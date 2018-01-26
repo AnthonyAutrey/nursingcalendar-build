@@ -1,0 +1,21 @@
+#  dependencies
+/src/frontend/node_modules
+
+#  testing
+/src/frontend/coverage
+
+#  build
+/src/frontend/build
+/src/javascript
+
+#  configuration
+/src/frontend/.DS_Store
+/src/frontend/.env.local
+/src/frontend/.env.development.local
+/src/frontend/.env.test.local
+/src/frontend/.env.production.local
+
+#  logs
+/src/frontend/npm-debug.log*
+/src/frontend/yarn-debug.log*
+/src/frontend/yarn-error.log*
