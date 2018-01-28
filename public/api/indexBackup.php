@@ -6,7 +6,8 @@ use \Psr\Http\Message\ResponseInterface as Response;
 require '../../src/api/dependencies/autoload.php';
 require '../../src/api/DBUtil.php';
 
-// Configuration //////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Configuration ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 $config = [
     'settings' => [
         'displayErrorDetails' => false,
@@ -16,7 +17,8 @@ $config = [
 
 $app = new \Slim\App($config);
 
-// Event Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 $app->get('/hello[/{name}]', function (Request $request, Response $response, array $args) {
 
 	if (isset($args['name']))
@@ -29,7 +31,7 @@ $app->get('/hello[/{name}]', function (Request $request, Response $response, arr
     return $response;
 });
 
-// Read //
+// Events //
 $app->get('/events', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
 	$queryString = DBUtil::buildSelectQuery('events', $queryData['fields'], $queryData['where']);
@@ -39,8 +41,8 @@ $app->get('/events', function (Request $request, Response $response, array $args
 	return $response;	
 });
 
-// Update //
 $app->post('/events', function (Request $request, Response $response, array $args) {
+	// TODO: prevent bugs in update query builder
 	$queryData = getUpdateQueryData($request);
 
 	if (isset($queryData['setValues']) and count($queryData['setValues']) > 0 and isset($queryData['where'])) {
@@ -54,17 +56,16 @@ $app->post('/events', function (Request $request, Response $response, array $arg
 		return $response->withStatus(400);
 });
 
-// Insert //
 $app->put('/events', function (Request $request, Response $response, array $args) {
-	$queryData = getInsertQueryData($request);
-	$queryString = DBUtil::buildInsertQuery('events', $queryData['insertValues']);
-	$results = DBUtil::runCommand($queryString);
-	$response->getBody()->write(json_encode($results));
+	// TODO: create insert query builder	
+	// return DBUtil::buildInsertQuery($table, $insertValues);
+	
+	$msg = json_encode(['put called']);
+	$response->getBody()->write($msg);
 	$response = $response->withHeader('Content-type', 'application/json');
-	return $response;
+	return $response;	
 });
 
-// Delete //
 $app->delete('/events', function (Request $request, Response $response, array $args) {
 	// TODO: create delete query builder
 	$msg = json_encode(['delete called']);
@@ -73,49 +74,51 @@ $app->delete('/events', function (Request $request, Response $response, array $a
 	return $response;	
 });
 
-// Query Data Extraction ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Query Building ///////////////////////////////////////////////////////////////////////////////////////////////////
+
 function getSelectQueryData(Request $request) : array {
-	$queryData = null;
+	$filters = null;
 	$fields = null;
 	$where = null;
 
-	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
-		$queryData = json_decode($request->getHeader('queryData')[0]);
-	if (isset($queryData->fields))
-		$fields = $queryData->fields;
-	if (isset($queryData->where))
-		$where = $queryData->where;
+	if(count($request->getHeader('filters')) > 0 and ($request->getHeader('filters')[0] !== null))
+		$filters = json_decode($request->getHeader('filters')[0]);
+	if (isset($filters->fields))
+		$fields = $filters->fields;
+	if (isset($filters->where))
+		$where = $filters->where;
 	
 	return ['fields'=>$fields, 'where'=>$where];
 }
 
-function getInsertQueryData(Request $request) : array {
+function getInsertQueryData(Request $request, String $table) : array {
 	$insertValues = null;
 
-	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
-		$queryData = json_decode($request->getHeader('queryData')[0]);
-	if (isset($queryData->insertValues))
-		$insertValues = $queryData->insertValues;
+	if(count($request->getHeader('filters')) > 0 and ($request->getHeader('filters')[0] !== null))
+		$filters = json_decode($request->getHeader('filters')[0]);
+	if (isset($filters->insertValues))
+		$insertValues = $filters->insertValues;
 
-	return ['insertValues'=>$insertValues];
+	return $insertValues;
 }
 
 function getUpdateQueryData(Request $request) : array {
-	$queryData = null;
+	$filters = null;
 	$setValues = null;
 	$where = null;
 
-	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
-		$queryData = json_decode($request->getHeader('queryData')[0]);
-	if (isset($queryData->setValues))
-		$setValues = $queryData->setValues;
-	if (isset($queryData->where))
-		$where = $queryData->where;
+	if(count($request->getHeader('filters')) > 0 and ($request->getHeader('filters')[0] !== null))
+		$filters = json_decode($request->getHeader('filters')[0]);
+	if (isset($filters->setValues))
+		$setValues = $filters->setValues;
+	if (isset($filters->where))
+		$where = $filters->where;
 
 	return ['setValues'=>$setValues, 'where'=>$where];
 }
 
 // Error Handling /////////////////////////////////////////////////////////////////////////////////////////////////////
+
 if (!$config['devEnvironment']) {
 
 	$container = $app->getContainer();
@@ -145,4 +148,5 @@ if (!$config['devEnvironment']) {
 }
 
 // Execute /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 $app->run();

@@ -6,7 +6,7 @@ class DBConfig {
 	private $dbHost = 'localhost';
 	private $dbUsername = 'root';
 	private $dbPassword = 'password';
-	private $dbName = 'nursing_scheduler';
+	private $dbName = 'nursing_calendar';
 
 	public function connect() {
 

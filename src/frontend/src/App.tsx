@@ -1,196 +1,271 @@
 import * as React from 'react';
-const FullCalendar = require('fullcalendar-reactwrapper');
-const fullcalendarCSS = require('../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
+import * as ReactDOM from 'react-dom';
 import './App.css';
-import { Stats } from 'fs';
+import { Duration } from 'moment';
+import * as Moment from 'moment';
 
-const logo = require('./logo.svg');
+const FullCalendarReact = require('fullcalendar-reactwrapper');
+const fullcalendarCSS = require('../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
+const request = require('superagent');
 
+// Interfaces ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 interface State {
-	events: [{}];
+	events: { number: Event } | {};
+}
+
+interface Event {
+	id: number;
+	title: string;
+	start: string;
+	end?: string;
 }
 
 class App extends React.Component<{}, State> {
 
+	private scrollPosition: number = 0;
+
 	constructor() {
 		super({}, {});
 
-		this.state = {
-			events: [
-				{
-					title: 'All Day Event',
-					start: '2018-01-01'
-				},
-				{
-					title: 'Long Event',
-					start: '2017-05-07',
-					end: '2018-01-10'
-				},
-				{
-					id: 999,
-					title: 'Repeating Event',
-					start: '2018-01-09T16:00:00'
-				},
-				{
-					id: 999,
-					title: 'Repeating Event',
-					start: '2018-01-16T16:00:00'
-				},
-				{
-					title: 'Conference',
-					start: '2018-01-11',
-					end: '2018-01-13'
-				},
-				{
-					title: 'Meeting',
-					start: '2018-01-12T10:30:00',
-					end: '2018-01-12T12:30:00'
-				},
-				{
-					title: 'Test',
-					start: '2018-01-13T07:00:00',
-					test: 'yes'
-				},
-				{
-					title: 'Click for Google',
-					url: 'http://google.com/',
-					start: '2018-01-28'
-				},
-				{
-					title: 'Conference',
-					start: '2018-01-11',
-					end: '2018-01-13'
-				},
-				{
-					title: 'Meeting',
-					start: '2018-01-12T10:30:00',
-					end: '2018-01-12T12:30:00'
-				},
-				{
-					title: 'Clinicals',
-					start: '2018-01-13T07:00:00'
-				},
-				{
-					title: 'Click for Google',
-					url: 'http://google.com/',
-					start: '2018-01-28'
-				},
-				{
-					title: 'All Day Event',
-					start: '2018-01-01'
-				},
-				{
-					title: 'Long Event',
-					start: '2017-05-07',
-					end: '2018-01-10'
-				},
-				{
-					id: 999,
-					title: 'Repeating Event',
-					start: '2018-01-09T16:00:00'
-				},
-				{
-					id: 999,
-					title: 'Repeating Event',
-					start: '2018-01-16T16:00:00'
-				},
-				{
-					title: 'Conference',
-					start: '2018-01-11',
-					end: '2018-01-13'
-				},
-				{
-					title: 'Meeting',
-					start: '2018-01-12T10:30:00',
-					end: '2018-01-12T12:30:00'
-				},
-				{
-					title: 'Clinicals',
-					start: '2018-01-13T07:00:00'
-				},
-				{
-					title: 'Click for Google',
-					url: 'http://google.com/',
-					start: '2018-01-28'
-				},
-				{
-					title: 'Conference',
-					start: '2018-01-11',
-					end: '2018-01-13'
-				},
-				{
-					title: 'Meeting',
-					start: '2018-01-12T10:30:00',
-					end: '2018-01-12T12:30:00'
-				},
-				{
-					title: 'Clinicals',
-					start: '2018-01-13T07:00:00'
-				},
-				{
-					title: 'Click for Google',
-					url: 'http://google.com/',
-					start: '2018-01-28'
-				}
-			],
-		};
+		this.state = { events: {} };
+	}
+
+	componentWillMount() {
+		this.getStateFromDB();
+	}
+
+	componentWillUpdate() {
+		const element = ReactDOM.findDOMNode(this);
+		if (element != null)
+			this.scrollPosition = window.scrollY;
+	}
+
+	componentDidUpdate() {
+		const element = ReactDOM.findDOMNode(this);
+		if (element != null)
+			window.scrollTo(0, this.scrollPosition);
 	}
 
 	render() {
 		return (
 			<div className="App">
 				<header className="App-header">
-					<img src={logo} className="App-logo" alt="logo" />
 					<h1 className="App-title">Nursing Scheduler</h1>
 				</header>
-				<div className="calendar" />
-				<FullCalendar
-					id="your-custom-ID"
+				<button onClick={() => this.persistStateToDB()}>Persist To DB</button>
+				<div id="calendar" />
+				<FullCalendarReact
+					id="calendar"
 					header={{
 						left: 'prev,next today myCustomButton',
 						center: 'title',
-						right: ''
+						right: 'agendaWeek, month, listMonth, listDay, basicWeek'
 					}}
 					// defaultDate={'2017-09-12'}
 					defaultView={'agendaWeek'}
 					navLinks={true} // can click day/week names to navigate views
 					editable={true}
 					slotEventOverlap={false}
+					eventOverlap={false}
 					// eventAllow={(dropInfo: any, draggedEvent: any) => {
 					// 	console.log(JSON.stringify(dropInfo));
 					// 	return draggedEvent.title === 'Clinicals';
 					// }}
 					// eventLimit={true} // allow "more" link when too many events
 					// eventLimitClick={'day'}
-					events={this.state.events}
-					eventDrop={(event: any, delta: any, revertDrop: Function) => {
-						console.log(JSON.stringify(delta));
-						if (!confirm('do it?'))
-							revertDrop();
-					}}
+					events={this.getStateEventsAsArray()}
+					eventDrop={(event: Event, delta: Duration) => this.editEvent(event, delta)}
+					eventResize={(event: Event, delta: Duration) => this.editEvent(event, delta)}
+					// eventAfterRender={(event: any, element: any) => {
+					// 	console.log(event.start);
+					// 	// console.log(element.start);
+					// }}
 					height={'auto'}
 					snapDuration={'00:15:00'}
 					slotDuration={'00:30:00'}
-					scrollTime={'24:00:00'}
+					// scrollTime={'24:00:00'}
 					// minTime={'03:00:00'}
 					// maxTime={'27:00:00'}
 					selectable={true}
 					selectOverlap={false}
-					selectHelper={false}
+					selectHelper={true}
 					select={(start: any, end: any, jsEvent: any, view: any) => {
-						let abc = prompt('Enter Title');
-						// var allDay = !start.hasTime && !end.hasTime;
-						// let newEvent: any = {};
-						// newEvent.title = abc;
-						// newEvent.start = start;
-						// newEvent.allDay = false;
+						let promptResult: string | null = prompt('Enter Title');
+						let title: string = '';
+						if (promptResult !== null)
+							title = promptResult;
+						else {
+							this.forceUpdate();
+							return;
+						}
 
-						return false;
+						let index: number = Object.keys(this.state.events).length;
+						let events = this.cloneStateEvents();
+
+						events[index] = { id: index, title: title, start: start, end: end };
+						this.setState({ events: events });
 					}}
 				/>
 			</div>
 		);
 	}
+
+	// Client Events ////////////////////////////////////////////////////////////////////////////////////////
+	cloneStateEvents(): Event[] {
+		let events: Event[] = [];
+		for (const key in this.state.events) {
+			if (this.state.events.hasOwnProperty(key))
+				events.push(this.state.events[key]);
+		}
+
+		return events;
+	}
+
+	editEvent(event: Event, delta: Duration): void {
+		let newEvent: Event = event;
+		newEvent.id = event.id;
+		newEvent.title = event.title;
+		newEvent.start = event.start;
+		newEvent.end = event.end;
+		let index: number = event.id;
+		let events = this.state.events;
+		events[index] = newEvent;
+
+		this.setState({ events: events });
+	}
+
+	getStateEventsAsArray(): Event[] {
+		let events: Event[] = [];
+		for (const key in this.state.events) {
+			if (this.state.events.hasOwnProperty(key)) {
+				const event = this.state.events[key];
+				events.push(event);
+			}
+		}
+
+		return events;
+	}
+
+	// Event Persistence /////////////////////////////////////////////////////////////////////////////////////////////////
+	// TODO: set this up as promises
+	persistStateToDB(): void {
+		this.getStateEventsThatAreAlreadyInDB((eventsInDB: number[]) => {
+			this.persistExistingEventsToDB(eventsInDB);
+
+			this.getStateEventsNotYetInDB(eventsInDB, (eventsNotInDB: { number: Event } | {}) => {
+				// console.log(eventsNotInDB);
+				// TODO: create these events in API call
+				this.persistNewEventsToDB(eventsNotInDB);
+			});
+		});
+	}
+
+	persistExistingEventsToDB(eventIDs: number[]): void {
+		let eventsToUpdate: Event[] = [];
+		eventIDs.forEach((id) => {
+			eventsToUpdate.push(this.state.events[id]);
+		});
+
+		eventsToUpdate.forEach((event: Event) => {
+			let queryData = { setValues: { 'name': event.title, 'start_time': event.start, 'end_time': event.end }, where: { id: [event.id] } };
+			let queryDataString = JSON.stringify(queryData);
+			request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body)
+					console.log('updated: ' + res.body);
+			});
+		});
+	}
+
+	persistNewEventsToDB(events: { number: Event } | {}) {
+		let eventsToCreate: Event[] = [];
+		for (const key in events) {
+			if (events.hasOwnProperty(key))
+				eventsToCreate.push(events[key]);
+		}
+
+		eventsToCreate.forEach((event) => {
+			console.log('creating event:');
+			console.log(event);
+			let queryData = { insertValues: { 'id': event.id, 'name': event.title, 'start_time': event.start, 'end_time': event.end } };
+			let queryDataString = JSON.stringify(queryData);
+			request.put('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body)
+					console.log('created: ' + res.body);
+			});
+		});
+	}
+
+	getStateEventsNotYetInDB(alreadyInDB: number[], next: Function) {
+		let stateEventsNotYetInDB: { number: Event } | {} = this.cloneStateEvents();
+
+		console.log('state: ');
+		console.log(stateEventsNotYetInDB);
+		console.log('already there: ');
+		console.log(alreadyInDB);
+		alreadyInDB.forEach((id) => {
+			console.log('deleting: ' + id);
+			delete stateEventsNotYetInDB[id];
+		});
+
+		next(stateEventsNotYetInDB);
+	}
+
+	getStateEventsThatAreAlreadyInDB(next: Function) {
+		let ids: number[] = [];
+		for (const key in this.state.events) {
+			if (this.state.events.hasOwnProperty(key)) {
+				ids.push(parseInt(key, 10));
+			}
+		}
+
+		console.log('state: ');
+		console.log(this.state.events);
+		console.log('supposed to be all keys:');
+		console.log(ids);
+		let queryData = { fields: ['id'], where: { id: ids } };
+		let queryDataString = JSON.stringify(queryData);
+		let stateEventsThatAreAlreadyInDB: number[] = [];
+		request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (res && res.body)
+				stateEventsThatAreAlreadyInDB = this.getEventIdsFromResponseBody(res.body);
+
+			next(stateEventsThatAreAlreadyInDB);
+		});
+	}
+
+	getEventIdsFromResponseBody(body: any): number[] {
+		let ids: number[] = [];
+
+		for (let event of body)
+			ids.push(event.id);
+
+		return ids;
+	}
+
+	getStateFromDB(): void {
+		request.get('/api/events').end((error: {}, res: any) => {
+			if (res && res.body)
+				this.setState({ events: this.parseDBEventsAsMap(res.body) });
+		});
+	}
+
+	parseDBEventsAsMap(body: any): { number: Event } | {} {
+		let parsedEvents: { number: Event } | {} = {};
+		for (let event of body) {
+
+			let parsedEvent: Event = {
+				id: event.id,
+				title: event.name,
+				start: event.start_time,
+				end: event.end_time,
+			};
+
+			parsedEvents[event.id] = (parsedEvent);
+		}
+
+		return parsedEvents;
+	}
+
 }
 
 export default App;
