@@ -1,8 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './App.css';
-import { Duration } from 'moment';
-import * as Moment from 'moment';
+import { Duration, Moment } from 'moment';
 
 const FullCalendarReact = require('fullcalendar-reactwrapper');
 const fullcalendarCSS = require('../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
@@ -23,6 +22,9 @@ interface Event {
 class App extends React.Component<{}, State> {
 
 	private scrollPosition: number = 0;
+	private currentView: String | null = null;
+	private currentDate: any | null = null;
+	private smallestTimeInterval: number = Number.MAX_SAFE_INTEGER;
 
 	constructor() {
 		super({}, {});
@@ -57,12 +59,22 @@ class App extends React.Component<{}, State> {
 				<FullCalendarReact
 					id="calendar"
 					header={{
-						left: 'prev,next today myCustomButton',
+						left: 'prev, next, today',
 						center: 'title',
-						right: 'agendaWeek, month, listMonth, listDay, basicWeek'
+						right: 'agendaWeek, month, agendaDay,listMonth, listDay, basicWeek'
 					}}
-					// defaultDate={'2017-09-12'}
-					defaultView={'agendaWeek'}
+					defaultDate={(() => {
+						if (this.currentDate)
+							return this.currentDate;
+						else
+							return null;
+					})()}
+					defaultView={(() => {
+						if (this.currentView)
+							return this.currentView;
+						else
+							return 'agendaWeek';
+					})()}
 					navLinks={true} // can click day/week names to navigate views
 					editable={true}
 					slotEventOverlap={false}
@@ -89,6 +101,8 @@ class App extends React.Component<{}, State> {
 					selectable={true}
 					selectOverlap={false}
 					selectHelper={true}
+					viewRender={(view: any) => this.cacheViewAndDate(view)}
+					firstDay={1}
 					select={(start: any, end: any, jsEvent: any, view: any) => {
 						let promptResult: string | null = prompt('Enter Title');
 						let title: string = '';
@@ -264,6 +278,20 @@ class App extends React.Component<{}, State> {
 		}
 
 		return parsedEvents;
+	}
+
+	// Store Calendar State /////////////////////////////////////////////////////////////////////////////////////////////////////////
+	cacheViewAndDate(view: any) {
+		this.currentView = view.name;
+		if (view.intervalEnd - view.intervalStart <= this.smallestTimeInterval) {
+			this.currentDate = view.intervalStart;
+			this.smallestTimeInterval = view.intervalEnd - view.intervalStart;
+		}
+
+		if (this.currentDate.isBefore(view.intervalStart) || this.currentDate.isAfter(view.intervalEnd)) {
+			this.currentDate = view.intervalStart;
+			this.smallestTimeInterval = view.intervalEnd - view.intervalStart;
+		}
 	}
 
 }
