@@ -61,7 +61,7 @@ class App extends React.Component<{}, State> {
 					header={{
 						left: 'prev, next, today',
 						center: 'title',
-						right: 'agendaWeek, month, agendaDay,listMonth, listDay, basicWeek'
+						right: 'agendaWeek,month,agendaDay,listMonth,listDay,basicWeek'
 					}}
 					defaultDate={(() => {
 						if (this.currentDate)
@@ -161,31 +161,32 @@ class App extends React.Component<{}, State> {
 	}
 
 	// Event Persistence /////////////////////////////////////////////////////////////////////////////////////////////////
-	// TODO: set this up as promises
 	persistStateToDB(): void {
-		this.getStateEventsThatAreAlreadyInDB((eventsInDB: number[]) => {
-			this.persistExistingEventsToDB(eventsInDB);
-
-			this.getStateEventsNotYetInDB(eventsInDB, (eventsNotInDB: { number: Event } | {}) => {
-				// console.log(eventsNotInDB);
-				// TODO: create these events in API call
+		this.getStateEventsThatAreAlreadyInDB().then((eventsInDB) => {
+			this.persistExistingEventsToDB(eventsInDB).then(() => {
+				let eventsNotInDB = this.getStateEventsNotYetInDB(eventsInDB);
 				this.persistNewEventsToDB(eventsNotInDB);
 			});
 		});
 	}
 
-	persistExistingEventsToDB(eventIDs: number[]): void {
-		let eventsToUpdate: Event[] = [];
-		eventIDs.forEach((id) => {
-			eventsToUpdate.push(this.state.events[id]);
-		});
+	persistExistingEventsToDB(eventIDs: number[]): Promise<void> {
+		return new Promise((resolve, reject) => {
+			let eventsToUpdate: Event[] = [];
+			eventIDs.forEach((id) => {
+				eventsToUpdate.push(this.state.events[id]);
+			});
 
-		eventsToUpdate.forEach((event: Event) => {
-			let queryData = { setValues: { 'name': event.title, 'start_time': event.start, 'end_time': event.end }, where: { id: [event.id] } };
-			let queryDataString = JSON.stringify(queryData);
-			request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-				if (res && res.body)
-					console.log('updated: ' + res.body);
+			eventsToUpdate.forEach((event: Event) => {
+				let queryData = { setValues: { 'name': event.title, 'start_time': event.start, 'end_time': event.end }, where: { id: [event.id] } };
+				let queryDataString = JSON.stringify(queryData);
+				request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+					if (res && res.body) {
+						console.log('updated: ' + res.body);
+						resolve();
+					} else
+						reject();
+				});
 			});
 		});
 	}
@@ -209,7 +210,7 @@ class App extends React.Component<{}, State> {
 		});
 	}
 
-	getStateEventsNotYetInDB(alreadyInDB: number[], next: Function) {
+	getStateEventsNotYetInDB(alreadyInDB: number[]): { number: Event } | {} {
 		let stateEventsNotYetInDB: { number: Event } | {} = this.cloneStateEvents();
 
 		console.log('state: ');
@@ -221,29 +222,31 @@ class App extends React.Component<{}, State> {
 			delete stateEventsNotYetInDB[id];
 		});
 
-		next(stateEventsNotYetInDB);
+		return stateEventsNotYetInDB;
 	}
 
-	getStateEventsThatAreAlreadyInDB(next: Function) {
-		let ids: number[] = [];
-		for (const key in this.state.events) {
-			if (this.state.events.hasOwnProperty(key)) {
-				ids.push(parseInt(key, 10));
+	getStateEventsThatAreAlreadyInDB(): Promise<number[]> {
+		return new Promise((resolve, reject) => {
+			let ids: number[] = [];
+			for (const key in this.state.events) {
+				if (this.state.events.hasOwnProperty(key)) {
+					ids.push(parseInt(key, 10));
+				}
 			}
-		}
 
-		console.log('state: ');
-		console.log(this.state.events);
-		console.log('supposed to be all keys:');
-		console.log(ids);
-		let queryData = { fields: ['id'], where: { id: ids } };
-		let queryDataString = JSON.stringify(queryData);
-		let stateEventsThatAreAlreadyInDB: number[] = [];
-		request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-			if (res && res.body)
-				stateEventsThatAreAlreadyInDB = this.getEventIdsFromResponseBody(res.body);
-
-			next(stateEventsThatAreAlreadyInDB);
+			console.log('state: ');
+			console.log(this.state.events);
+			console.log('supposed to be all keys:');
+			console.log(ids);
+			let queryData = { fields: ['id'], where: { id: ids } };
+			let queryDataString = JSON.stringify(queryData);
+			let stateEventsThatAreAlreadyInDB: number[] = [];
+			request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body)
+					resolve(this.getEventIdsFromResponseBody(res.body));
+				else
+					reject();
+			});
 		});
 	}
 
