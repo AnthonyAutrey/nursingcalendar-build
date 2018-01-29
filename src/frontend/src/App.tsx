@@ -286,17 +286,13 @@ class App extends React.Component<{}, State> {
 	// Store Calendar State /////////////////////////////////////////////////////////////////////////////////////////////////////////
 	cacheViewAndDate(view: any) {
 		this.currentView = view.name;
-		if (view.intervalEnd - view.intervalStart <= this.smallestTimeInterval) {
+		if (!this.currentDate)
 			this.currentDate = view.intervalStart;
-			this.smallestTimeInterval = view.intervalEnd - view.intervalStart;
-		}
-
 		if (this.currentDate.isBefore(view.intervalStart) || this.currentDate.isAfter(view.intervalEnd)) {
 			this.currentDate = view.intervalStart;
 			this.smallestTimeInterval = view.intervalEnd - view.intervalStart;
 		}
 	}
-
 }
 
 export default App;
