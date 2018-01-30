@@ -17,6 +17,8 @@ $config = [
 $app = new \Slim\App($config);
 
 // Event Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//TODO: remove this example route
 $app->get('/hello[/{name}]', function (Request $request, Response $response, array $args) {
 
 	if (isset($args['name']))
