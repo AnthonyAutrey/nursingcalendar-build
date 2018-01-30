@@ -26,8 +26,8 @@ class App extends React.Component<{}, State> {
 	private currentDate: any | null = null;
 	private smallestTimeInterval: number = Number.MAX_SAFE_INTEGER;
 
-	constructor() {
-		super({}, {});
+	constructor(props: {}) {
+		super(props);
 
 		this.state = { events: {} };
 	}

@@ -129,7 +129,7 @@ class DBUtil {
 					$valueString.= ')';
 				}
 				else {
-					$valueString = '()';
+					$valueString = '(null)';
 				}
 
 
