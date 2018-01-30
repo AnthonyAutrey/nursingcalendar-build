@@ -53,9 +53,8 @@ class App extends React.Component<{}, State> {
 			<div className="App">
 				<header className="App-header">
 					<h1 className="App-title">Nursing Scheduler</h1>
+					<button className="btn btn-primary" onClick={() => this.persistStateToDB()}>Persist To DB</button>
 				</header>
-				<button onClick={() => this.persistStateToDB()}>Persist To DB</button>
-				<div id="calendar" />
 				<FullCalendarReact
 					id="calendar"
 					header={{

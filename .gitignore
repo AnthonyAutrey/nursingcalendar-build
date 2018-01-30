@@ -7,6 +7,9 @@
 #  build
 /src/frontend/build
 /src/javascript
+/public/*
+!/public/api
+!/public/.htaccess
 
 #  configuration
 /src/frontend/.DS_Store

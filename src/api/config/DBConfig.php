@@ -2,20 +2,18 @@
 
 class DBConfig {
 
-	// TODO: use env variables here
 	private $dbHost = 'localhost';
 	private $dbUsername = 'root';
-	private $dbPassword = 'password';
 	private $dbName = 'nursing_calendar';
 
 	public function connect() {
-
+		$dbPassword = getenv("NURSECAL_DB_PASS");
+		
 		$connectionString = "mysql:host=$this->dbHost;dbname=$this->dbName;";
-		$dbConnection = new PDO($connectionString, $this->dbUsername, $this->dbPassword);
+		$dbConnection = new PDO($connectionString, $this->dbUsername, $dbPassword);
 		$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-		return $dbConnection;
-		
+		return $dbConnection;	
 	}
 
 }
