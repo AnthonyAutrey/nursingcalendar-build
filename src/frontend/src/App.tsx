@@ -183,11 +183,12 @@ class App extends React.Component<{}, State> {
 				request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
 					if (res && res.body) {
 						console.log('updated: ' + res.body);
-						resolve();
 					} else
 						reject();
 				});
 			});
+
+			resolve();
 		});
 	}
 
