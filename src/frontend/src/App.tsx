@@ -177,7 +177,14 @@ class App extends React.Component<{}, State> {
 			});
 
 			eventsToUpdate.forEach((event: Event) => {
-				let queryData = { setValues: { 'name': event.title, 'start_time': event.start, 'end_time': event.end }, where: { id: [event.id] } };
+				let queryData = {
+					setValues: {
+						'title': event.title,
+						'starttime': event.start,
+						'endtime': event.end
+					},
+					where: { EventID: [event.id] }
+				};
 				let queryDataString = JSON.stringify(queryData);
 				request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
 					if (res && res.body) {
@@ -201,7 +208,15 @@ class App extends React.Component<{}, State> {
 		eventsToCreate.forEach((event) => {
 			console.log('creating event:');
 			console.log(event);
-			let queryData = { insertValues: { 'id': event.id, 'name': event.title, 'start_time': event.start, 'end_time': event.end } };
+			let queryData = {
+				insertValues: {
+					'eventID': event.id,
+					'title': event.title,
+					'description': '', // TODO: request this from user
+					'starttime': event.start,
+					'endtime': event.end
+				}
+			};
 			let queryDataString = JSON.stringify(queryData);
 			request.put('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
 				if (res && res.body)
@@ -238,7 +253,7 @@ class App extends React.Component<{}, State> {
 			console.log(this.state.events);
 			console.log('supposed to be all keys:');
 			console.log(ids);
-			let queryData = { fields: ['id'], where: { id: ids } };
+			let queryData = { fields: ['EventID'], where: { EventID: ids } };
 			let queryDataString = JSON.stringify(queryData);
 			let stateEventsThatAreAlreadyInDB: number[] = [];
 			request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
@@ -254,7 +269,7 @@ class App extends React.Component<{}, State> {
 		let ids: number[] = [];
 
 		for (let event of body)
-			ids.push(event.id);
+			ids.push(event.EventID);
 
 		return ids;
 	}
@@ -271,13 +286,13 @@ class App extends React.Component<{}, State> {
 		for (let event of body) {
 
 			let parsedEvent: Event = {
-				id: event.id,
-				title: event.name,
-				start: event.start_time,
-				end: event.end_time,
+				id: event.EventID,
+				title: event.Title,
+				start: event.StartTime,
+				end: event.EndTime,
 			};
 
-			parsedEvents[event.id] = (parsedEvent);
+			parsedEvents[event.EventID] = (parsedEvent);
 		}
 
 		return parsedEvents;
