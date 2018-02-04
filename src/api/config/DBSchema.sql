@@ -1,9 +1,13 @@
--- Drop the existing db and create an empty one
+/*---------------------------------------------------
+--- Drop the existing db and create an empty one ----
+---------------------------------------------------*/
 
 DROP DATABASE IF EXISTS nursing_calendar;
 CREATE DATABASE nursing_calendar;
 
--- Create tables
+/*--------------------
+--- Create tables ----
+--------------------*/
 
 USE nursing_calendar;
 
@@ -16,7 +20,7 @@ CREATE TABLE Locations
 CREATE TABLE Rooms
 (
 	RoomName VARCHAR(20) NOT NULL,
-	Capacity SmallInt NOT NULL,
+	Capacity SmallInt, -- if NULL, room should be regarded as having infinite capacity
 	LocationName VARCHAR(20) NOT NULL,
 	PRIMARY KEY (RoomName),
 	FOREIGN KEY (LocationName) REFERENCES Locations(LocationName)
@@ -31,11 +35,13 @@ CREATE TABLE Resources
 CREATE TABLE Events
 (
 	EventID INT NOT NULL,
+	RoomName VARCHAR(20) NOT NULL,
 	Title VARCHAR(20) NOT NULL,
 	Description VARCHAR(300) NOT NULL,
 	StartTime DateTime NOT NULL,
 	EndTime DateTime NOT NULL,
-	PRIMARY KEY (EventID)
+	PRIMARY KEY (EventID, RoomName),
+	FOREIGN KEY (RoomName) REFERENCES Rooms(RoomName)	
 );
 
 CREATE TABLE Groups
@@ -119,3 +125,13 @@ CREATE TABLE UserGroupRelation
 	FOREIGN KEY (CWID) REFERENCES Users(CWID),
 	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName)
 );
+
+/*----------------------------------------------
+--- Insert initial values into the database ----
+----------------------------------------------*/
+
+INSERT INTO Locations (LocationName)
+VALUES ('Location 1');
+
+INSERT INTO Rooms (RoomName, Capacity, LocationName)
+VALUES ('Room 1', 50, 'Location 1');

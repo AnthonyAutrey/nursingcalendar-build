@@ -2,6 +2,8 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './App.css';
 import { Duration, Moment } from 'moment';
+import { Scheduler } from './Scheduler/Scheduler';
+import { SchedulerCalendar } from './Scheduler/SchedulerCalendar';
 
 const FullCalendarReact = require('fullcalendar-reactwrapper');
 const fullcalendarCSS = require('../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
@@ -211,6 +213,7 @@ class App extends React.Component<{}, State> {
 			let queryData = {
 				insertValues: {
 					'eventID': event.id,
+					'roomName': 'Room 1',
 					'title': event.title,
 					'description': '', // TODO: request this from user
 					'starttime': event.start,
