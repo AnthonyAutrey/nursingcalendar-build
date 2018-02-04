@@ -7,15 +7,31 @@ interface State {
 	selectedRoom: number;
 }
 
+interface Room {
+	roomName: string;
+	capacity: number;
+	resources: { name: string, count: number };
+}
+
 export class Scheduler extends React.Component<{}, State> {
-	constructor(props: {}) {
-		super({});
+	private schedulerCalendar: SchedulerCalendar | null;
+
+	constructor(props: {}, state: State) {
+		super(props, state);
 	}
 
 	render() {
 		return (
-			<SchedulerCalendar room={'Room 1'} />
+			<div className="Scheduler">
+				<button className="btn btn-primary" onClick={() => this.persistEventsToDB()}>Persist To DB</button>
+				<SchedulerCalendar room={'Room 1'} ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
+			</div>
 		);
+	}
+
+	persistEventsToDB() {
+		if (this.schedulerCalendar)
+			this.schedulerCalendar.persistStateToDB();
 	}
 }
 
