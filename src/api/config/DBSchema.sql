@@ -22,7 +22,7 @@ CREATE TABLE Rooms
 	RoomName VARCHAR(20) NOT NULL,
 	Capacity SmallInt, -- if NULL, room should be regarded as having infinite capacity
 	LocationName VARCHAR(20) NOT NULL,
-	PRIMARY KEY (RoomName),
+	PRIMARY KEY (RoomName, LocationName),
 	FOREIGN KEY (LocationName) REFERENCES Locations(LocationName)
 );
 
