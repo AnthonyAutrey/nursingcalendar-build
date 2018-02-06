@@ -29,6 +29,7 @@ CREATE TABLE Rooms
 CREATE TABLE Resources
 (
 	ResourceName VARCHAR(20) NOT NULL,
+	IsNotEnumerable Boolean NOT NULL DEFAULT 0,
 	PRIMARY KEY (ResourceName)
 );
 
