@@ -1,5 +1,6 @@
 import * as React from 'react';
 const uuid = require('uuid/v4');
+const classNames = require('classnames');
 
 interface Props {
 	index: number;
@@ -7,43 +8,63 @@ interface Props {
 	selectedResource: string;
 	handleResourceChange: Function;
 	handleMinChange: Function;
-	handleMaxChange: Function;
 	handleDelete: Function;
+	isEnumerable: boolean;
+	min?: number;
 }
 
-interface State {
-	min: number;
-	max: number;
-}
+// interface State {
+// 	min: number;
+// 	max: number;
+// }
 
-export class FilterResource extends React.Component<Props, State> {
-	constructor(props: Props, state: State) {
+export class FilterResource extends React.Component<Props, {}> {
+	constructor(props: Props, state: {}) {
 		super(props, state);
 
 		this.state = { min: 0, max: 1000 };
 	}
 
 	render() {
-		let resourceOptions = this.props.resources.map(resource => {
+		const resourceOptions = this.props.resources.map(resource => {
 			return (<option key={uuid()} value={resource}>{resource}</option>);
 		});
 
+		let minInput = (
+			<input
+				className="form-control"
+				type="number"
+				value={this.props.min}
+				placeholder="min"
+				onChange={(e) => this.props.handleMinChange(e, this.props.index)}
+			/>
+		);
+
+		let selectClass = classNames('col-lg-6');
+		let minInputClass = classNames('col-lg-4 mx-0 pl-0');
+		if (!this.props.isEnumerable) {
+			minInput = <span />;
+			selectClass = classNames('col-lg-10');
+			minInputClass = classNames('mx-0 px-0');
+		}
+
 		return (
-			<div>
-				{/* TODO: Send the event along with this */}
-				<select value={this.props.selectedResource} onChange={(event) => this.props.handleResourceChange(event, this.props.index)}>
-					{resourceOptions}
-				</select>
-				<label>
-					Min:
-					<input type="number" value={this.state.min} onChange={this.props.handleMinChange(this.props.index)} />
-				</label>
-				<label>
-					Max:
-					<input type="number" value={this.state.max} onChange={this.props.handleMaxChange(this.props.index)} />
-				</label>
-				<button className="btn btn-danger" onClick={() => this.props.handleDelete(this.props.index)}>X</button>
-				<br />
+			<div className="form-group row">
+				<div className={selectClass}>
+					<select
+						className="form-control"
+						value={this.props.selectedResource}
+						onChange={(event) => this.props.handleResourceChange(event, this.props.index)}
+					>
+						{resourceOptions}
+					</select>
+				</div>
+				<div className={minInputClass}>
+					{minInput}
+				</div>
+				<div className="col-lg-2">
+					<button className="btn btn-danger float-right" onClick={() => this.props.handleDelete(this.props.index)}>x</button>
+				</div>
 			</div>
 		);
 	}

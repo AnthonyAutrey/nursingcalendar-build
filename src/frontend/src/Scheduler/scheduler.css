@@ -1,0 +1,9 @@
+.addButton {
+	white-space: normal;
+	/* word-wrap: break-word; */
+}
+
+.plusIcon {
+	font-size: .7em;
+	font-weight: 'lightest';
+}

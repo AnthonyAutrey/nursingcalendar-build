@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { RoomFilters } from './Scheduler';
 import { FilterResource } from './FilterResource';
+import './scheduler.css';
 const uuid = require('uuid/v4');
 
 interface Props {
@@ -9,13 +10,25 @@ interface Props {
 
 interface State {
 	roomFilters: RoomFilters;
+	open: boolean;
 }
 
 export class RoomFilter extends React.Component<Props, State> {
 
-	private allLocations: string[] = [];
-	private allResources: string[] = ['resource 1', 'resource 2', 'resource 3', 'resource 4'];
-	private unselectedResources: string[] = this.allResources;
+	private allLocations: string[] = ['location 1', 'location 2'];
+	private allResources: { name: string, enumerable: boolean }[] = [
+		{ name: 'Manequinns', enumerable: true },
+		{ name: 'Beds', enumerable: true },
+		{ name: 'Audio/Video', enumerable: false },
+		{ name: 'Clinical', enumerable: false },
+		{ name: 'Robot', enumerable: true },
+		{ name: 'Needle Station', enumerable: true }
+	];
+	private unselectedResources: string[] = this.getResourceNames();
+	// HACK: godawful hack to prevent resource from being added when resources array is empty
+	// and React decided to click 'add resource' button automatically
+	private addResourceFunction: Function;
+	private roomFilter: any;
 
 	constructor(props: Props, state: State) {
 
@@ -24,158 +37,230 @@ export class RoomFilter extends React.Component<Props, State> {
 		this.state = {
 			roomFilters: {
 				searchText: '',
-				capacity: { min: 0, max: 1000 },
+				capacity: { min: 0 },
 				resources: []
-			}
+			},
+			open: false
 		};
-
 		// TODO: Get all possible locations and resources on initialize
-		this.allLocations = ['location 1', 'location 2'];
+		this.addResourceFunction = this.handleAddResource;
+	}
+
+	componentWillMount() {
+		document.addEventListener('mousedown', this.handleClick, false);
+	}
+
+	componentWillUnMount() {
+		document.removeEventListener('mousedown', this.handleClick, false);
+	}
+
+	// HACK: enable adding resource
+	componentDidUpdate() {
+		setTimeout(() => { this.addResourceFunction = this.handleAddResource; }, 200);
+	}
+
+	handleClick = (e: any) => {
+		if (this.roomFilter && this.roomFilter.contains(e.target))
+			return;
+		else
+			this.closeComponent();
+	}
+
+	closeComponent = () => {
+		this.setState({ open: false });
 	}
 
 	render() {
-		this.unselectedResources = this.allResources.slice(0);
+		this.unselectedResources = this.getResourceNames();
+		this.state.roomFilters.resources.forEach(res => {
+			if (this.unselectedResources.includes(res.name))
+				this.unselectedResources.splice(this.unselectedResources.indexOf(res.name), 1);
+		});
+		this.unselectedResources.sort((a, b) => {
+			if (a < b) return -1;
+			if (a > b) return 1;
+			return 0;
+		});
 
-		const locationOptions = this.allLocations.map(location => {
+		let locationOptions = this.allLocations.map(location => {
 			return (<option key={uuid()} value={location}>{location}</option>);
 		});
 
+		locationOptions.unshift(<option key={uuid()} value={'any'}>Any</option>);
+
 		let resourceComponents: any[] = [];
 
-		console.log('rendering...');
-		console.log(this.state.roomFilters.resources);
 		this.state.roomFilters.resources.forEach(resource => {
 			let resourceIndex = this.state.roomFilters.resources.indexOf(resource);
-
 			let selected: string = this.unselectedResources[0];
-			if (this.state.roomFilters.resources[resourceIndex])
-				selected = this.state.roomFilters.resources[resourceIndex].name;
+			let resourceOptions = this.unselectedResources.slice(0);
+			resourceOptions.unshift(resource.name);
 
 			resourceComponents.push(
 				<FilterResource
-					key={uuid()}
+					key={resource.name}
 					index={resourceIndex}
-					resources={this.unselectedResources.slice(0)}
-					selectedResource={selected}
+					resources={resourceOptions}
+					selectedResource={resource.name}
 					handleDelete={this.handleDeleteResource}
-					handleMaxChange={() => { return false; }}
-					handleMinChange={() => { return false; }}
+					handleMinChange={this.handleResourceMinChange}
 					handleResourceChange={this.handleResourceChange}
+					min={resource.min}
+					isEnumerable={this.resourceIsEnumerable(resource.name)}
 				/>
 			);
-			this.unselectedResources.splice(this.unselectedResources.indexOf(this.state.roomFilters.resources[resourceIndex].name), 1);
+
 		});
 
 		let addButton: any = null;
-		if (this.state.roomFilters.resources.length < this.allResources.length) {
-			console.log('creating button...');
-			addButton = <button className="btn btn-primary" onClick={this.handleAddResource}>Add Resource</button>;
+		if (this.state.roomFilters.resources.length < this.allResources.length)
+			addButton = (
+				<a
+					href="#"
+					className="addButton btn btn-primary w-100"
+					onClick={() => { this.addResourceFunction(); }}
+				>
+					Add Resource &nbsp;&nbsp;
+					<span className="plusIcon oi oi-size-sm oi-plus" />
+				</a>
+			);
 
-		}
+		let extraFilters = (
+			<div>
+				<div className="form-group row">
+					<label className="col-lg-4 col-form-label">Location:</label>
+					<div className="col-lg-8">
+						<select className="form-control" value={this.state.roomFilters.location} onChange={this.handleLocationChange}>
+							{locationOptions}
+						</select>
+					</div>
+				</div>
+				<div className="form-group row">
+					<label className="col-lg-4 col-form-label">Capacity:</label>
+					<div className="col-lg-8">
+						<input className="form-control" type="number" value={this.state.roomFilters.capacity.min} onChange={this.handleCapacityMinChange} />
+					</div>
+				</div>
+				<div className="form-group row">
+					<label className="col-lg-4 col-form-label">Resources:</label>
+					<div className="col-lg-8">
+						{addButton}
+					</div>
+				</div>
+				{resourceComponents}
+			</div>
+		);
+
+		if (!this.state.open)
+			extraFilters = <span />;
 
 		return (
-			<div>
-				<br />
-				Room Filter:
-				<br />
-				<input type="text" value={this.state.roomFilters.searchText} onChange={this.handleSearchTextChange} />
-				<br />
-				<label>
-					Location:
-					<select value={0} onChange={this.handleLocationChange}>
-						{locationOptions}
-					</select>
-				</label>
-				<br />
-				<label>
-					Capacity:
-					<label>
-						Min:
-						<input type="number" value={this.state.roomFilters.capacity.min} onChange={this.handleCapacityMinChange} />
-					</label><label>
-						Max:
-						<input type="number" value={this.state.roomFilters.capacity.max} onChange={this.handleCapacityMaxChange} />
-					</label>
-				</label>
-				<br />
-				<label>
-					Resources:
-					{resourceComponents}
-					<br />
-					{addButton}
-				</label>
-				<br />
-				<br />
+			<div className="pb-1" ref={(roomFilter) => { this.roomFilter = roomFilter; }}>
+				<div className="form-group">
+					<div className="input-group">
+						<input
+							className="form-control border-right-0"
+							type="text"
+							placeholder="Search Rooms"
+							value={this.state.roomFilters.searchText}
+							onClick={() => { this.setState({ open: true }); }}
+							onChange={this.handleSearchTextChange}
+						/>
+						<div className="input-group-append" id="basic-addon2" >
+							<span className="input-group-text bg-white border-left-0"><i className="oi oi-magnifying-glass" /></span>
+						</div>
+					</div>
+				</div>
+				{extraFilters}
 			</div>
 		);
 	}
 
 	handleSearchTextChange = (event: any) => {
-		this.setState({ roomFilters: { ...this.state.roomFilters, searchText: event.target.value } });
-		// TODO: make sure the state being passed is the state after being changed
-		this.props.filterChangeHandler(this.state);
+		event.preventDefault();
+		this.setState({ roomFilters: { ...this.state.roomFilters, searchText: event.target.value } },
+			() => { this.props.filterChangeHandler(this.state); });
 	}
 
 	handleLocationChange = (event: any) => {
-		this.setState({ roomFilters: { ...this.state.roomFilters, location: event.target.value } });
-		this.props.filterChangeHandler(this.state);
+		event.preventDefault();
+		let location = event.target.value;
+		if (location === 'any')
+			location = null;
+		this.setState({ roomFilters: { ...this.state.roomFilters, location: location } },
+			() => { this.props.filterChangeHandler(this.state); });
 	}
 
 	handleCapacityMinChange = (event: any) => {
-		this.setState({ roomFilters: { ...this.state.roomFilters, capacity: { ...this.state.roomFilters.capacity, min: event.target.value } } });
-		this.props.filterChangeHandler(this.state);
-	}
+		event.preventDefault();
 
-	handleCapacityMaxChange = (event: any) => {
-		this.setState({ roomFilters: { ...this.state.roomFilters, capacity: { ...this.state.roomFilters.capacity, max: event.target.value } } });
-		this.props.filterChangeHandler(this.state);
+		this.setState({ roomFilters: { ...this.state.roomFilters, capacity: { ...this.state.roomFilters.capacity, min: event.target.value } } },
+			() => { this.props.filterChangeHandler(this.state); });
 	}
 
 	// Resources ///////////////////////////////////////////////////////////////////////////////////////////////
 
+	getResourceNames(): string[] {
+		let resourceNames: string[] = this.allResources.map(res => {
+			return res.name;
+		});
+		return resourceNames;
+	}
+
+	resourceIsEnumerable(name: string): boolean {
+		let enumerable = true;
+
+		this.allResources.forEach(resource => {
+			if (resource.name === name)
+				enumerable = resource.enumerable;
+		});
+
+		return enumerable;
+	}
+
 	handleResourceChange = (event: any, index: number) => {
-		console.log('resource change...');
-		// if (this.state.roomFilters.resources.length < 1)
-		// 	this.setState({ roomFilters: { ...this.state.roomFilters, resources: [{ name: event.target.value }] } });
-		// else {
-		// 	let newResourceState = this.state.roomFilters.resources.slice(0); // clones the resources array
-		// 	newResourceState[index].name = event.target.value;
-		// 	this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } });
-		// }
-		if (this.state.roomFilters.resources[index]) {
-			let newResourceState = this.state.roomFilters.resources.slice(0); // clones the resources array
-			newResourceState[index].name = event.target.value;
-			this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } });
-		} else {
-			let newResourceState = this.state.roomFilters.resources.slice(0); // clones the resources array
-			newResourceState.push({ name: event.target.value });
-			this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } });
-		}
+		event.preventDefault();
+		let newResourceState = this.state.roomFilters.resources.slice(0); // clones the resources array
+		newResourceState[index].name = event.target.value;
+		if (this.resourceIsEnumerable(newResourceState[index].name))
+			newResourceState[index].min = 1;
+		this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } },
+			() => { this.props.filterChangeHandler(this.state); });
 	}
 
 	handleAddResource = () => {
-		// if (this.state.roomFilters.resources.length !== this.allResources.length)
-		console.log('adding...');
+		let enumerable = this.resourceIsEnumerable(this.unselectedResources[0]);
+		let newResource: { name: string, min?: number } = { name: this.unselectedResources[0] };
+		if (enumerable)
+			newResource = { name: this.unselectedResources[0], min: 1 };
+
 		this.setState(state => ({
 			roomFilters: {
 				...this.state.roomFilters,
-				resources: state.roomFilters.resources.concat({ name: this.unselectedResources[0] })
+				resources: state.roomFilters.resources.concat(newResource)
 			}
-		}));
-		// this.setState(state => ({
-		// 	inputCount: state.inputCount + 1
-		// }));
+		}), () => { this.props.filterChangeHandler(this.state); });
 	}
 
 	handleDeleteResource = (index: number) => {
-		console.log('deleting...');
 		let newResourceState = this.state.roomFilters.resources.slice(0); // clones the resources array
-		console.log(JSON.stringify(newResourceState));
 		newResourceState.splice(index, 1);
-		console.log(JSON.stringify(newResourceState));
-		this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } });
+		this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } },
+			() => { this.props.filterChangeHandler(this.state); });
+
+		// HACK: disable adding resource
+		if (newResourceState.length < 1)
+			this.addResourceFunction = () => { return; };
 	}
 
+	handleResourceMinChange = (event: any, index: number) => {
+		event.preventDefault();
+
+		let resources = this.state.roomFilters.resources.slice(0);
+		resources[index].min = event.target.value;
+		this.setState({ roomFilters: { ...this.state.roomFilters, resources: resources } },
+			() => { this.props.filterChangeHandler(this.state); });
+	}
 }
 
 export default RoomFilter;
