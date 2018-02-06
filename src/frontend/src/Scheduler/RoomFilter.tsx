@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { RoomFilters } from './Scheduler';
 import { FilterResource } from './FilterResource';
+import './scheduler.css';
 const uuid = require('uuid/v4');
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 
 interface State {
 	roomFilters: RoomFilters;
+	open: boolean;
 }
 
 export class RoomFilter extends React.Component<Props, State> {
@@ -26,6 +28,7 @@ export class RoomFilter extends React.Component<Props, State> {
 	// HACK: godawful hack to prevent resource from being added when resources array is empty
 	// and React decided to click 'add resource' button automatically
 	private addResourceFunction: Function;
+	private roomFilter: any;
 
 	constructor(props: Props, state: State) {
 
@@ -36,15 +39,35 @@ export class RoomFilter extends React.Component<Props, State> {
 				searchText: '',
 				capacity: { min: 0 },
 				resources: []
-			}
+			},
+			open: false
 		};
 		// TODO: Get all possible locations and resources on initialize
 		this.addResourceFunction = this.handleAddResource;
 	}
 
+	componentWillMount() {
+		document.addEventListener('mousedown', this.handleClick, false);
+	}
+
+	componentWillUnMount() {
+		document.removeEventListener('mousedown', this.handleClick, false);
+	}
+
 	// HACK: enable adding resource
 	componentDidUpdate() {
 		setTimeout(() => { this.addResourceFunction = this.handleAddResource; }, 200);
+	}
+
+	handleClick = (e: any) => {
+		if (this.roomFilter && this.roomFilter.contains(e.target))
+			return;
+		else
+			this.closeComponent();
+	}
+
+	closeComponent = () => {
+		this.setState({ open: false });
 	}
 
 	render() {
@@ -91,35 +114,64 @@ export class RoomFilter extends React.Component<Props, State> {
 
 		let addButton: any = null;
 		if (this.state.roomFilters.resources.length < this.allResources.length)
-			addButton = <button className="btn btn-primary" onClick={() => { this.addResourceFunction(); }}>Add Resource</button>;
+			addButton = (
+				<a
+					href="#"
+					className="addButton btn btn-primary w-100"
+					onClick={() => { this.addResourceFunction(); }}
+				>
+					Add Resource &nbsp;&nbsp;
+					<span className="plusIcon oi oi-size-sm oi-plus" />
+				</a>
+			);
+
+		let extraFilters = (
+			<div>
+				<div className="form-group row">
+					<label className="col-lg-4 col-form-label">Location:</label>
+					<div className="col-lg-8">
+						<select className="form-control" value={this.state.roomFilters.location} onChange={this.handleLocationChange}>
+							{locationOptions}
+						</select>
+					</div>
+				</div>
+				<div className="form-group row">
+					<label className="col-lg-4 col-form-label">Capacity:</label>
+					<div className="col-lg-8">
+						<input className="form-control" type="number" value={this.state.roomFilters.capacity.min} onChange={this.handleCapacityMinChange} />
+					</div>
+				</div>
+				<div className="form-group row">
+					<label className="col-lg-4 col-form-label">Resources:</label>
+					<div className="col-lg-8">
+						{addButton}
+					</div>
+				</div>
+				{resourceComponents}
+			</div>
+		);
+
+		if (!this.state.open)
+			extraFilters = <span />;
 
 		return (
-			<div>
-				<br />
-				Room Filter:
-				<br />
-				<input type="text" value={this.state.roomFilters.searchText} onChange={this.handleSearchTextChange} />
-				<br />
-				<label>
-					Location:
-					<select value={this.state.roomFilters.location} onChange={this.handleLocationChange}>
-						{locationOptions}
-					</select>
-				</label>
-				<br />
-				<label>
-					Capacity:
-					<input type="number" value={this.state.roomFilters.capacity.min} onChange={this.handleCapacityMinChange} />
-				</label>
-				<br />
-				<label>
-					Resources:
-					{resourceComponents}
-					<br />
-					{addButton}
-				</label>
-				<br />
-				<br />
+			<div ref={(roomFilter) => { this.roomFilter = roomFilter; }}>
+				<div className="form-group">
+					<div className="input-group">
+						<input
+							className="form-control border-right-0"
+							type="text"
+							placeholder="Search Rooms"
+							value={this.state.roomFilters.searchText}
+							onClick={() => { this.setState({ open: true }); }}
+							onChange={this.handleSearchTextChange}
+						/>
+						<div className="input-group-append" id="basic-addon2" >
+							<span className="input-group-text bg-white border-left-0"><i className="oi oi-magnifying-glass" /></span>
+						</div>
+					</div>
+				</div>
+				{extraFilters}
 			</div>
 		);
 	}

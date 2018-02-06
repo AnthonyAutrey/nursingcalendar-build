@@ -1,5 +1,6 @@
 import * as React from 'react';
 const uuid = require('uuid/v4');
+const classNames = require('classnames');
 
 interface Props {
 	index: number;
@@ -30,23 +31,40 @@ export class FilterResource extends React.Component<Props, {}> {
 		});
 
 		let minInput = (
-			<label>
-				At Least:
-				<input type="number" value={this.props.min} onChange={(e) => this.props.handleMinChange(e, this.props.index)} />
-			</label>
+			<input
+				className="form-control"
+				type="number"
+				value={this.props.min}
+				placeholder="min"
+				onChange={(e) => this.props.handleMinChange(e, this.props.index)}
+			/>
 		);
 
-		if (!this.props.isEnumerable)
+		let selectClass = classNames('col-lg-7');
+		let minInputClass = classNames('col-lg-3 mx-0 px-0');
+		if (!this.props.isEnumerable) {
 			minInput = <span />;
+			selectClass = classNames('col-lg-10 mr-0 pr-0');
+			minInputClass = classNames('');
+		}
 
 		return (
-			<div>
-				<select value={this.props.selectedResource} onChange={(event) => this.props.handleResourceChange(event, this.props.index)}>
-					{resourceOptions}
-				</select>
-				{minInput}
-				<button className="btn btn-danger" onClick={() => this.props.handleDelete(this.props.index)}>X</button>
-				<br />
+			<div className="form-group row">
+				<div className={selectClass}>
+					<select
+						className="form-control mx-0 px-0"
+						value={this.props.selectedResource}
+						onChange={(event) => this.props.handleResourceChange(event, this.props.index)}
+					>
+						{resourceOptions}
+					</select>
+				</div>
+				<div className={minInputClass}>
+					{minInput}
+				</div>
+				<div className="col-lg-2">
+					<button className="btn btn-danger" onClick={() => this.props.handleDelete(this.props.index)}>X</button>
+				</div>
 			</div>
 		);
 	}

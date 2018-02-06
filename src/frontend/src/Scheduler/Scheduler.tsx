@@ -29,10 +29,18 @@ export class Scheduler extends React.Component<{}, State> {
 
 	render() {
 		return (
-			<div className="Scheduler">
+			<div>
 				<button className="btn btn-primary" onClick={() => this.persistEventsToDB()}>Persist To DB</button>
-				<RoomFilter filterChangeHandler={this.filterChangeHandler} />
-				<SchedulerCalendar room={'Room 1'} ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
+				<div className="Scheduler container-fluid">
+					<div className="row">
+						<div className="col-3">
+							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
+						</div>
+						<div className="col-9">
+							<SchedulerCalendar room={'Room 1'} ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
+						</div>
+					</div>
+				</div>
 			</div>
 		);
 	}
