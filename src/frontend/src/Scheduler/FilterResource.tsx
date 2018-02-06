@@ -40,19 +40,19 @@ export class FilterResource extends React.Component<Props, {}> {
 			/>
 		);
 
-		let selectClass = classNames('col-lg-7');
-		let minInputClass = classNames('col-lg-3 mx-0 px-0');
+		let selectClass = classNames('col-lg-6');
+		let minInputClass = classNames('col-lg-4 mx-0 pl-0');
 		if (!this.props.isEnumerable) {
 			minInput = <span />;
-			selectClass = classNames('col-lg-10 mr-0 pr-0');
-			minInputClass = classNames('');
+			selectClass = classNames('col-lg-10');
+			minInputClass = classNames('mx-0 px-0');
 		}
 
 		return (
 			<div className="form-group row">
 				<div className={selectClass}>
 					<select
-						className="form-control mx-0 px-0"
+						className="form-control"
 						value={this.props.selectedResource}
 						onChange={(event) => this.props.handleResourceChange(event, this.props.index)}
 					>
@@ -63,7 +63,7 @@ export class FilterResource extends React.Component<Props, {}> {
 					{minInput}
 				</div>
 				<div className="col-lg-2">
-					<button className="btn btn-danger" onClick={() => this.props.handleDelete(this.props.index)}>X</button>
+					<button className="btn btn-danger float-right" onClick={() => this.props.handleDelete(this.props.index)}>x</button>
 				</div>
 			</div>
 		);

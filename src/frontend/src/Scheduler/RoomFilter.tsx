@@ -105,7 +105,7 @@ export class RoomFilter extends React.Component<Props, State> {
 					handleDelete={this.handleDeleteResource}
 					handleMinChange={this.handleResourceMinChange}
 					handleResourceChange={this.handleResourceChange}
-					// min={resource.min}
+					min={resource.min}
 					isEnumerable={this.resourceIsEnumerable(resource.name)}
 				/>
 			);
@@ -155,7 +155,7 @@ export class RoomFilter extends React.Component<Props, State> {
 			extraFilters = <span />;
 
 		return (
-			<div ref={(roomFilter) => { this.roomFilter = roomFilter; }}>
+			<div className="pb-1" ref={(roomFilter) => { this.roomFilter = roomFilter; }}>
 				<div className="form-group">
 					<div className="input-group">
 						<input
@@ -222,6 +222,8 @@ export class RoomFilter extends React.Component<Props, State> {
 		event.preventDefault();
 		let newResourceState = this.state.roomFilters.resources.slice(0); // clones the resources array
 		newResourceState[index].name = event.target.value;
+		if (this.resourceIsEnumerable(newResourceState[index].name))
+			newResourceState[index].min = 1;
 		this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } },
 			() => { this.props.filterChangeHandler(this.state); });
 	}
@@ -230,7 +232,7 @@ export class RoomFilter extends React.Component<Props, State> {
 		let enumerable = this.resourceIsEnumerable(this.unselectedResources[0]);
 		let newResource: { name: string, min?: number } = { name: this.unselectedResources[0] };
 		if (enumerable)
-			newResource = { name: this.unselectedResources[0], min: 0 };
+			newResource = { name: this.unselectedResources[0], min: 1 };
 
 		this.setState(state => ({
 			roomFilters: {
