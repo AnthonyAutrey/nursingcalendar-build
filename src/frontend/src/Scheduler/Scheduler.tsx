@@ -16,8 +16,8 @@ interface Room {
 export interface RoomFilters {
 	searchText: string;
 	location?: string;
-	capacity: { min?: number, max?: number };
-	resources: { name: string, min?: number, max?: number }[];
+	capacity: { min: number };
+	resources: { name: string, min?: number }[];
 }
 
 export class Scheduler extends React.Component<{}, State> {
@@ -41,7 +41,8 @@ export class Scheduler extends React.Component<{}, State> {
 		// TODO: update list of rooms based on changes to filters
 		// TODO: maybe throttle this
 
-		console.log('API call to get rooms based on filter change!');
+		console.log('API call!');
+		console.log(JSON.stringify(filters));
 	}
 
 	// Events //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

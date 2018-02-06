@@ -7,41 +7,44 @@ interface Props {
 	selectedResource: string;
 	handleResourceChange: Function;
 	handleMinChange: Function;
-	handleMaxChange: Function;
 	handleDelete: Function;
+	isEnumerable: boolean;
+	min?: number;
 }
 
-interface State {
-	min: number;
-	max: number;
-}
+// interface State {
+// 	min: number;
+// 	max: number;
+// }
 
-export class FilterResource extends React.Component<Props, State> {
-	constructor(props: Props, state: State) {
+export class FilterResource extends React.Component<Props, {}> {
+	constructor(props: Props, state: {}) {
 		super(props, state);
 
 		this.state = { min: 0, max: 1000 };
 	}
 
 	render() {
-		let resourceOptions = this.props.resources.map(resource => {
+		const resourceOptions = this.props.resources.map(resource => {
 			return (<option key={uuid()} value={resource}>{resource}</option>);
 		});
 
+		let minInput = (
+			<label>
+				At Least:
+				<input type="number" value={this.props.min} onChange={(e) => this.props.handleMinChange(e, this.props.index)} />
+			</label>
+		);
+
+		if (!this.props.isEnumerable)
+			minInput = <span />;
+
 		return (
 			<div>
-				{/* TODO: Send the event along with this */}
 				<select value={this.props.selectedResource} onChange={(event) => this.props.handleResourceChange(event, this.props.index)}>
 					{resourceOptions}
 				</select>
-				<label>
-					Min:
-					<input type="number" value={this.state.min} onChange={this.props.handleMinChange(this.props.index)} />
-				</label>
-				<label>
-					Max:
-					<input type="number" value={this.state.max} onChange={this.props.handleMaxChange(this.props.index)} />
-				</label>
+				{minInput}
 				<button className="btn btn-danger" onClick={() => this.props.handleDelete(this.props.index)}>X</button>
 				<br />
 			</div>
