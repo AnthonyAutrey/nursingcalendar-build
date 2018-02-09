@@ -179,7 +179,7 @@ export class RoomFilter extends React.Component<Props, State> {
 	handleSearchTextChange = (event: any) => {
 		event.preventDefault();
 		this.setState({ roomFilters: { ...this.state.roomFilters, searchText: event.target.value } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	handleLocationChange = (event: any) => {
@@ -188,14 +188,14 @@ export class RoomFilter extends React.Component<Props, State> {
 		if (location === 'any')
 			location = null;
 		this.setState({ roomFilters: { ...this.state.roomFilters, location: location } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	handleCapacityMinChange = (event: any) => {
 		event.preventDefault();
 
 		this.setState({ roomFilters: { ...this.state.roomFilters, capacity: { ...this.state.roomFilters.capacity, min: event.target.value } } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	// Resources ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,7 +225,7 @@ export class RoomFilter extends React.Component<Props, State> {
 		if (this.resourceIsEnumerable(newResourceState[index].name))
 			newResourceState[index].min = 1;
 		this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	handleAddResource = () => {
@@ -239,14 +239,14 @@ export class RoomFilter extends React.Component<Props, State> {
 				...this.state.roomFilters,
 				resources: state.roomFilters.resources.concat(newResource)
 			}
-		}), () => { this.props.filterChangeHandler(this.state); });
+		}), () => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	handleDeleteResource = (index: number) => {
 		let newResourceState = this.state.roomFilters.resources.slice(0); // clones the resources array
 		newResourceState.splice(index, 1);
 		this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 
 		// HACK: disable adding resource
 		if (newResourceState.length < 1)
@@ -259,7 +259,7 @@ export class RoomFilter extends React.Component<Props, State> {
 		let resources = this.state.roomFilters.resources.slice(0);
 		resources[index].min = event.target.value;
 		this.setState({ roomFilters: { ...this.state.roomFilters, resources: resources } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 }
 

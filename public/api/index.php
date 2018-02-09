@@ -75,6 +75,18 @@ $app->delete('/events', function (Request $request, Response $response, array $a
 	return $response;	
 });
 
+// Room Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/rooms', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('rooms natural left outer join roomResourceRelation', $queryData['fields'], $queryData['where']);
+	$rooms = DBUtil::runQuery($queryString);
+	$response->getBody()->write($rooms);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
 // Query Data Extraction ///////////////////////////////////////////////////////////////////////////////////////////////////
 function getSelectQueryData(Request $request) : array {
 	$queryData = null;

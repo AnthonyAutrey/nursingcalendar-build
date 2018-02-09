@@ -29,7 +29,7 @@ CREATE TABLE Rooms
 CREATE TABLE Resources
 (
 	ResourceName VARCHAR(20) NOT NULL,
-	IsNotEnumerable Boolean NOT NULL DEFAULT 0,
+	IsEnumerable Boolean NOT NULL DEFAULT 1,
 	PRIMARY KEY (ResourceName)
 );
 
@@ -101,10 +101,12 @@ CREATE TABLE OverrideRequests
 
 CREATE TABLE RoomResourceRelation
 (
-	Count SmallInt, -- if NULL, this resource isn't countable (example: AV capability)
+	LocationName VARCHAR(20) NOT NULL,
 	RoomName VARCHAR(20) NOT NULL,
 	ResourceName VARCHAR(20) NOT NULL,
-	PRIMARY KEY (RoomName, ResourceName),
+	Count SmallInt, -- if NULL, this resource isn't countable (example: AV capability)
+	PRIMARY KEY (LocationName, RoomName, ResourceName),
+	FOREIGN KEY (LocationName) REFERENCES Locations(LocationName),
 	FOREIGN KEY (RoomName) REFERENCES Rooms(RoomName),
 	FOREIGN KEY (ResourceName) REFERENCES Resources(ResourceName)
 );
@@ -132,7 +134,34 @@ CREATE TABLE UserGroupRelation
 ----------------------------------------------*/
 
 INSERT INTO Locations (LocationName)
-VALUES ('Location 1');
+VALUES
+	('Nursing Building'),
+	('St. Francis'),
+	('Glenwood');
 
 INSERT INTO Rooms (RoomName, Capacity, LocationName)
-VALUES ('Room 1', 50, 'Location 1');
+VALUES
+	('Room 1', 10, 'Nursing Building'),
+	('Room 2', 20, 'Nursing Building'),
+	('Room 3', 30, 'Nursing Building'),
+	('First Floor', null, 'St. Francis'),
+	('Second Floor', null, 'St. Francis'),
+	('First Floor', null, 'Glenwood'),
+	('Second Floor', null, 'Glenwood');
+
+INSERT INTO Resources (ResourceName, IsEnumerable)
+VALUES
+	('Clinicals', false),
+	('Beds', true),
+	('Audio/Video', false);
+
+INSERT INTO RoomResourceRelation (LocationName, RoomName, ResourceName, Count)
+	VALUES
+		('Nursing Building', 'Room 1', 'Beds', 10),
+		('Nursing Building', 'Room 1', 'Audio/Video', null),
+		('Nursing Building', 'Room 2', 'Audio/Video', null),
+		('Nursing Building', 'Room 3', 'Audio/Video', null),
+		('St. Francis', 'First Floor', 'Clinicals', null),
+		('St. Francis', 'Second Floor', 'Clinicals', null),
+		('Glenwood', 'First Floor', 'Clinicals', null),
+		('Glenwood', 'Second Floor', 'Clinicals', null);
