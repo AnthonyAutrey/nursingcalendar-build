@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 
 import { Duration, Moment } from 'moment';
 const FullCalendarReact = require('fullcalendar-reactwrapper');
-const fullcalendarCSS = require('../../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
+// const fullcalendarCSS = require('../../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
 const request = require('superagent');
 
 interface Props {
@@ -83,6 +83,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					// eventLimit={true} // allow "more" link when too many events
 					// eventLimitClick={'day'}
 					events={this.getStateEventsAsArray()}
+					eventTextColor="white"
 					eventDrop={(event: Event, delta: Duration) => this.editEvent(event, delta)}
 					eventResize={(event: Event, delta: Duration) => this.editEvent(event, delta)}
 					// eventAfterRender={(event: any, element: any) => {
@@ -162,7 +163,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let events: Event[] = [];
 		for (const key in this.state.events) {
 			if (this.state.events.hasOwnProperty(key)) {
-				const event = this.state.events[key];
+				let event = this.state.events[key];
 				events.push(event);
 			}
 		}

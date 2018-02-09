@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { SchedulerCalendar } from './SchedulerCalendar';
 import { RoomFilter } from './RoomFilter';
+const request = require('superagent');
 
 interface State {
 	rooms: Room[];
@@ -50,7 +51,11 @@ export class Scheduler extends React.Component<{}, State> {
 		// TODO: maybe throttle this
 
 		console.log('API call!');
-		console.log(JSON.stringify(filters));
+		// console.log(JSON.stringify(filters));
+
+		request.get('https://jsonplaceholder.typicode.com/posts/1').end((error: {}, res: any) => {
+			console.log(JSON.stringify(res.body));
+		});
 	}
 
 	// Events //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
