@@ -101,7 +101,7 @@ export class Scheduler extends React.Component<{}, State> {
 				filteredRooms.push(room);
 		});
 
-		console.log(JSON.stringify(filteredRooms));
+		console.log(JSON.stringify(filteredRooms.length));
 	}
 
 	roomMatchesEveryResource(room: Room, filterResources: { name: string, min?: number }[]): boolean {

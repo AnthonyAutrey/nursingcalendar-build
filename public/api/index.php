@@ -87,6 +87,30 @@ $app->get('/rooms', function (Request $request, Response $response, array $args)
 	return $response;	
 });
 
+// Location Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/locations', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('locations', $queryData['fields'], $queryData['where']);
+	$locations = DBUtil::runQuery($queryString);
+	$response->getBody()->write($locations);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+// Resource Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/resources', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('resources', $queryData['fields'], $queryData['where']);
+	$resources = DBUtil::runQuery($queryString);
+	$response->getBody()->write($resources);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
 // Query Data Extraction ///////////////////////////////////////////////////////////////////////////////////////////////////
 function getSelectQueryData(Request $request) : array {
 	$queryData = null;

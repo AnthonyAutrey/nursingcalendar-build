@@ -3,6 +3,7 @@ import { RoomFilters } from './Scheduler';
 import { FilterResource } from './FilterResource';
 import './scheduler.css';
 const uuid = require('uuid/v4');
+const request = require('superagent');
 
 interface Props {
 	filterChangeHandler: Function;
@@ -43,6 +44,8 @@ export class RoomFilter extends React.Component<Props, State> {
 			open: false
 		};
 		// TODO: Get all possible locations and resources on initialize
+		this.initializeOptions();
+
 		this.addResourceFunction = this.handleAddResource;
 	}
 
@@ -174,6 +177,39 @@ export class RoomFilter extends React.Component<Props, State> {
 				{extraFilters}
 			</div>
 		);
+	}
+
+	initializeOptions = () => {
+		let getDataPromises: Promise<any>[] = [];
+
+		getDataPromises.push(new Promise((resolve: Function, reject: Function) => {
+			request.get('/api/locations').end((error: {}, res: any) => {
+				if (res && res.body)
+					resolve(res.body);
+				else
+					reject();
+			});
+		}));
+
+		getDataPromises.push(new Promise((resolve: Function, reject: Function) => {
+			request.get('/api/resources').end((error: {}, res: any) => {
+				if (res && res.body)
+					resolve(res.body);
+				else
+					reject();
+			});
+		}));
+
+		Promise.all(getDataPromises).then((data: any[][]) => {
+			this.allLocations = data[0].map(loc => { return loc.LocationName; });
+			this.allResources = data[1].map(resource => {
+				let isEnumberable: boolean = (Boolean)(+resource.IsEnumerable);
+				return {
+					name: resource.ResourceName,
+					enumerable: isEnumberable
+				};
+			});
+		});
 	}
 
 	handleSearchTextChange = (event: any) => {
