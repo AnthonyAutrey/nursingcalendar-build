@@ -1,5 +1,7 @@
 import * as React from 'react';
+import { CSSProperties } from 'react';
 import * as ReactDOM from 'react-dom';
+import { CreateEventModal } from './CreateEventModal';
 
 import { Duration, Moment } from 'moment';
 const FullCalendarReact = require('fullcalendar-reactwrapper');
@@ -7,16 +9,19 @@ const FullCalendarReact = require('fullcalendar-reactwrapper');
 const request = require('superagent');
 
 interface Props {
+	location: string;
 	room: string;
 }
 
 interface State {
 	events: { number: Event } | {};
+	showCreateModal: boolean;
 }
 
 interface Event {
-	id: number;
+	id: string;
 	title: string;
+	description: string;
 	start: string;
 	end?: string;
 }
@@ -31,7 +36,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	constructor(props: Props, state: State) {
 		super(props, state);
 
-		this.state = { events: {} };
+		this.state = { events: {}, showCreateModal: false };
 	}
 
 	componentWillMount() {
@@ -53,6 +58,11 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	render() {
 		return (
 			<div className="SchedulerCalendar">
+				<CreateEventModal
+					show={this.state.showCreateModal}
+					creationHandler={this.handleEventCreation}
+					closeHandler={this.closeEventCreationModal}
+				/>
 				<FullCalendarReact
 					id="calendar"
 					header={{
@@ -101,38 +111,52 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					selectHelper={true}
 					viewRender={(view: any) => this.cacheViewAndDate(view)}
 					firstDay={1}
-					select={(start: any, end: any, jsEvent: any, view: any) => {
-						let promptResult: string | null = prompt('Enter Title');
-						let title: string = '';
-						if (promptResult !== null)
-							title = promptResult;
-						else {
-							this.forceUpdate();
-							return;
-						}
-
-						let index: number = Object.keys(this.state.events).length;
-						let events = this.cloneStateEvents();
-
-						events[index] = { id: index, title: title, start: start, end: end };
-						this.setState({ events: events });
-					}}
+					select={this.createNewEvent}
 				/>
 			</div>
 		);
+	}
+
+	// Event Creation //////////////////////////////////////////////////////////////////////////////////
+	createNewEvent = (start: any, end: any, jsEvent: any, view: any) => {
+		// create a placeholder event for when modal is displayed
+		// closing modal will remove this placeholder
+		let events = this.cloneStateEvents();
+		events.unshift({ id: 'modal placeholder', title: '', description: '', start: start, end: end });
+		console.log(events);
+		this.setState({ events: events, showCreateModal: true });
+	}
+
+	handleEventCreation = (title: string, description: string) => {
+		let events = this.cloneStateEvents();
+		events.push({ id: '' + (events.length - 1), title: title, description: description, start: events[0].start, end: events[0].end });
+		this.setState({ events: events }, () => this.closeEventCreationModal());
+	}
+
+	closeEventCreationModal = () => {
+		this.setState({ showCreateModal: false });
+		let events = this.cloneStateEvents();
+		console.log(events);
+		if (events[0].id === 'modal placeholder') {
+			events.splice(0, 1);
+			this.setState({ events: events });
+		}
 	}
 
 	// Client Events
 	getStateFromDB(): void {
 		let queryData: {} = {
 			where: {
-				RoomName: ['"' + this.props.room + '"']
+				RoomName: ['"' + this.props.room + '"'],
+				LocationName: ['"' + this.props.location + '"']
 			}
 		};
 		let queryDataString = JSON.stringify(queryData);
-		request.get('/api/events').set('queryData', queryData).end((error: {}, res: any) => {
-			if (res && res.body)
+		request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (res && res.body) {
 				this.setState({ events: this.parseDBEventsAsMap(res.body) });
+				console.log(res.body);
+			}
 		});
 	}
 
@@ -152,7 +176,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		newEvent.title = event.title;
 		newEvent.start = event.start;
 		newEvent.end = event.end;
-		let index: number = event.id;
+		let index: number | string = event.id;
 		let events = this.state.events;
 		events[index] = newEvent;
 
@@ -178,6 +202,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			let parsedEvent: Event = {
 				id: event.EventID,
 				title: event.Title,
+				description: event.Description,
 				start: event.StartTime,
 				end: event.EndTime,
 			};
@@ -209,10 +234,11 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				let queryData = {
 					setValues: {
 						'title': event.title,
+						'description': event.description,
 						'starttime': event.start,
 						'endtime': event.end
 					},
-					where: { EventID: [event.id] }
+					where: { EventID: [event.id], RoomName: ['"' + this.props.room + '"'], LocationName: ['"' + this.props.location + '"'] }
 				};
 				let queryDataString = JSON.stringify(queryData);
 				request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
@@ -240,9 +266,10 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			let queryData = {
 				insertValues: {
 					'eventID': event.id,
-					'roomName': 'Room 1',
+					'locationName': this.props.location,
+					'roomName': this.props.room,
 					'title': event.title,
-					'description': '', // TODO: request this from user
+					'description': event.description,
 					'starttime': event.start,
 					'endtime': event.end
 				}
@@ -273,17 +300,21 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	getStateEventsThatAreAlreadyInDB(): Promise<number[]> {
 		return new Promise((resolve, reject) => {
 			let ids: number[] = [];
-			for (const key in this.state.events) {
-				if (this.state.events.hasOwnProperty(key)) {
+			for (const key in this.state.events)
+				if (this.state.events.hasOwnProperty(key))
 					ids.push(parseInt(key, 10));
-				}
-			}
 
 			console.log('state: ');
 			console.log(this.state.events);
 			console.log('supposed to be all keys:');
 			console.log(ids);
-			let queryData = { fields: ['EventID'], where: { EventID: ids } };
+			let queryData = {
+				fields: ['EventID'], where: {
+					EventID: ids,
+					LocationName: ['"' + this.props.location + '"'],
+					RoomName: ['"' + this.props.room + '"']
+				}
+			};
 			let queryDataString = JSON.stringify(queryData);
 			let stateEventsThatAreAlreadyInDB: number[] = [];
 			request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {

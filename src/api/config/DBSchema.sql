@@ -36,13 +36,15 @@ CREATE TABLE Resources
 CREATE TABLE Events
 (
 	EventID INT NOT NULL,
+	LocationName VARCHAR(20) NOT NULL,
 	RoomName VARCHAR(20) NOT NULL,
 	Title VARCHAR(20) NOT NULL,
 	Description VARCHAR(300) NOT NULL,
 	StartTime DateTime NOT NULL,
 	EndTime DateTime NOT NULL,
-	PRIMARY KEY (EventID, RoomName),
-	FOREIGN KEY (RoomName) REFERENCES Rooms(RoomName)	
+	PRIMARY KEY (EventID),
+	FOREIGN KEY (RoomName) REFERENCES Rooms(RoomName),
+	FOREIGN KEY (LocationName) REFERENCES Locations(LocationName)	
 );
 
 CREATE TABLE Groups

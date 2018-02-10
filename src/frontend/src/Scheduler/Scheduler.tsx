@@ -45,7 +45,7 @@ export class Scheduler extends React.Component<{}, State> {
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
 						</div>
 						<div className="col-9">
-							<SchedulerCalendar room={'Room 1'} ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
+							<SchedulerCalendar room={'Room 1'} location="Nursing Building" ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
 						</div>
 					</div>
 				</div>
@@ -101,7 +101,9 @@ export class Scheduler extends React.Component<{}, State> {
 				filteredRooms.push(room);
 		});
 
-		console.log(JSON.stringify(filteredRooms.length));
+		console.log(JSON.stringify(filteredRooms.map(room => {
+			return room.roomName;
+		})));
 	}
 
 	roomMatchesEveryResource(room: Room, filterResources: { name: string, min?: number }[]): boolean {

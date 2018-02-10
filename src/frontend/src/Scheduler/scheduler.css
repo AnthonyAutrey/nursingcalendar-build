@@ -7,3 +7,17 @@
 	font-size: .7em;
 	font-weight: 'lightest';
 }
+
+.modal-header .form-control {
+	font-size: 1.2em;
+	color: black;
+	border: 0;
+}
+
+.modal-header .form-control:focus {
+	box-shadow: none;
+}
+
+/* textarea:focus, input:focus{
+    outline: none;
+} */
