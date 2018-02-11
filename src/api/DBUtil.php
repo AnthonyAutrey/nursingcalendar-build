@@ -10,7 +10,7 @@ class DBUtil {
 			$db = new DBConfig();
 			$db = $db->connect();
 
-			$statement = $db->query($query);
+			$statement = $db->prepare($query);
 			$statement->execute();
 			$results = $statement->rowCount();
 			$db = null;
@@ -28,7 +28,8 @@ class DBUtil {
 			$db = new DBConfig();
 			$db = $db->connect();
 
-			$statement = $db->query($query);
+			$statement = $db->prepare($query);
+			$statement->execute();
 			$results = $statement->fetchAll(PDO::FETCH_OBJ);
 			$db = null;
 			return json_encode($results);
@@ -61,6 +62,12 @@ class DBUtil {
 		return "insert into $table $columns values $values";
 	}
 
+	public static function buildDeleteQuery($table, $where): String {
+		$filterString = DBUtil::getFilterString($where);
+		
+		return "delete from $table $filterString";
+	}
+
 	// String Building For Queries ///////////////////////////////////////////////////////////////////////////////////////////
 	private static function getInsertStrings($insertValues): array {
 		$insertColumnsString = '(';
@@ -68,7 +75,10 @@ class DBUtil {
 
 		foreach ($insertValues as $column => $value) {
 			$insertColumnsString .= "$column, ";
-			$insertValuesString .= "'$value', ";
+			if (is_string($value))
+				$insertValuesString .= "'$value', ";
+			else
+				$insertValuesString .= "$value, ";
 		}
 		$insertColumnsString = substr($insertColumnsString, 0, -2) . ")" ;
 		$insertValuesString = substr($insertValuesString, 0, -2) . ")" ;
@@ -93,14 +103,17 @@ class DBUtil {
 		$fieldString = '';
 
 		if (isset($fields)) {
-			foreach ($fields as $field) {
-				$fieldString .= "$field, ";
-			}
-			$fieldString = substr($fieldString, 0, -2);
-			$fieldString = str_replace(";","", $fieldString);
-
-			if (count($fields) < 1)
+			if (is_string($fields))
+				$fieldString = $fields;
+			else if (count($fields) < 1)
 				$fieldString = '*';
+			else {
+				foreach ($fields as $field) {
+					$fieldString .= "$field, ";
+				}
+				$fieldString = substr($fieldString, 0, -2);
+				$fieldString = str_replace(";","", $fieldString);
+			}
 		}
 		else
 			$fieldString = '*';
@@ -120,12 +133,24 @@ class DBUtil {
 			foreach ($filters as $field => $values) {
 				$filterString.= "$field in ";
 
-				if (count($values) > 0) {
-					$valueString = '(';				
-					foreach ($values as $value) {
-						$valueString.= "$value,";
-					}
-					$valueString = substr($valueString, 0, -1);	
+				if (is_string($values)) {
+					$valueString = "('".$values."')";
+				}
+				else if (count($values) > 0) {
+					$valueString = '(';
+					if (is_string($values))
+						$valueString.="'$values'";
+					else if (is_numeric($values))
+						$valueString.=$values;
+					else {
+						foreach ($values as $value) {
+							if (is_string($value))
+								$valueString.= "'$value',";						
+							else
+								$valueString.= "$value,";
+						}
+						$valueString = substr($valueString, 0, -1);
+					}		
 					$valueString.= ')';
 				}
 				else {

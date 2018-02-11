@@ -33,6 +33,15 @@ CREATE TABLE Resources
 	PRIMARY KEY (ResourceName)
 );
 
+CREATE TABLE Users
+(
+	CWID INT NOT NULL,
+	FirstName VARCHAR(30) NOT NULL,
+	LastName VARCHAR(30) NOT NULL,
+	UserRole ENUM('student', 'instructor', 'administrator') NOT NULL,
+	PRIMARY KEY (CWID)
+);
+
 CREATE TABLE Events
 (
 	EventID INT NOT NULL,
@@ -42,9 +51,11 @@ CREATE TABLE Events
 	Description VARCHAR(300) NOT NULL,
 	StartTime DateTime NOT NULL,
 	EndTime DateTime NOT NULL,
-	PRIMARY KEY (EventID),
+	CWID INT NOT NULL,
+	PRIMARY KEY (EventID, LocationName, RoomName),
 	FOREIGN KEY (RoomName) REFERENCES Rooms(RoomName),
-	FOREIGN KEY (LocationName) REFERENCES Locations(LocationName)	
+	FOREIGN KEY (LocationName) REFERENCES Locations(LocationName),
+	FOREIGN KEY (CWID) REFERENCES Users(CWID)
 );
 
 CREATE TABLE Groups
@@ -54,18 +65,9 @@ CREATE TABLE Groups
 	PRIMARY KEY (GroupName)
 );
 
-CREATE TABLE Users
-(
-	CWID SmallInt NOT NULL,
-	FirstName VARCHAR(30) NOT NULL,
-	LastName VARCHAR(30) NOT NULL,
-	UserRole ENUM('student', 'instructor', 'administrator') NOT NULL,
-	PRIMARY KEY (CWID)
-);
-
 CREATE TABLE Preferences
 (
-	CWID SmallInt NOT NULL,
+	CWID INT NOT NULL,
 	PRIMARY KEY (CWID),
 	FOREIGN KEY (CWID) REFERENCES Users(CWID)
 );
@@ -77,8 +79,8 @@ CREATE TABLE Notifications
 	Message VARCHAR(300) NOT NULL,
 	SendTime DateTime NOT NULL,
 	HasBeenSeen Boolean NOT NULL,
-	FromCWID SmallInt,	-- if NULL, notification is from sender
-	ToCWID SmallInt NOT NULL,
+	FromCWID INT,	-- if NULL, notification is from sender
+	ToCWID INT NOT NULL,
 	PRIMARY KEY (ID),
 	FOREIGN KEY (FromCWID) REFERENCES Users(CWID),
 	FOREIGN KEY (ToCWID) REFERENCES Users(CWID)
@@ -93,8 +95,8 @@ CREATE TABLE OverrideRequests
 	Time DateTime NOT NULL,
 	Accepted Boolean NOT NULL,
 	EventID INT NOT NULL,
-	RequestorCWID SmallInt NOT NULL,
-	ResolvingAdminCWID SmallInt, -- if NULL, Admin has not yet resolved this
+	RequestorCWID INT NOT NULL,
+	ResolvingAdminCWID INT, -- if NULL, Admin has not yet resolved this
 	PRIMARY KEY (ID),
 	FOREIGN KEY (EventID) REFERENCES Events(EventID),
 	FOREIGN KEY (RequestorCWID) REFERENCES Users(CWID),
@@ -124,7 +126,7 @@ CREATE TABLE EventGroupRelation
 
 CREATE TABLE UserGroupRelation
 (
-	CWID SmallInt NOT NULL,
+	CWID INT NOT NULL,
 	GroupName VARCHAR(20) NOT NULL,
 	PRIMARY KEY (CWID, GroupName),
 	FOREIGN KEY (CWID) REFERENCES Users(CWID),
@@ -134,6 +136,11 @@ CREATE TABLE UserGroupRelation
 /*----------------------------------------------
 --- Insert initial values into the database ----
 ----------------------------------------------*/
+
+INSERT INTO Users (CWID, FirstName, LastName, UserRole)
+VALUES
+	(17700946, 'Nursey', 'McNurseFace', 'administrator'),
+	(99999999, 'Applesauce', 'Blueberry', 'administrator');
 
 INSERT INTO Locations (LocationName)
 VALUES

@@ -68,9 +68,10 @@ $app->put('/events', function (Request $request, Response $response, array $args
 
 // Delete //
 $app->delete('/events', function (Request $request, Response $response, array $args) {
-	// TODO: create delete query builder
-	$msg = json_encode(['delete called']);
-	$response->getBody()->write($msg);
+	$queryData = getDeleteQueryData($request);
+	$queryString = DBUtil::buildDeleteQuery('events', $queryData['where']);
+	$results = DBUtil::runCommand($queryString);
+	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
 });
@@ -124,7 +125,7 @@ function getSelectQueryData(Request $request) : array {
 	if (isset($queryData->where))
 		$where = $queryData->where;
 	
-	return ['fields'=>$fields, 'where'=>$where];
+	return sanitize(['fields'=>$fields, 'where'=>$where]);
 }
 
 function getInsertQueryData(Request $request) : array {
@@ -135,7 +136,7 @@ function getInsertQueryData(Request $request) : array {
 	if (isset($queryData->insertValues))
 		$insertValues = $queryData->insertValues;
 
-	return ['insertValues'=>$insertValues];
+	return sanitize(['insertValues'=>$insertValues]);
 }
 
 function getUpdateQueryData(Request $request) : array {
@@ -150,7 +151,33 @@ function getUpdateQueryData(Request $request) : array {
 	if (isset($queryData->where))
 		$where = $queryData->where;
 
-	return ['setValues'=>$setValues, 'where'=>$where];
+	return sanitize(['setValues'=>$setValues, 'where'=>$where]);
+}
+
+function getDeleteQueryData(Request $request) : array {
+	$queryData = null;
+	$where = null;
+
+	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+		$queryData = json_decode($request->getHeader('queryData')[0]);
+	if (isset($queryData->where))
+		$where = $queryData->where;
+
+	return sanitize(['where'=>$where]);
+}
+
+function sanitize($o) {
+	$o = json_encode($o, true);
+	$o = json_decode($o, true);
+
+	if (is_string($o)) {
+		$o = addslashes($o);
+	}
+	else if ($o != null && !is_numeric($o))
+		foreach ($o as $key => $value) 
+			$o[$key] = sanitize($value);
+
+	return $o;
 }
 
 // Error Handling /////////////////////////////////////////////////////////////////////////////////////////////////////

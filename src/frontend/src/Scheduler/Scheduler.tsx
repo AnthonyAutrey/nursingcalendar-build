@@ -45,7 +45,13 @@ export class Scheduler extends React.Component<{}, State> {
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
 						</div>
 						<div className="col-9">
-							<SchedulerCalendar room={'Room 1'} location="Nursing Building" ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
+							<SchedulerCalendar
+								room={'Room 1'}
+								location="Nursing Building"
+								// cwid={99999999}
+								cwid={17700946}
+								ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }}
+							/>
 						</div>
 					</div>
 				</div>

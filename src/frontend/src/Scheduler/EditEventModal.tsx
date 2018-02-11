@@ -2,30 +2,31 @@ import * as React from 'react';
 import { CSSProperties } from 'react';
 
 interface Props {
-	show: boolean;
-	closeHandler: Function;
-	creationHandler: Function;
+	saveHandler: Function;
+	deleteHandler: Function;
 }
 
 interface State {
+	show: boolean;
+	eventID?: number;
 	title: string;
 	description: string;
 }
 
-export class CreateEventModal extends React.Component<Props, State> {
-	private defaultTitle: string = 'New Event';
+export class EditEventModal extends React.Component<Props, State> {
 	public titleInput: any = null;
 
 	constructor(props: Props, state: State) {
 		super(props, state);
 		this.state = {
+			show: false,
 			title: '',
 			description: ''
 		};
 	}
 
 	render() {
-		if (!this.props.show)
+		if (!this.state.show)
 			return null;
 
 		let backdropStyle: CSSProperties = {
@@ -72,7 +73,12 @@ export class CreateEventModal extends React.Component<Props, State> {
 							</div>
 						</div>
 						<div className="modal-footer">
-							<button tabIndex={3} type="button" className="btn btn-primary" onClick={this.save}>Create Event</button>
+							<button tabIndex={3} type="button" className="btn btn-danger mr-auto" onClick={this.delete}>
+								<span className=" oi oi-trash" />
+								<span>&nbsp;&nbsp;</span>
+								Delete
+							</button>
+							<button tabIndex={3} type="button" className="btn btn-primary" onClick={this.save}>Save Changes</button>
 						</div>
 					</div>
 				</div>
@@ -80,36 +86,42 @@ export class CreateEventModal extends React.Component<Props, State> {
 		);
 	}
 
-	handleTitleChange = (event: any) => {
+	public beginEdit = (eventID: number, title: string, description: string) => {
+		this.setState({ title: title, description: description, eventID: eventID, show: true });
+	}
+
+	private handleTitleChange = (event: any) => {
 		this.setState({ title: event.target.value });
 	}
 
-	handleDescriptionChange = (event: any) => {
+	private handleDescriptionChange = (event: any) => {
 		if (event.target.value.length <= 300)
 			this.setState({ description: event.target.value });
 	}
 
-	handleKeyPress = (event: any) => {
+	private handleKeyPress = (event: any) => {
 		if (event.key === 'Enter')
 			this.save();
 	}
 
-	close = () => {
-		this.resetFields();
-		this.props.closeHandler();
+	private close = () => {
+		this.resetState();
 	}
 
-	save = () => {
+	private save = () => {
 		let title = this.state.title;
-		if (title === '')
-			title = this.defaultTitle;
-		this.props.creationHandler(title, this.state.description);
-		this.resetFields();
+		this.props.saveHandler(this.state.eventID, title, this.state.description);
+		this.resetState();
 	}
 
-	resetFields = () => {
-		this.setState({ title: '', description: '' });
+	private delete = () => {
+		this.resetState();
+		this.props.deleteHandler(this.state.eventID);
+	}
+
+	private resetState = () => {
+		this.setState({ eventID: undefined, title: '', description: '', show: false });
 	}
 }
 
-export default CreateEventModal;
+export default EditEventModal;
