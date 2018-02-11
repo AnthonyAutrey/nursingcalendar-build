@@ -342,6 +342,7 @@ temporary rendered events).
   border: 1px solid #007bff;
   /* padding: 5%; */
   margin-top: 1px;
+  padding: 4px;
   /* default BORDER color */ }
 
 .fc-event,
@@ -1287,4 +1288,8 @@ be a descendant of the grid when it is being dragged.
 	font-weight: 500;
 	color: #333;
 	font-size: 1.1em;
+}
+
+body {
+	height: 100vh;
 }

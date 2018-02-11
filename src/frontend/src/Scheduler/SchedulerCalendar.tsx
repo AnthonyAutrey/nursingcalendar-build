@@ -19,6 +19,7 @@ interface Props {
 interface State {
 	events: Map<number, Event>;
 	showCreateModal: boolean;
+	groupOptionsFromAPI: string[];
 }
 
 interface Event {
@@ -28,6 +29,7 @@ interface Event {
 	start: string;
 	end?: string;
 	cwid: number;
+	groups: string[];
 }
 
 export class SchedulerCalendar extends React.Component<Props, State> {
@@ -41,11 +43,19 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	constructor(props: Props, state: State) {
 		super(props, state);
 
-		this.state = { events: new Map<number, Event>(), showCreateModal: false };
+		this.state = {
+			events: new Map<number, Event>(),
+			showCreateModal: false,
+			groupOptionsFromAPI: []
+		};
 	}
 
 	componentWillMount() {
 		this.getStateFromDB();
+		request.get('/api/classes').end((error: {}, res: any) => {
+			if (res && res.body)
+				this.setState({ groupOptionsFromAPI: res.body });
+		});
 	}
 
 	componentWillUpdate() {
@@ -65,11 +75,13 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			<div className="SchedulerCalendar">
 				<CreateEventModal
 					show={this.state.showCreateModal}
+					groupOptionsFromAPI={this.state.groupOptionsFromAPI}
 					creationHandler={this.handleEventCreation}
 					closeHandler={this.closeEventCreationModal}
 				/>
 				<EditEventModal
 					ref={editEventModal => { this.editEventModal = editEventModal; }}
+					groupOptionsFromAPI={this.state.groupOptionsFromAPI}
 					saveHandler={this.handleEventModify}
 					deleteHandler={this.handleEventDeletion}
 				/>
@@ -118,21 +130,21 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					snapDuration={'00:15:00'}
 					slotDuration={'00:30:00'}
 					scrollTime={'6:00:00'}
-					// minTime={'03:00:00'}
-					// maxTime={'27:00:00'}
+					minTime={'06:00:00'}
+					maxTime={'30:00:00'}
 					selectable={true}
 					selectOverlap={false}
 					selectHelper={true}
 					viewRender={(view: any) => this.cacheViewAndDate(view)}
 					firstDay={1}
-					select={this.createNewEvent}
+					select={this.createNewEventOnCalendar}
 				/>
 			</div>
 		);
 	}
 
 	// Event Modals //////////////////////////////////////////////////////////////////////////////////
-	createNewEvent = (start: moment.Moment, end: Moment, jsEvent: any, view: any) => {
+	createNewEventOnCalendar = (start: moment.Moment, end: Moment, jsEvent: any, view: any) => {
 		// Don't allow events to be less than x minutes
 		if (moment.duration(end.diff(start)).asMinutes() < 30)
 			end = start.clone().add({ minutes: 30 });
@@ -146,12 +158,13 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			description: 'modal placeholder',
 			start: start.toISOString(),
 			end: end.toISOString(),
-			cwid: 0
+			cwid: 0,
+			groups: []
 		});
 		this.setState({ events: events, showCreateModal: true });
 	}
 
-	handleEventCreation = (title: string, description: string) => {
+	handleEventCreation = (title: string, description: string, groups: string[]) => {
 		let events: Map<number, Event> = this.cloneStateEvents();
 		let index = this.getNextEventIndex();
 		let placeholder = events.get(Number.MAX_SAFE_INTEGER);
@@ -162,7 +175,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				description: description,
 				start: placeholder.start,
 				end: placeholder.end,
-				cwid: this.props.cwid
+				cwid: this.props.cwid,
+				groups: groups
 			});
 
 		this.setState({ events: events }, () => this.closeEventCreationModal());
@@ -179,12 +193,13 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		}
 	}
 
-	handleEventModify = (eventID: number, title: string, description: string) => {
+	handleEventModify = (eventID: number, title: string, description: string, groups: string[]) => {
 		let events = this.cloneStateEvents();
 		let eventToModify = events.get(eventID);
 		if (eventToModify) {
 			eventToModify.title = title;
 			eventToModify.description = description;
+			eventToModify.groups = groups;
 			events.set(eventID, eventToModify);
 			this.setState({ events: events });
 		}
@@ -200,14 +215,14 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let events = this.cloneStateEvents();
 		let clickedEvent = events.get(event.id);
 		if (clickedEvent && Number(clickedEvent.cwid) === Number(this.props.cwid))
-			this.openEditEventModal(clickedEvent.id, clickedEvent.title, clickedEvent.description);
+			this.openEditEventModal(clickedEvent.id, clickedEvent.title, clickedEvent.description, clickedEvent.groups);
 		else
 			console.log('DIFFERENT CWID, OPEN The viewer');
 	}
 
-	openEditEventModal = (eventID: number, title: string, description: string) => {
+	openEditEventModal = (eventID: number, title: string, description: string, groups: string[]) => {
 		if (this.editEventModal)
-			this.editEventModal.beginEdit(eventID, title, description);
+			this.editEventModal.beginEdit(eventID, title, description, groups);
 	}
 
 	// Client Events //////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,12 +291,12 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid);
-			let acolor = '';
 			let color = '';
+			let borderColor = '';
 
 			if (!userOwnsEvent) {
-				color = 'rgba(255,255,255,.4)';
-				acolor = 'rgba(0,123,255,.7)';
+				borderColor = 'rgba(255,255,255,.4)';
+				color = 'rgba(0,123,255,.6)';
 			}
 
 			let parsedEvent: any = {
@@ -291,8 +306,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				start: event.StartTime,
 				end: event.EndTime,
 				cwid: event.CWID,
-				color: acolor,
-				borderColor: color,
+				groups: [], // TODO: make this actually parse the groups for this event
+				color: color,
+				borderColor: borderColor,
 				editable: userOwnsEvent
 			};
 

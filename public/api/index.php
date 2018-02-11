@@ -112,6 +112,26 @@ $app->get('/resources', function (Request $request, Response $response, array $a
 	return $response;	
 });
 
+// LDAP ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+$app->get('/classes', function (Request $request, Response $response, array $args) {
+	$classes = [
+		'Nursing Class 1',
+		'Nursing Class 2',
+		'Nursing Class 3',
+		'Nursing Class 4',
+		'Nursing Class 5',
+		'Nursing Class 6',
+		'Nursing Class 7','Nursing Class 8',
+		'Semester 1', 
+		'Semester 2',
+		'Semester 3', 
+		'Semester 4'
+	];
+	$response->getBody()->write(json_encode($classes));
+	$response = $response->withHeader('Content-type', 'application/json');	
+	return $response;	
+});
+
 // Query Data Extraction ///////////////////////////////////////////////////////////////////////////////////////////////////
 function getSelectQueryData(Request $request) : array {
 	$queryData = null;

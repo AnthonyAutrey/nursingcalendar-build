@@ -18,6 +18,11 @@
 	box-shadow: none;
 }
 
+/* .groupSelectors {
+	max-height: 300px;
+	overflow-y: auto;
+} */
+
 /* textarea:focus, input:focus{
     outline: none;
 } */
