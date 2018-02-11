@@ -8,7 +8,7 @@ interface State {
 	selectedRoom: number;
 }
 
-interface Room {
+export interface Room {
 	locationName: string;
 	roomName: string;
 	capacity: number;
