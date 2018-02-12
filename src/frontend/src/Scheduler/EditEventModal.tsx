@@ -45,7 +45,6 @@ export class EditEventModal extends React.Component<Props, State> {
 
 		let backdropStyle: CSSProperties = {
 			zIndex: Number.MAX_SAFE_INTEGER,
-			// position: 'fixed',
 			position: 'fixed',
 			overflow: 'auto',
 			top: 0,

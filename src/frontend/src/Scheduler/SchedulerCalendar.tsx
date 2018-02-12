@@ -234,7 +234,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			}
 		};
 		let queryDataString = JSON.stringify(queryData);
-		request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+		request.get('/api/eventswithgroups').set('queryData', queryDataString).end((error: {}, res: any) => {
 			if (res && res.body) {
 				this.setState({ events: this.parseDBEvents(res.body) });
 				console.log(res.body);
@@ -288,6 +288,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	}
 
 	parseDBEvents(body: any): Map<number, Event> {
+		console.log(body);
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid);
@@ -306,7 +307,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				start: event.StartTime,
 				end: event.EndTime,
 				cwid: event.CWID,
-				groups: [], // TODO: make this actually parse the groups for this event
+				groups: event.Groups,
 				color: color,
 				borderColor: borderColor,
 				editable: userOwnsEvent

@@ -41,6 +41,38 @@ $app->get('/events', function (Request $request, Response $response, array $args
 	return $response;	
 });
 
+// Read With Group Relation //
+$app->get('/eventswithgroups', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('Events natural left outer join EventGroupRelation', '*', $queryData['where']);
+	$joinedEvents = json_decode(DBUtil::runQuery($queryString));
+	$eventMap = [];
+	foreach ($joinedEvents as $key => $joinedEvent) {
+		if (!isset($eventMap[$joinedEvent->EventID])) {
+			$eventMap[$joinedEvent->EventID]  = [
+				'EventID' => $joinedEvent->EventID,
+				'LocationName' => $joinedEvent->LocationName,
+				'RoomName' => $joinedEvent->RoomName,
+				'Title' => $joinedEvent->Title,
+				'Description' => $joinedEvent->Description,
+				'StartTime' => $joinedEvent->StartTime,
+				'EndTime' => $joinedEvent->EndTime,
+				'CWID' => $joinedEvent->CWID,
+				'Groups' => [$joinedEvent->GroupName]
+			];
+		} else {
+			array_push($eventMap[$joinedEvent->EventID]['Groups'], $joinedEvent->GroupName);
+		}
+	}
+	$events = [];
+	foreach ($eventMap as $key => $value) {
+		array_push($events, $value);
+	}
+	$response->getBody()->write(json_encode($events));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
 // Update //
 $app->post('/events', function (Request $request, Response $response, array $args) {
 	$results = [];
@@ -88,8 +120,11 @@ $app->put('/events', function (Request $request, Response $response, array $args
 // Delete //
 $app->delete('/events', function (Request $request, Response $response, array $args) {
 	$queryData = getDeleteQueryData($request);
+	$innerGroupsQuery = DBUtil::buildSelectQuery('Events natural join EventGroupRelation','EventID', $queryData['where']);
+	$deleteGroupsQuery = 'delete from EventGroupRelation where EventID in (select EventID from ('.$innerGroupsQuery.') deleteEvents)';
+	$results['Delete Groups'] = DBUtil::runCommand($deleteGroupsQuery);
 	$queryString = DBUtil::buildDeleteQuery('events', $queryData['where']);
-	$results = DBUtil::runCommand($queryString);
+	$results['Delete Events'] = DBUtil::runCommand($queryString);
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
