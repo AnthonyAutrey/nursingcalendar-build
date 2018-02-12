@@ -43,35 +43,43 @@ $app->get('/events', function (Request $request, Response $response, array $args
 
 // Update //
 $app->post('/events', function (Request $request, Response $response, array $args) {
+	$results = [];
 	$queryData = getUpdateQueryData($request);
 
-	if (isset($queryData['setValues']) and count($queryData['setValues']) > 0 and isset($queryData['where'])) {
-		$queryString = DBUtil::buildUpdateQuery('events', $queryData['setValues'], $queryData['where']);	
-		$results = DBUtil::runCommand($queryString);
-		$response->getBody()->write(json_encode($results));
-		$response = $response->withHeader('Content-type', 'application/json');
-		return $response;
-	}
-	else 
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['setValues']) ||
+		!isset($queryData['where']['EventID']) ||
+		!count($queryData['setValues']) > 0 ||
+		!isset($queryData['where'])
+		) {
 		return $response->withStatus(400);
+	}
+
+	// delete all of the event's groups before resetting them
+	$deleteGroupsQuery = 'delete from EventGroupRelation where EventID = '.$queryData['where']['EventID'];
+	$results['Delete Groups'] = DBUtil::runCommand($deleteGroupsQuery);
+	$results['Insert Groups'] = insertEventGroups($request, $queryData['where']['EventID']);
+
+	$queryString = DBUtil::buildUpdateQuery('events', $queryData['setValues'], $queryData['where']);	
+	$results['Update Event'] = DBUtil::runCommand($queryString);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+
 });
 
 // Insert //
 $app->put('/events', function (Request $request, Response $response, array $args) {
 	$queryData = getInsertQueryData($request);
-	$queryString = DBUtil::buildInsertQuery('events', $queryData['insertValues']);
-	$results = ['Insert Event' => DBUtil::runCommand($queryString)];
 
-	$groupsToInsert = getEventGroupsToInsert($request);
-	$groupRelationQueryString = '';
-	foreach ($groupsToInsert as $groupToInsert) {
-		$groupInsertValues = array();
-		$groupInsertValues['eventID'] = $queryData['insertValues']['eventID'];
-		$groupInsertValues['groupName'] = $groupToInsert;
-		$groupRelationQueryString = DBUtil::buildInsertQuery('EventGroupRelation', $groupInsertValues);
-		$results['Insert Groups'][$groupToInsert] = DBUtil::runCommand($groupRelationQueryString);
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['EventID'])) {
+		return $response->withStatus(400);
 	}
 
+	$queryString = DBUtil::buildInsertQuery('events', $queryData['insertValues']);
+	$results = ['Insert Event' => DBUtil::runCommand($queryString)];
+	$results['Insert Groups'] = insertEventGroups($request, $queryData['insertValues']['EventID']);
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -212,6 +220,20 @@ function getEventGroupsToInsert(Request $request) : array {
 		$groups = [$groups];
 
 	return sanitize($groups);
+}
+
+function insertEventGroups(Request $request, $eventID) : array {
+	$groupsToInsert = getEventGroupsToInsert($request);
+	$insertResults = [];
+	foreach ($groupsToInsert as $groupToInsert) {
+		$groupInsertValues = array();
+		$groupInsertValues['EventID'] = $eventID;
+		$groupInsertValues['GroupName'] = $groupToInsert;
+		$groupRelationQueryString = DBUtil::buildInsertQuery('EventGroupRelation', $groupInsertValues);
+		$insertResults[$groupToInsert] = DBUtil::runCommand($groupRelationQueryString);
+	}
+	
+	return $insertResults;
 }
 
 function sanitize($o) {

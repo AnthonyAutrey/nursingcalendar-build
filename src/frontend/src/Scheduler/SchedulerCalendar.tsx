@@ -322,7 +322,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	persistStateToDB(): void {
 		this.deleteDBEventsNotInClient();
 		this.getClientEventIDsThatAreAlreadyInDB().then((eventIDsInDB) => {
-			this.persistExistingEventsToDB(eventIDsInDB).then(() => {
+			this.updateExistingEventsInDB(eventIDsInDB).then(() => {
 				let eventsNotInDB = this.getClientEventsNotYetInDB(eventIDsInDB);
 				this.persistNewEventsToDB(eventsNotInDB);
 			});
@@ -400,7 +400,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		});
 	}
 
-	persistExistingEventsToDB(eventIDsInDB: number[]): Promise<void> {
+	updateExistingEventsInDB(eventIDsInDB: number[]): Promise<void> {
 		return new Promise((resolve, reject) => {
 			console.log('PERSIST EXISTING......');
 			console.log(this.state.events);
@@ -417,11 +417,12 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 			eventsToUpdate.forEach((event: Event) => {
 				let queryData = {
+					groups: event.groups,
 					setValues: {
-						'title': event.title,
-						'description': event.description,
-						'starttime': event.start,
-						'endtime': event.end
+						'Title': event.title,
+						'Description': event.description,
+						'StartTime': event.start,
+						'EndTime': event.end
 					},
 					where: { EventID: event.id, RoomName: this.props.room, LocationName: this.props.location }
 				};
@@ -430,7 +431,6 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					if (res && res.body) {
 						console.log('updated id: ' + event.id + ', ' + event.title + ', ' + event.description);
 					} else {
-						console.log('OUCH!!!!');
 						console.log('failed update,  id: ' + event.id + ', ' + event.title + ', ' + event.description);
 						reject();
 					}
@@ -467,14 +467,14 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			let queryData = {
 				groups: event.groups,
 				insertValues: {
-					'cwid': this.props.cwid,
-					'eventID': event.id,
-					'locationName': this.props.location,
-					'roomName': this.props.room,
-					'title': event.title,
-					'description': event.description,
-					'starttime': event.start,
-					'endtime': event.end
+					'CWID': this.props.cwid,
+					'EventID': event.id,
+					'LocationName': this.props.location,
+					'RoomName': this.props.room,
+					'Title': event.title,
+					'Description': event.description,
+					'StartTime': event.start,
+					'EndTime': event.end
 				}
 			};
 			let queryDataString = JSON.stringify(queryData);
