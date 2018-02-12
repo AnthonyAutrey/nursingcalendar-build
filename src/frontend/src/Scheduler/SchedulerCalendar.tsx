@@ -226,7 +226,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	}
 
 	// Client Events //////////////////////////////////////////////////////////////////////////////////////////////
-	getStateFromDB(): void {
+	public getStateFromDB(): void {
 		let queryData: {} = {
 			where: {
 				RoomName: this.props.room,

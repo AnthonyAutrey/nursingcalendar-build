@@ -1,6 +1,8 @@
 import * as React from 'react';
+import { CSSProperties } from 'react';
 import { SchedulerCalendar } from './SchedulerCalendar';
 import { RoomFilter } from './RoomFilter';
+import { Toolbar } from './Toolbar';
 const request = require('superagent');
 
 interface State {
@@ -36,10 +38,14 @@ export class Scheduler extends React.Component<{}, State> {
 	}
 
 	render() {
+
+		let bottomSpacerStyle: CSSProperties = {
+			height: 80
+		};
+
 		return (
 			<div>
-				<button className="btn btn-primary" onClick={() => this.persistEventsToDB()}>Persist To DB</button>
-				<div className="Scheduler container-fluid">
+				<div className="Scheduler container-fluid mt-2">
 					<div className="row">
 						<div className="col-3">
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
@@ -48,13 +54,18 @@ export class Scheduler extends React.Component<{}, State> {
 							<SchedulerCalendar
 								room={'Room 1'}
 								location="Nursing Building"
-								// cwid={99999999}
-								cwid={17700946}
+								cwid={99999999}
+								// cwid={17700946}
 								ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }}
 							/>
 						</div>
 					</div>
 				</div>
+				<Toolbar
+					handleSave={this.persistEventsToDB}
+					handleRevert={() => { this.schedulerCalendar ? this.schedulerCalendar.getStateFromDB() : null; }}
+				/>
+				<div style={bottomSpacerStyle} />
 			</div>
 		);
 	}
@@ -131,7 +142,7 @@ export class Scheduler extends React.Component<{}, State> {
 	}
 
 	// Events //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	persistEventsToDB() {
+	persistEventsToDB = () => {
 		if (this.schedulerCalendar)
 			this.schedulerCalendar.persistStateToDB();
 	}
