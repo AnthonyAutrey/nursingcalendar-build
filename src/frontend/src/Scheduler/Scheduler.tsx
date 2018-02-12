@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { SchedulerCalendar } from './SchedulerCalendar';
 import { RoomFilter } from './RoomFilter';
+import { RoomSelector } from './RoomSelector';
 const request = require('superagent');
 
 interface State {
@@ -43,6 +44,7 @@ export class Scheduler extends React.Component<{}, State> {
 					<div className="row">
 						<div className="col-3">
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
+							<RoomSelector rooms={[]} selectedRoom={0} />
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar room={'Room 1'} ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
