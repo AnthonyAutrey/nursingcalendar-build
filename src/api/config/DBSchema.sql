@@ -120,8 +120,7 @@ CREATE TABLE EventGroupRelation
 	EventID INT NOT NULL,
 	GroupName VARCHAR(20) NOT NULL,
 	PRIMARY KEY (EventID, GroupName),
-	FOREIGN KEY (EventID) REFERENCES Events(EventID),
-	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName)
+	FOREIGN KEY (EventID) REFERENCES Events(EventID)
 );
 
 CREATE TABLE UserGroupRelation

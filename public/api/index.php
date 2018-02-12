@@ -60,7 +60,18 @@ $app->post('/events', function (Request $request, Response $response, array $arg
 $app->put('/events', function (Request $request, Response $response, array $args) {
 	$queryData = getInsertQueryData($request);
 	$queryString = DBUtil::buildInsertQuery('events', $queryData['insertValues']);
-	$results = DBUtil::runCommand($queryString);
+	$results = ['Insert Event' => DBUtil::runCommand($queryString)];
+
+	$groupsToInsert = getEventGroupsToInsert($request);
+	$groupRelationQueryString = '';
+	foreach ($groupsToInsert as $groupToInsert) {
+		$groupInsertValues = array();
+		$groupInsertValues['eventID'] = $queryData['insertValues']['eventID'];
+		$groupInsertValues['groupName'] = $groupToInsert;
+		$groupRelationQueryString = DBUtil::buildInsertQuery('EventGroupRelation', $groupInsertValues);
+		$results['Insert Groups'][$groupToInsert] = DBUtil::runCommand($groupRelationQueryString);
+	}
+
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -184,6 +195,23 @@ function getDeleteQueryData(Request $request) : array {
 		$where = $queryData->where;
 
 	return sanitize(['where'=>$where]);
+}
+
+// Event Groups //
+function getEventGroupsToInsert(Request $request) : array {
+	$groups = null;
+
+	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+		$queryData = json_decode($request->getHeader('queryData')[0]);
+	if (isset($queryData->groups))
+		$groups = $queryData->groups;
+	else
+		return [];
+		
+	if (is_string($groups))
+		$groups = [$groups];
+
+	return sanitize($groups);
 }
 
 function sanitize($o) {

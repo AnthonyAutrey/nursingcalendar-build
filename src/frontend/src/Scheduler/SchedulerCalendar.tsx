@@ -236,7 +236,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let queryDataString = JSON.stringify(queryData);
 		request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
 			if (res && res.body) {
-				this.setState({ events: this.parseDBEventsAsMap(res.body) });
+				this.setState({ events: this.parseDBEvents(res.body) });
 				console.log(res.body);
 			}
 		});
@@ -287,7 +287,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		return Array.from(this.state.events.values());
 	}
 
-	parseDBEventsAsMap(body: any): Map<number, Event> {
+	parseDBEvents(body: any): Map<number, Event> {
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid);
@@ -465,6 +465,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			console.log('persisting new event:');
 			console.log(event);
 			let queryData = {
+				groups: event.groups,
 				insertValues: {
 					'cwid': this.props.cwid,
 					'eventID': event.id,
@@ -479,7 +480,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			let queryDataString = JSON.stringify(queryData);
 			request.put('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
 				if (res && res.body)
-					console.log('created: ' + res.body);
+					console.log('created: ' + JSON.stringify(res.body));
 			});
 		});
 	}
