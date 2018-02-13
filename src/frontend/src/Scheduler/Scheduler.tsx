@@ -8,6 +8,8 @@ const request = require('superagent');
 interface State {
 	rooms: Room[];
 	selectedRoom: number;
+	toolbarMessage: string;
+	toolbarStatus?: 'error' | 'success';
 }
 
 interface Room {
@@ -27,12 +29,14 @@ export interface RoomFilters {
 export class Scheduler extends React.Component<{}, State> {
 	private schedulerCalendar: SchedulerCalendar | null;
 	private allRooms: Room[] = [];
+	private defaultToolbarMessage: string = 'Click and drag to schedule a new event.';
 
 	constructor(props: {}, state: State) {
 		super(props, state);
 		this.state = {
 			rooms: [],
-			selectedRoom: 0
+			selectedRoom: 0,
+			toolbarMessage: this.defaultToolbarMessage
 		};
 		this.getAllRoomsFromDB();
 	}
@@ -52,16 +56,19 @@ export class Scheduler extends React.Component<{}, State> {
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar
+								ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }}
+								handleSendMessage={this.handleCalendarMessage}
 								room={'Room 1'}
 								location="Nursing Building"
 								cwid={99999999}
-								// cwid={17700946}
-								ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }}
+							// cwid={17700946}
 							/>
 						</div>
 					</div>
 				</div>
 				<Toolbar
+					status={this.state.toolbarStatus}
+					message={this.state.toolbarMessage}
 					handleSave={this.persistEventsToDB}
 					handleRevert={() => { this.schedulerCalendar ? this.schedulerCalendar.getStateFromDB() : null; }}
 				/>
@@ -107,6 +114,15 @@ export class Scheduler extends React.Component<{}, State> {
 
 		return parsedRooms;
 	}
+
+	// Toolbar //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	handleCalendarMessage = (message: string, style?: 'success' | 'error') => {
+		this.setState({ toolbarMessage: message, toolbarStatus: style });
+		setTimeout(() => {
+			this.setState({ toolbarMessage: this.defaultToolbarMessage, toolbarStatus: undefined });
+		}, 4000);
+	}
+
 	// Filters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	filterChangeHandler = (filters: RoomFilters) => {
 		let filteredRooms: Room[] = [];

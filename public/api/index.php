@@ -48,7 +48,13 @@ $app->get('/eventswithgroups', function (Request $request, Response $response, a
 	$joinedEvents = json_decode(DBUtil::runQuery($queryString));
 	$eventMap = [];
 	foreach ($joinedEvents as $key => $joinedEvent) {
+		
 		if (!isset($eventMap[$joinedEvent->EventID])) {
+			if($joinedEvent->GroupName == null)
+				$groups = [];
+			else
+				$groups = [$joinedEvent->GroupName];
+
 			$eventMap[$joinedEvent->EventID]  = [
 				'EventID' => $joinedEvent->EventID,
 				'LocationName' => $joinedEvent->LocationName,
@@ -58,7 +64,7 @@ $app->get('/eventswithgroups', function (Request $request, Response $response, a
 				'StartTime' => $joinedEvent->StartTime,
 				'EndTime' => $joinedEvent->EndTime,
 				'CWID' => $joinedEvent->CWID,
-				'Groups' => [$joinedEvent->GroupName]
+				'Groups' => $groups
 			];
 		} else {
 			array_push($eventMap[$joinedEvent->EventID]['Groups'], $joinedEvent->GroupName);
