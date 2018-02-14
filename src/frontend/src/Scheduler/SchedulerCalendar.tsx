@@ -333,7 +333,6 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	}
 
 	parseDBEvents(body: any): Map<number, Event> {
-		console.log(body);
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid);

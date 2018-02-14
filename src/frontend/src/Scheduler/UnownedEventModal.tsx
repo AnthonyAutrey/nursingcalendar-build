@@ -109,16 +109,16 @@ export class UnownedEventModal extends React.Component<Props, State> {
 								<br />
 								{groupString}
 							</div>
-							{pendingOverrideMessage}
 							{requestForm}
 						</div>
 						<div className="modal-footer">
 							<div className="container-fluid m-0 p-0">
 								<div className="d-flex flex-wrap">
 									<div className="mr-auto">
+										{pendingOverrideMessage}
 										<button
-											disabled={this.state.event.pendingOverride}
-											hidden={this.state.showRequestForm && !this.state.event.pendingOverride}
+											// disabled={this.state.event.pendingOverride || !this.state.showRequestForm }
+											hidden={this.state.showRequestForm || this.state.event.pendingOverride}
 											type="button"
 											className="btn btn-danger"
 											onClick={this.showRequestForm}
@@ -175,7 +175,7 @@ export class UnownedEventModal extends React.Component<Props, State> {
 						insertValues: {
 							'EventID': this.state.event.id,
 							'Message': this.state.requestMessage,
-							'Time': Date.now(),
+							'Time': this.getCurrentDateTimeInSqlFormat(),
 							'Accepted': 'false',
 							'RequestorCWID': this.props.cwid
 						}
@@ -197,6 +197,11 @@ export class UnownedEventModal extends React.Component<Props, State> {
 				alert('Something went wrong!');
 			});
 		}
+	}
+
+	private getCurrentDateTimeInSqlFormat = () => {
+		// TODO: This produces a UTC time, ensure that's what it needs to be
+		return new Date().toISOString().slice(0, 19).replace('T', ' ');
 	}
 
 	// Reset Everything ////////////////////////////////////////////////////////////////////////////////////////////////////

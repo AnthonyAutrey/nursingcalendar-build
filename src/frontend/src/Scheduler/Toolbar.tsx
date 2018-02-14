@@ -26,13 +26,13 @@ export class Toolbar extends React.Component<Props, {}> {
 		let className: string = 'bg-light border border-right-0 rounded-left mb-3 py-2 px-4 ml-auto';
 		let icon: JSX.Element | null = null;
 		if (this.props.status && this.props.status === 'error') {
-			className = 'text-danger bg-light border border-danger border-right-0 rounded-left mb-3 py-2 px-4 ml-auto';
+			className = 'text-danger bg-light border border-danger border-right-0 rounded-left mb-3 py-2 px-4 ml-auto font-weight-bold';
 		} else if (this.props.status && this.props.status === 'success') {
-			className = 'text-success bg-light border border-2 border-success border-right-0 rounded-left mb-3 py-2 px-4 ml-auto';
+			className = 'text-success bg-light border border-2 border-success border-right-0 rounded-left mb-3 py-2 px-4 ml-auto font-weight-bold';
 			icon = <span className="oi oi-check mr-2" />;
 		} else if (this.props.status && this.props.status === 'info') {
 			icon = <span className="oi oi-calendar mr-2" />;
-			className = 'bg-light border border-2 border-secondary border-right-0 rounded-left mb-3 py-2 px-4 ml-auto';
+			className = 'bg-light border border-2 border-secondary border-right-0 rounded-left mb-3 py-2 px-4 ml-auto font-weight-bold';
 		}
 
 		return (

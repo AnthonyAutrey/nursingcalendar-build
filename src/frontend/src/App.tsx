@@ -1,6 +1,8 @@
 import * as React from 'react';
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { NavigationBar } from './Navigation/NavigationBar';
 import { Scheduler } from './Scheduler/Scheduler';
-import './App.css';
+import { ViewingCalendar } from './Home/ViewingCalendar';
 
 class App extends React.Component<{}, {}> {
 
@@ -13,10 +15,14 @@ class App extends React.Component<{}, {}> {
 	render() {
 		return (
 			<div className="App">
-				<header className="App-header">
-					<h1 className="App-title">Nursing Scheduler</h1>
-				</header>
-				<Scheduler />
+				<NavigationBar />
+				<Router>
+					<Switch>
+						<Route path="/" exact={true} component={ViewingCalendar} />
+						<Route path="/schedule" component={Scheduler} />
+						<Route component={() => <div>404</div>} />
+					</Switch>
+				</Router>
 			</div>
 		);
 	}

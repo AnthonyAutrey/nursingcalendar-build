@@ -18,15 +18,6 @@
 	box-shadow: none;
 }
 
-.fc-day, .fc-day-top, .fc-basic-view {
+.SchedulerCalendar .fc-basic-view {
 	cursor: pointer;
 }
-
-/* .groupSelectors {
-	max-height: 300px;
-	overflow-y: auto;
-} */
-
-/* textarea:focus, input:focus{
-    outline: none;
-} */

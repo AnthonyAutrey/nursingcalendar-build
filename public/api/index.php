@@ -47,7 +47,7 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 	$queryString = DBUtil::buildSelectQuery(
 		'Events natural left outer join EventGroupRelation '.
 		'NATURAL left outer join (SELECT EventID as OverrideID from overrideRequests) overrideJoin '.
-		'NATURAL join (select FirstName, LastName from Users) userJoin',
+		'NATURAL join (select CWID, FirstName, LastName from Users) userJoin',
 		'*',
 		$queryData['where']
 	);
@@ -55,7 +55,11 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 	$eventMap = [];
 	foreach ($joinedEvents as $key => $joinedEvent) {
 		
-		if (!isset($eventMap[$joinedEvent->EventID])) {
+		if (!isset($eventMap[
+			$joinedEvent->EventID.
+			$joinedEvent->LocationName.
+			$joinedEvent->RoomName
+		])) {
 			if($joinedEvent->GroupName == null)
 				$groups = [];
 			else
@@ -66,7 +70,11 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 			else
 				$pendingOverride = true;
 
-			$eventMap[$joinedEvent->EventID]  = [
+			$eventMap[
+				$joinedEvent->EventID.
+				$joinedEvent->LocationName.
+				$joinedEvent->RoomName
+				]  = [
 				'EventID' => $joinedEvent->EventID,
 				'LocationName' => $joinedEvent->LocationName,
 				'RoomName' => $joinedEvent->RoomName,
@@ -80,7 +88,11 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 				'PendingOverride' => $pendingOverride
 			];
 		} else {
-			array_push($eventMap[$joinedEvent->EventID]['Groups'], $joinedEvent->GroupName);
+			array_push($eventMap[
+				$joinedEvent->EventID.
+				$joinedEvent->LocationName.
+				$joinedEvent->RoomName
+			]['Groups'], $joinedEvent->GroupName);
 		}
 	}
 	$events = [];

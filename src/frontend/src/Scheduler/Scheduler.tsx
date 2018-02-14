@@ -49,7 +49,7 @@ export class Scheduler extends React.Component<{}, State> {
 
 		return (
 			<div>
-				<div className="Scheduler container-fluid mt-2">
+				<div className="Scheduler container-fluid">
 					<div className="row">
 						<div className="col-3">
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
