@@ -88,16 +88,15 @@ CREATE TABLE Notifications
 
 CREATE TABLE OverrideRequests
 (
-	ID INT NOT NULL,
+	EventID INT NOT NULL,
 	Message VARCHAR(300) NOT NULL,
-	OwnerResponse VARCHAR(300) NOT NULL,
-	AdminResponse VARCHAR(300) NOT NULL,
+	OwnerResponse VARCHAR(300),
+	AdminResponse VARCHAR(300),
 	Time DateTime NOT NULL,
 	Accepted Boolean NOT NULL,
-	EventID INT NOT NULL,
 	RequestorCWID INT NOT NULL,
 	ResolvingAdminCWID INT, -- if NULL, Admin has not yet resolved this
-	PRIMARY KEY (ID),
+	PRIMARY KEY (EventID),
 	FOREIGN KEY (EventID) REFERENCES Events(EventID),
 	FOREIGN KEY (RequestorCWID) REFERENCES Users(CWID),
 	FOREIGN KEY (ResolvingAdminCWID) REFERENCES Users(CWID)

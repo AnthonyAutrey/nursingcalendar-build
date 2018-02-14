@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 
 interface Props {
 	message: string;
-	status?: 'error' | 'success';
+	status?: 'error' | 'success' | 'info';
 	handleSave: Function;
 	handleRevert: Function;
 }
@@ -24,16 +24,23 @@ export class Toolbar extends React.Component<Props, {}> {
 		};
 
 		let className: string = 'bg-light border border-right-0 rounded-left mb-3 py-2 px-4 ml-auto';
-		if (this.props.status && this.props.status === 'error')
+		let icon: JSX.Element | null = null;
+		if (this.props.status && this.props.status === 'error') {
 			className = 'text-danger bg-light border border-danger border-right-0 rounded-left mb-3 py-2 px-4 ml-auto';
-		else if (this.props.status && this.props.status === 'success')
+		} else if (this.props.status && this.props.status === 'success') {
 			className = 'text-success bg-light border border-2 border-success border-right-0 rounded-left mb-3 py-2 px-4 ml-auto';
+			icon = <span className="oi oi-check mr-2" />;
+		} else if (this.props.status && this.props.status === 'info') {
+			icon = <span className="oi oi-calendar mr-2" />;
+			className = 'bg-light border border-2 border-secondary border-right-0 rounded-left mb-3 py-2 px-4 ml-auto';
+		}
 
 		return (
 			<div style={backdropStyle}>
 				<div className="d-flex flex-no-wrap align-self-center">
 					<div className={className}>
 						<span className="justify-content-center align-self-center mr-3">
+							{icon}
 							{this.props.message}
 						</span>
 						<button

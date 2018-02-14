@@ -42,9 +42,15 @@ $app->get('/events', function (Request $request, Response $response, array $args
 });
 
 // Read With Group Relation //
-$app->get('/eventswithgroups', function (Request $request, Response $response, array $args) {
+$app->get('/eventswithrelations', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
-	$queryString = DBUtil::buildSelectQuery('Events natural left outer join EventGroupRelation', '*', $queryData['where']);
+	$queryString = DBUtil::buildSelectQuery(
+		'Events natural left outer join EventGroupRelation '.
+		'NATURAL left outer join (SELECT EventID as OverrideID from overrideRequests) overrideJoin '.
+		'NATURAL join (select FirstName, LastName from Users) userJoin',
+		'*',
+		$queryData['where']
+	);
 	$joinedEvents = json_decode(DBUtil::runQuery($queryString));
 	$eventMap = [];
 	foreach ($joinedEvents as $key => $joinedEvent) {
@@ -55,6 +61,11 @@ $app->get('/eventswithgroups', function (Request $request, Response $response, a
 			else
 				$groups = [$joinedEvent->GroupName];
 
+			if($joinedEvent->OverrideID == null)
+				$pendingOverride = false;
+			else
+				$pendingOverride = true;
+
 			$eventMap[$joinedEvent->EventID]  = [
 				'EventID' => $joinedEvent->EventID,
 				'LocationName' => $joinedEvent->LocationName,
@@ -64,7 +75,9 @@ $app->get('/eventswithgroups', function (Request $request, Response $response, a
 				'StartTime' => $joinedEvent->StartTime,
 				'EndTime' => $joinedEvent->EndTime,
 				'CWID' => $joinedEvent->CWID,
-				'Groups' => $groups
+				'Groups' => $groups,
+				'OwnerName' => $joinedEvent->FirstName.' '.$joinedEvent->LastName,
+				'PendingOverride' => $pendingOverride
 			];
 		} else {
 			array_push($eventMap[$joinedEvent->EventID]['Groups'], $joinedEvent->GroupName);
@@ -170,6 +183,24 @@ $app->get('/resources', function (Request $request, Response $response, array $a
 	$response->getBody()->write($resources);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
+});
+
+// Override Requests /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Create //
+$app->put('/overriderequests', function (Request $request, Response $response, array $args) {
+	$queryData = getInsertQueryData($request);
+
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['EventID'])) {
+		return $response->withStatus(400);
+	}
+
+	$queryString = DBUtil::buildInsertQuery('overrideRequests', $queryData['insertValues']);
+	$results = ['Insert Override Request' => DBUtil::runCommand($queryString)];
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
 });
 
 // LDAP ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

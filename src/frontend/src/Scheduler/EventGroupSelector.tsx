@@ -40,7 +40,7 @@ export class EventGroupSelector extends React.Component<Props, State> {
 						</select>
 					</div>
 					<div className="ml-auto mr-0">
-						<button className="btn btn-danger float-right" onClick={() => this.props.handleDelete(this.props.index)}>x</button>
+						<button className="btn btn-danger float-right" onClick={() => this.props.handleDelete(this.props.index)}>&#10006;</button>
 					</div>
 				</div>
 			</div>

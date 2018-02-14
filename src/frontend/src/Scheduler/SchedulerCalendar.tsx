@@ -3,6 +3,7 @@ import { CSSProperties } from 'react';
 import * as ReactDOM from 'react-dom';
 import { CreateEventModal } from './CreateEventModal';
 import { EditEventModal } from './EditEventModal';
+import { UnownedEventModal } from './UnownedEventModal';
 
 import { Duration, Moment } from 'moment';
 import * as moment from 'moment';
@@ -23,14 +24,16 @@ interface State {
 	groupOptionsFromAPI: string[];
 }
 
-interface Event {
+export interface Event {
 	id: number;
 	title: string;
 	description: string;
 	start: string;
 	end?: string;
 	cwid: number;
+	ownerName: string;
 	groups: string[];
+	pendingOverride: boolean;
 }
 
 export class SchedulerCalendar extends React.Component<Props, State> {
@@ -40,6 +43,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	private currentDate: any | null = null;
 	private smallestTimeInterval: number = Number.MAX_SAFE_INTEGER;
 	private editEventModal: EditEventModal | null;
+	private unownedEventModal: UnownedEventModal | null;
 
 	constructor(props: Props, state: State) {
 		super(props, state);
@@ -86,12 +90,27 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					saveHandler={this.handleEventModify}
 					deleteHandler={this.handleEventDeletion}
 				/>
+				<UnownedEventModal
+					ref={unownedEventModal => { this.unownedEventModal = unownedEventModal; }}
+					cwid={this.props.cwid}
+					handleOverrideRequest={this.handleOverrideRequest}
+				/>
 				<FullCalendarReact
 					id="calendar"
+					customButtons={{
+						selectDate: {
+							text: 'Month',
+							click: () => {
+								this.currentView = 'month';
+								this.props.handleSendMessage('Select a date to schedule events for that week.', 'info');
+								this.forceUpdate();
+							}
+						}
+					}}
 					header={{
-						left: 'prev, next, today',
+						left: '',
 						center: 'title',
-						right: 'agendaWeek,month,agendaDay,listMonth,listDay,basicWeek'
+						right: 'prev,selectDate,next today'
 					}}
 					defaultDate={(() => {
 						if (this.currentDate)
@@ -105,28 +124,30 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 						else
 							return 'agendaWeek';
 					})()}
-					navLinks={true} // can click day/week names to navigate views
 					editable={true}
 					slotEventOverlap={false}
+					allDaySlot={false}
 					eventOverlap={false}
-					// eventAllow={(dropInfo: any, draggedEvent: any) => {
-					// 	let events = this.cloneStateEvents();
-					// 	let event = events[draggedEvent.id];
-					// 	let allowEdit = Number(event.cwid) === Number(this.props.cwid);
-					// 	return Number(event.cwid) === Number(this.props.cwid);
-					// }}
 					eventLimit={true} // allow "more" link when too many events
-					eventLimitClick={'day'}
 					eventClick={this.handleEventClick}
+					dayClick={(date: any) => {
+						if (this.currentView === 'month') {
+							this.currentDate = date;
+							this.currentView = 'agendaWeek';
+							this.forceUpdate();
+						}
+					}}
 					events={this.getStateEventsAsArray()}
 					eventTextColor="white"
 					eventDrop={(event: Event, delta: Duration) => this.editEvent(event, delta)}
 					eventResize={(event: Event, delta: Duration) => this.editEvent(event, delta)}
-					// eventAfterRender={(event: any, element: any) => {
-					// 	console.log(event.start);
-					// 	// console.log(element.start);
-					// }}
-					height={'auto'}
+					height={() => {
+						if (this.currentView === 'month')
+							return 700;
+
+						return 'auto';
+					}}
+					aspectRatio={1}
 					selectMinDistance={10}
 					snapDuration={'00:15:00'}
 					slotDuration={'00:30:00'}
@@ -138,14 +159,18 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					selectHelper={true}
 					viewRender={(view: any) => this.cacheViewAndDate(view)}
 					firstDay={1}
-					select={this.createNewEventOnCalendar}
+					select={this.handleCalendarSelect}
 				/>
 			</div>
 		);
 	}
 
 	// Event Modals //////////////////////////////////////////////////////////////////////////////////
-	createNewEventOnCalendar = (start: moment.Moment, end: Moment, jsEvent: any, view: any) => {
+	handleCalendarSelect = (start: moment.Moment, end: Moment, jsEvent: any, view: any) => {
+		// Don't allow events to be created in month view
+		if (this.currentView === 'month')
+			return;
+
 		// Don't allow events to be less than x minutes
 		if (moment.duration(end.diff(start)).asMinutes() < 30)
 			end = start.clone().add({ minutes: 30 });
@@ -160,7 +185,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			start: start.toISOString(),
 			end: end.toISOString(),
 			cwid: 0,
-			groups: []
+			ownerName: '',
+			groups: [],
+			pendingOverride: false
 		});
 		this.setState({ events: events, showCreateModal: true });
 	}
@@ -177,7 +204,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				start: placeholder.start,
 				end: placeholder.end,
 				cwid: this.props.cwid,
-				groups: groups
+				ownerName: '',
+				groups: groups,
+				pendingOverride: false
 			});
 
 		this.setState({ events: events }, () => this.closeEventCreationModal());
@@ -214,16 +243,31 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 	handleEventClick = (event: any, jsEvent: any, view: any) => {
 		let events = this.cloneStateEvents();
-		let clickedEvent = events.get(event.id);
+		let clickedEvent: Event | undefined = events.get(event.id);
 		if (clickedEvent && Number(clickedEvent.cwid) === Number(this.props.cwid))
 			this.openEditEventModal(clickedEvent.id, clickedEvent.title, clickedEvent.description, clickedEvent.groups);
-		else
-			console.log('DIFFERENT CWID, OPEN The viewer');
+		else if (clickedEvent)
+			this.openUnownedEventModal(clickedEvent);
 	}
 
 	openEditEventModal = (eventID: number, title: string, description: string, groups: string[]) => {
 		if (this.editEventModal)
 			this.editEventModal.beginEdit(eventID, title, description, groups);
+	}
+
+	openUnownedEventModal = (event: Event) => {
+		if (this.unownedEventModal)
+			this.unownedEventModal.beginEdit(event);
+	}
+
+	handleOverrideRequest = (eventID: number) => {
+		let events: Map<number, Event> = this.cloneStateEvents();
+		let eventWithRequest: Event | undefined = events.get(eventID);
+		if (eventWithRequest) {
+			eventWithRequest.pendingOverride = true;
+			events.set(eventID, eventWithRequest);
+			this.setState({ events: events });
+		}
 	}
 
 	// Client Events //////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,7 +279,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			}
 		};
 		let queryDataString = JSON.stringify(queryData);
-		request.get('/api/eventswithgroups').set('queryData', queryDataString).end((error: {}, res: any) => {
+		request.get('/api/eventswithrelations').set('queryData', queryDataString).end((error: {}, res: any) => {
 			if (res && res.body) {
 				this.setState({ events: this.parseDBEvents(res.body) });
 				console.log(res.body);
@@ -308,7 +352,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				start: event.StartTime,
 				end: event.EndTime,
 				cwid: event.CWID,
+				ownerName: event.OwnerName,
 				groups: event.Groups,
+				pendingOverride: event.PendingOverride,
 				color: color,
 				borderColor: borderColor,
 				editable: userOwnsEvent

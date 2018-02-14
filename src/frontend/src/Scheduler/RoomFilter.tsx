@@ -131,7 +131,7 @@ export class RoomFilter extends React.Component<Props, State> {
 		let extraFilters = (
 			<div>
 				<div className="form-group row">
-					<label className="col-lg-4 col-form-label">Location:</label>
+					<label className="col-lg-4 col-form-label text-left">Location:</label>
 					<div className="col-lg-8">
 						<select className="form-control" value={this.state.roomFilters.location} onChange={this.handleLocationChange}>
 							{locationOptions}
@@ -139,13 +139,13 @@ export class RoomFilter extends React.Component<Props, State> {
 					</div>
 				</div>
 				<div className="form-group row">
-					<label className="col-lg-4 col-form-label">Capacity:</label>
+					<label className="col-lg-4 col-form-label text-left">Capacity:</label>
 					<div className="col-lg-8">
 						<input className="form-control" type="number" value={this.state.roomFilters.capacity.min} onChange={this.handleCapacityMinChange} />
 					</div>
 				</div>
 				<div className="form-group row">
-					<label className="col-lg-4 col-form-label">Resources:</label>
+					<label className="col-lg-4 col-form-label text-left">Resources:</label>
 					<div className="col-lg-8">
 						{addButton}
 					</div>
@@ -209,6 +209,8 @@ export class RoomFilter extends React.Component<Props, State> {
 					enumerable: isEnumberable
 				};
 			});
+		}).catch(() => {
+			// TODO: handle error getting data
 		});
 	}
 

@@ -30,7 +30,7 @@ export class Alert extends React.Component<{}, State> {
 				<div className="w-100 align-self-center">
 					{this.state.message}
 				</div>
-				<button className="btn btn-sm btn-danger ml-auto mr-2" onClick={this.close}>x</button>
+				<button className="btn btn-sm btn-danger ml-auto mr-2" onClick={this.close}>&#10006;</button>
 			</div>
 		);
 	}
