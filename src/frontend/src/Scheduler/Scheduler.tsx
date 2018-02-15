@@ -44,7 +44,7 @@ export class Scheduler extends React.Component<{}, State> {
 					<div className="row">
 						<div className="col-3">
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
-							<RoomSelector rooms={[]} selectedRoom={0} />
+							<RoomSelector rooms={this.state.rooms} selectedRoom={this.state.selectedRoom} />
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar room={'Room 1'} ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
