@@ -63,7 +63,7 @@ export class FilterResource extends React.Component<Props, {}> {
 					{minInput}
 				</div>
 				<div className="col-lg-2">
-					<button className="btn btn-danger float-right" onClick={() => this.props.handleDelete(this.props.index)}>x</button>
+					<button className="btn btn-danger float-right" onClick={() => this.props.handleDelete(this.props.index)}>&#10006;</button>
 				</div>
 			</div>
 		);

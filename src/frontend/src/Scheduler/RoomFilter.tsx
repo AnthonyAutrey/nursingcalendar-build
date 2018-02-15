@@ -3,6 +3,7 @@ import { RoomFilters } from './Scheduler';
 import { FilterResource } from './FilterResource';
 import './scheduler.css';
 const uuid = require('uuid/v4');
+const request = require('superagent');
 
 interface Props {
 	filterChangeHandler: Function;
@@ -43,6 +44,8 @@ export class RoomFilter extends React.Component<Props, State> {
 			open: false
 		};
 		// TODO: Get all possible locations and resources on initialize
+		this.initializeOptions();
+
 		this.addResourceFunction = this.handleAddResource;
 	}
 
@@ -128,7 +131,7 @@ export class RoomFilter extends React.Component<Props, State> {
 		let extraFilters = (
 			<div>
 				<div className="form-group row">
-					<label className="col-lg-4 col-form-label">Location:</label>
+					<label className="col-lg-4 col-form-label text-left">Location:</label>
 					<div className="col-lg-8">
 						<select className="form-control" value={this.state.roomFilters.location} onChange={this.handleLocationChange}>
 							{locationOptions}
@@ -136,13 +139,13 @@ export class RoomFilter extends React.Component<Props, State> {
 					</div>
 				</div>
 				<div className="form-group row">
-					<label className="col-lg-4 col-form-label">Capacity:</label>
+					<label className="col-lg-4 col-form-label text-left">Capacity:</label>
 					<div className="col-lg-8">
 						<input className="form-control" type="number" value={this.state.roomFilters.capacity.min} onChange={this.handleCapacityMinChange} />
 					</div>
 				</div>
 				<div className="form-group row">
-					<label className="col-lg-4 col-form-label">Resources:</label>
+					<label className="col-lg-4 col-form-label text-left">Resources:</label>
 					<div className="col-lg-8">
 						{addButton}
 					</div>
@@ -176,10 +179,45 @@ export class RoomFilter extends React.Component<Props, State> {
 		);
 	}
 
+	initializeOptions = () => {
+		let getDataPromises: Promise<any>[] = [];
+
+		getDataPromises.push(new Promise((resolve: Function, reject: Function) => {
+			request.get('/api/locations').end((error: {}, res: any) => {
+				if (res && res.body)
+					resolve(res.body);
+				else
+					reject();
+			});
+		}));
+
+		getDataPromises.push(new Promise((resolve: Function, reject: Function) => {
+			request.get('/api/resources').end((error: {}, res: any) => {
+				if (res && res.body)
+					resolve(res.body);
+				else
+					reject();
+			});
+		}));
+
+		Promise.all(getDataPromises).then((data: any[][]) => {
+			this.allLocations = data[0].map(loc => { return loc.LocationName; });
+			this.allResources = data[1].map(resource => {
+				let isEnumberable: boolean = (Boolean)(+resource.IsEnumerable);
+				return {
+					name: resource.ResourceName,
+					enumerable: isEnumberable
+				};
+			});
+		}).catch(() => {
+			// TODO: handle error getting data
+		});
+	}
+
 	handleSearchTextChange = (event: any) => {
 		event.preventDefault();
 		this.setState({ roomFilters: { ...this.state.roomFilters, searchText: event.target.value } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	handleLocationChange = (event: any) => {
@@ -188,14 +226,14 @@ export class RoomFilter extends React.Component<Props, State> {
 		if (location === 'any')
 			location = null;
 		this.setState({ roomFilters: { ...this.state.roomFilters, location: location } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	handleCapacityMinChange = (event: any) => {
 		event.preventDefault();
 
 		this.setState({ roomFilters: { ...this.state.roomFilters, capacity: { ...this.state.roomFilters.capacity, min: event.target.value } } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	// Resources ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,7 +263,7 @@ export class RoomFilter extends React.Component<Props, State> {
 		if (this.resourceIsEnumerable(newResourceState[index].name))
 			newResourceState[index].min = 1;
 		this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	handleAddResource = () => {
@@ -239,14 +277,14 @@ export class RoomFilter extends React.Component<Props, State> {
 				...this.state.roomFilters,
 				resources: state.roomFilters.resources.concat(newResource)
 			}
-		}), () => { this.props.filterChangeHandler(this.state); });
+		}), () => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 
 	handleDeleteResource = (index: number) => {
 		let newResourceState = this.state.roomFilters.resources.slice(0); // clones the resources array
 		newResourceState.splice(index, 1);
 		this.setState({ roomFilters: { ...this.state.roomFilters, resources: newResourceState } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 
 		// HACK: disable adding resource
 		if (newResourceState.length < 1)
@@ -259,7 +297,7 @@ export class RoomFilter extends React.Component<Props, State> {
 		let resources = this.state.roomFilters.resources.slice(0);
 		resources[index].min = event.target.value;
 		this.setState({ roomFilters: { ...this.state.roomFilters, resources: resources } },
-			() => { this.props.filterChangeHandler(this.state); });
+			() => { this.props.filterChangeHandler(this.state.roomFilters); });
 	}
 }
 

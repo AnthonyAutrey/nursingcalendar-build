@@ -8,6 +8,7 @@
 /src/frontend/build
 /src/javascript
 /public/*
+/session_store/*
 !/public/api
 !/public/.htaccess
 

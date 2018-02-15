@@ -16,6 +16,56 @@ $config = [
 
 $app = new \Slim\App($config);
 
+// Authentication Routes //////////////////////////////////////////////////////////////////////////////////////////////////
+
+$app->post('/login', function (Request $request, Response $response, array $args) {
+	session_start();
+	$queryData = json_decode($request->getHeader('queryData')[0]);
+
+	if(!isset($queryData->cwid))
+		return $response->withStatus(400);
+	else if (!isset($queryData->pin))
+		return $response->withStatus(400);
+	else {
+		$cwid = $queryData->cwid;
+		$pin = $queryData->pin;
+	}
+
+	// TODO: actually check LDAP, I guess.
+	if (true) {
+		$result = json_encode(['authenticated' => true]);
+		$response->getBody()->write($result);
+		$_SESSION["cwid"] = $cwid;
+		$_SESSION["role"] = 'admin';
+	} else
+		session_destroy();
+
+	$response = $response->withHeader('Content-type', 'application/json');
+    return $response;
+});
+
+$app->get('/logout', function (Request $request, Response $response, array $args) {
+	session_start();
+	session_destroy();
+	
+	$response->getBody()->write("Successfully logged out.");
+	return $response;
+});
+
+$app->get('/session', function (Request $request, Response $response, array $args) {
+	session_start();
+
+	if (isset($_SESSION))
+		$session = json_encode($_SESSION);
+	else 
+		$session = json_encode([]);		
+
+	$response->getBody()->write($session);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+});
+
+
 // Event Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 $app->get('/hello[/{name}]', function (Request $request, Response $response, array $args) {
 
@@ -39,26 +89,108 @@ $app->get('/events', function (Request $request, Response $response, array $args
 	return $response;	
 });
 
+// Read With Group Relation //
+$app->get('/eventswithrelations', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery(
+		'Events natural left outer join EventGroupRelation '.
+		'NATURAL left outer join (SELECT EventID as OverrideID from overrideRequests) overrideJoin '.
+		'NATURAL join (select CWID, FirstName, LastName from Users) userJoin',
+		'*',
+		$queryData['where']
+	);
+	$joinedEvents = json_decode(DBUtil::runQuery($queryString));
+	$eventMap = [];
+	foreach ($joinedEvents as $key => $joinedEvent) {
+		
+		if (!isset($eventMap[
+			$joinedEvent->EventID.
+			$joinedEvent->LocationName.
+			$joinedEvent->RoomName
+		])) {
+			if($joinedEvent->GroupName == null)
+				$groups = [];
+			else
+				$groups = [$joinedEvent->GroupName];
+
+			if($joinedEvent->OverrideID == null)
+				$pendingOverride = false;
+			else
+				$pendingOverride = true;
+
+			$eventMap[
+				$joinedEvent->EventID.
+				$joinedEvent->LocationName.
+				$joinedEvent->RoomName
+				]  = [
+				'EventID' => $joinedEvent->EventID,
+				'LocationName' => $joinedEvent->LocationName,
+				'RoomName' => $joinedEvent->RoomName,
+				'Title' => $joinedEvent->Title,
+				'Description' => $joinedEvent->Description,
+				'StartTime' => $joinedEvent->StartTime,
+				'EndTime' => $joinedEvent->EndTime,
+				'CWID' => $joinedEvent->CWID,
+				'Groups' => $groups,
+				'OwnerName' => $joinedEvent->FirstName.' '.$joinedEvent->LastName,
+				'PendingOverride' => $pendingOverride
+			];
+		} else {
+			array_push($eventMap[
+				$joinedEvent->EventID.
+				$joinedEvent->LocationName.
+				$joinedEvent->RoomName
+			]['Groups'], $joinedEvent->GroupName);
+		}
+	}
+	$events = [];
+	foreach ($eventMap as $key => $value) {
+		array_push($events, $value);
+	}
+	$response->getBody()->write(json_encode($events));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
 // Update //
 $app->post('/events', function (Request $request, Response $response, array $args) {
+	$results = [];
 	$queryData = getUpdateQueryData($request);
 
-	if (isset($queryData['setValues']) and count($queryData['setValues']) > 0 and isset($queryData['where'])) {
-		$queryString = DBUtil::buildUpdateQuery('events', $queryData['setValues'], $queryData['where']);	
-		$results = DBUtil::runCommand($queryString);
-		$response->getBody()->write(json_encode($results));
-		$response = $response->withHeader('Content-type', 'application/json');
-		return $response;
-	}
-	else 
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['setValues']) ||
+		!isset($queryData['where']['EventID']) ||
+		!count($queryData['setValues']) > 0 ||
+		!isset($queryData['where'])
+		) {
 		return $response->withStatus(400);
+	}
+
+	// delete all of the event's groups before resetting them
+	$deleteGroupsQuery = 'delete from EventGroupRelation where EventID = '.$queryData['where']['EventID'];
+	$results['Delete Groups'] = DBUtil::runCommand($deleteGroupsQuery);
+	$results['Insert Groups'] = insertEventGroups($request, $queryData['where']['EventID']);
+
+	$queryString = DBUtil::buildUpdateQuery('events', $queryData['setValues'], $queryData['where']);	
+	$results['Update Event'] = DBUtil::runCommand($queryString);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+
 });
 
 // Insert //
 $app->put('/events', function (Request $request, Response $response, array $args) {
 	$queryData = getInsertQueryData($request);
+
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['EventID'])) {
+		return $response->withStatus(400);
+	}
+
 	$queryString = DBUtil::buildInsertQuery('events', $queryData['insertValues']);
-	$results = DBUtil::runCommand($queryString);
+	$results = ['Insert Event' => DBUtil::runCommand($queryString)];
+	$results['Insert Groups'] = insertEventGroups($request, $queryData['insertValues']['EventID']);
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -66,10 +198,88 @@ $app->put('/events', function (Request $request, Response $response, array $args
 
 // Delete //
 $app->delete('/events', function (Request $request, Response $response, array $args) {
-	// TODO: create delete query builder
-	$msg = json_encode(['delete called']);
-	$response->getBody()->write($msg);
+	$queryData = getDeleteQueryData($request);
+	$innerGroupsQuery = DBUtil::buildSelectQuery('Events natural join EventGroupRelation','EventID', $queryData['where']);
+	$deleteGroupsQuery = 'delete from EventGroupRelation where EventID in (select EventID from ('.$innerGroupsQuery.') deleteEvents)';
+	$results['Delete Groups'] = DBUtil::runCommand($deleteGroupsQuery);
+	$queryString = DBUtil::buildDeleteQuery('events', $queryData['where']);
+	$results['Delete Events'] = DBUtil::runCommand($queryString);
+	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+// Room Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/rooms', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('rooms natural left outer join roomResourceRelation', $queryData['fields'], $queryData['where']);
+	$rooms = DBUtil::runQuery($queryString);
+	$response->getBody()->write($rooms);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+// Location Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/locations', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('locations', $queryData['fields'], $queryData['where']);
+	$locations = DBUtil::runQuery($queryString);
+	$response->getBody()->write($locations);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+// Resource Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/resources', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('resources', $queryData['fields'], $queryData['where']);
+	$resources = DBUtil::runQuery($queryString);
+	$response->getBody()->write($resources);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+// Override Requests /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Create //
+$app->put('/overriderequests', function (Request $request, Response $response, array $args) {
+	$queryData = getInsertQueryData($request);
+
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['EventID'])) {
+		return $response->withStatus(400);
+	}
+
+	$queryString = DBUtil::buildInsertQuery('overrideRequests', $queryData['insertValues']);
+	$results = ['Insert Override Request' => DBUtil::runCommand($queryString)];
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+});
+
+// LDAP ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+$app->get('/classes', function (Request $request, Response $response, array $args) {
+	$classes = [
+		'Nursing Class 1',
+		'Nursing Class 2',
+		'Nursing Class 3',
+		'Nursing Class 4',
+		'Nursing Class 5',
+		'Nursing Class 6',
+		'Nursing Class 7','Nursing Class 8',
+		'Semester 1', 
+		'Semester 2',
+		'Semester 3', 
+		'Semester 4'
+	];
+	$response->getBody()->write(json_encode($classes));
+	$response = $response->withHeader('Content-type', 'application/json');	
 	return $response;	
 });
 
@@ -86,7 +296,7 @@ function getSelectQueryData(Request $request) : array {
 	if (isset($queryData->where))
 		$where = $queryData->where;
 	
-	return ['fields'=>$fields, 'where'=>$where];
+	return sanitize(['fields'=>$fields, 'where'=>$where]);
 }
 
 function getInsertQueryData(Request $request) : array {
@@ -97,7 +307,7 @@ function getInsertQueryData(Request $request) : array {
 	if (isset($queryData->insertValues))
 		$insertValues = $queryData->insertValues;
 
-	return ['insertValues'=>$insertValues];
+	return sanitize(['insertValues'=>$insertValues]);
 }
 
 function getUpdateQueryData(Request $request) : array {
@@ -112,7 +322,64 @@ function getUpdateQueryData(Request $request) : array {
 	if (isset($queryData->where))
 		$where = $queryData->where;
 
-	return ['setValues'=>$setValues, 'where'=>$where];
+	return sanitize(['setValues'=>$setValues, 'where'=>$where]);
+}
+
+function getDeleteQueryData(Request $request) : array {
+	$queryData = null;
+	$where = null;
+
+	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+		$queryData = json_decode($request->getHeader('queryData')[0]);
+	if (isset($queryData->where))
+		$where = $queryData->where;
+
+	return sanitize(['where'=>$where]);
+}
+
+// Event Groups //
+function getEventGroupsToInsert(Request $request) : array {
+	$groups = null;
+
+	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+		$queryData = json_decode($request->getHeader('queryData')[0]);
+	if (isset($queryData->groups))
+		$groups = $queryData->groups;
+	else
+		return [];
+		
+	if (is_string($groups))
+		$groups = [$groups];
+
+	return sanitize($groups);
+}
+
+function insertEventGroups(Request $request, $eventID) : array {
+	$groupsToInsert = getEventGroupsToInsert($request);
+	$insertResults = [];
+	foreach ($groupsToInsert as $groupToInsert) {
+		$groupInsertValues = array();
+		$groupInsertValues['EventID'] = $eventID;
+		$groupInsertValues['GroupName'] = $groupToInsert;
+		$groupRelationQueryString = DBUtil::buildInsertQuery('EventGroupRelation', $groupInsertValues);
+		$insertResults[$groupToInsert] = DBUtil::runCommand($groupRelationQueryString);
+	}
+	
+	return $insertResults;
+}
+
+function sanitize($o) {
+	$o = json_encode($o, true);
+	$o = json_decode($o, true);
+
+	if (is_string($o)) {
+		$o = addslashes($o);
+	}
+	else if ($o != null && !is_numeric($o))
+		foreach ($o as $key => $value) 
+			$o[$key] = sanitize($value);
+
+	return $o;
 }
 
 // Error Handling /////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -12,6 +12,7 @@ class DBConfig {
 		$connectionString = "mysql:host=$this->dbHost;dbname=$this->dbName;";
 		$dbConnection = new PDO($connectionString, $this->dbUsername, $dbPassword);
 		$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$dbConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 
 		return $dbConnection;	
 	}

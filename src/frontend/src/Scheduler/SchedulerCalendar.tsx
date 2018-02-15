@@ -1,24 +1,39 @@
 import * as React from 'react';
+import { CSSProperties } from 'react';
 import * as ReactDOM from 'react-dom';
+import { CreateEventModal } from './CreateEventModal';
+import { EditEventModal } from './EditEventModal';
+import { UnownedEventModal } from './UnownedEventModal';
 
 import { Duration, Moment } from 'moment';
+import * as moment from 'moment';
 const FullCalendarReact = require('fullcalendar-reactwrapper');
-const fullcalendarCSS = require('../../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
+// const fullcalendarCSS = require('../../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
 const request = require('superagent');
 
 interface Props {
+	location: string;
 	room: string;
+	cwid: number;
+	handleSendMessage: Function;
 }
 
 interface State {
-	events: { number: Event } | {};
+	events: Map<number, Event>;
+	showCreateModal: boolean;
+	groupOptionsFromAPI: string[];
 }
 
-interface Event {
+export interface Event {
 	id: number;
 	title: string;
+	description: string;
 	start: string;
 	end?: string;
+	cwid: number;
+	ownerName: string;
+	groups: string[];
+	pendingOverride: boolean;
 }
 
 export class SchedulerCalendar extends React.Component<Props, State> {
@@ -27,15 +42,25 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	private currentView: String | null = null;
 	private currentDate: any | null = null;
 	private smallestTimeInterval: number = Number.MAX_SAFE_INTEGER;
+	private editEventModal: EditEventModal | null;
+	private unownedEventModal: UnownedEventModal | null;
 
 	constructor(props: Props, state: State) {
 		super(props, state);
 
-		this.state = { events: {} };
+		this.state = {
+			events: new Map<number, Event>(),
+			showCreateModal: false,
+			groupOptionsFromAPI: []
+		};
 	}
 
 	componentWillMount() {
 		this.getStateFromDB();
+		request.get('/api/classes').end((error: {}, res: any) => {
+			if (res && res.body)
+				this.setState({ groupOptionsFromAPI: res.body });
+		});
 	}
 
 	componentWillUpdate() {
@@ -53,12 +78,39 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	render() {
 		return (
 			<div className="SchedulerCalendar">
+				<CreateEventModal
+					show={this.state.showCreateModal}
+					groupOptionsFromAPI={this.state.groupOptionsFromAPI}
+					creationHandler={this.handleEventCreation}
+					closeHandler={this.closeEventCreationModal}
+				/>
+				<EditEventModal
+					ref={editEventModal => { this.editEventModal = editEventModal; }}
+					groupOptionsFromAPI={this.state.groupOptionsFromAPI}
+					saveHandler={this.handleEventModify}
+					deleteHandler={this.handleEventDeletion}
+				/>
+				<UnownedEventModal
+					ref={unownedEventModal => { this.unownedEventModal = unownedEventModal; }}
+					cwid={this.props.cwid}
+					handleOverrideRequest={this.handleOverrideRequest}
+				/>
 				<FullCalendarReact
 					id="calendar"
+					customButtons={{
+						selectDate: {
+							text: 'Month',
+							click: () => {
+								this.currentView = 'month';
+								this.props.handleSendMessage('Select a date to schedule events for that week.', 'info');
+								this.forceUpdate();
+							}
+						}
+					}}
 					header={{
-						left: 'prev, next, today',
+						left: '',
 						center: 'title',
-						right: 'agendaWeek,month,agendaDay,listMonth,listDay,basicWeek'
+						right: 'prev,selectDate,next today'
 					}}
 					defaultDate={(() => {
 						if (this.currentDate)
@@ -72,116 +124,242 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 						else
 							return 'agendaWeek';
 					})()}
-					navLinks={true} // can click day/week names to navigate views
 					editable={true}
 					slotEventOverlap={false}
+					allDaySlot={false}
 					eventOverlap={false}
-					// eventAllow={(dropInfo: any, draggedEvent: any) => {
-					// 	console.log(JSON.stringify(dropInfo));
-					// 	return draggedEvent.title === 'Clinicals';
-					// }}
-					// eventLimit={true} // allow "more" link when too many events
-					// eventLimitClick={'day'}
+					eventLimit={true} // allow "more" link when too many events
+					eventClick={this.handleEventClick}
+					dayClick={(date: any) => {
+						if (this.currentView === 'month') {
+							this.currentDate = date;
+							this.currentView = 'agendaWeek';
+							this.forceUpdate();
+						}
+					}}
 					events={this.getStateEventsAsArray()}
+					eventTextColor="white"
 					eventDrop={(event: Event, delta: Duration) => this.editEvent(event, delta)}
 					eventResize={(event: Event, delta: Duration) => this.editEvent(event, delta)}
-					// eventAfterRender={(event: any, element: any) => {
-					// 	console.log(event.start);
-					// 	// console.log(element.start);
-					// }}
-					height={'auto'}
+					height={() => {
+						if (this.currentView === 'month')
+							return 700;
+
+						return 'auto';
+					}}
+					aspectRatio={1}
+					selectMinDistance={10}
 					snapDuration={'00:15:00'}
 					slotDuration={'00:30:00'}
-					// scrollTime={'24:00:00'}
-					// minTime={'03:00:00'}
-					// maxTime={'27:00:00'}
+					scrollTime={'6:00:00'}
+					minTime={'06:00:00'}
+					maxTime={'30:00:00'}
 					selectable={true}
 					selectOverlap={false}
 					selectHelper={true}
 					viewRender={(view: any) => this.cacheViewAndDate(view)}
 					firstDay={1}
-					select={(start: any, end: any, jsEvent: any, view: any) => {
-						let promptResult: string | null = prompt('Enter Title');
-						let title: string = '';
-						if (promptResult !== null)
-							title = promptResult;
-						else {
-							this.forceUpdate();
-							return;
-						}
-
-						let index: number = Object.keys(this.state.events).length;
-						let events = this.cloneStateEvents();
-
-						events[index] = { id: index, title: title, start: start, end: end };
-						this.setState({ events: events });
-					}}
+					select={this.handleCalendarSelect}
 				/>
 			</div>
 		);
 	}
 
-	// Client Events
-	getStateFromDB(): void {
+	// Event Modals //////////////////////////////////////////////////////////////////////////////////
+	handleCalendarSelect = (start: moment.Moment, end: Moment, jsEvent: any, view: any) => {
+		// Don't allow events to be created in month view
+		if (this.currentView === 'month')
+			return;
+
+		// Don't allow events to be less than x minutes
+		if (moment.duration(end.diff(start)).asMinutes() < 30)
+			end = start.clone().add({ minutes: 30 });
+
+		// create a placeholder event for when modal is displayed
+		// closing modal will remove this placeholder
+		let events = this.cloneStateEvents();
+		events.set(Number.MAX_SAFE_INTEGER, {
+			id: Number.MAX_SAFE_INTEGER,
+			title: 'New Event',
+			description: 'modal placeholder',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			cwid: 0,
+			ownerName: '',
+			groups: [],
+			pendingOverride: false
+		});
+		this.setState({ events: events, showCreateModal: true });
+	}
+
+	handleEventCreation = (title: string, description: string, groups: string[]) => {
+		let events: Map<number, Event> = this.cloneStateEvents();
+		let index = this.getNextEventIndex();
+		let placeholder = events.get(Number.MAX_SAFE_INTEGER);
+		if (placeholder)
+			events.set(index, {
+				id: index,
+				title: title,
+				description: description,
+				start: placeholder.start,
+				end: placeholder.end,
+				cwid: this.props.cwid,
+				ownerName: '',
+				groups: groups,
+				pendingOverride: false
+			});
+
+		this.setState({ events: events }, () => this.closeEventCreationModal());
+	}
+
+	closeEventCreationModal = () => {
+		this.setState({ showCreateModal: false });
+		let events = this.cloneStateEvents();
+		let placeholder = events.get(Number.MAX_SAFE_INTEGER);
+		if (placeholder && Number(placeholder.id) === Number.MAX_SAFE_INTEGER &&
+			placeholder.description === 'modal placeholder') {
+			events.delete(Number.MAX_SAFE_INTEGER);
+			this.setState({ events: events });
+		}
+	}
+
+	handleEventModify = (eventID: number, title: string, description: string, groups: string[]) => {
+		let events = this.cloneStateEvents();
+		let eventToModify = events.get(eventID);
+		if (eventToModify) {
+			eventToModify.title = title;
+			eventToModify.description = description;
+			eventToModify.groups = groups;
+			events.set(eventID, eventToModify);
+			this.setState({ events: events });
+		}
+	}
+
+	handleEventDeletion = (eventID: number) => {
+		let events = this.cloneStateEvents();
+		events.delete(eventID);
+		this.setState({ events: events });
+	}
+
+	handleEventClick = (event: any, jsEvent: any, view: any) => {
+		let events = this.cloneStateEvents();
+		let clickedEvent: Event | undefined = events.get(event.id);
+		if (clickedEvent && Number(clickedEvent.cwid) === Number(this.props.cwid))
+			this.openEditEventModal(clickedEvent.id, clickedEvent.title, clickedEvent.description, clickedEvent.groups);
+		else if (clickedEvent)
+			this.openUnownedEventModal(clickedEvent);
+	}
+
+	openEditEventModal = (eventID: number, title: string, description: string, groups: string[]) => {
+		if (this.editEventModal)
+			this.editEventModal.beginEdit(eventID, title, description, groups);
+	}
+
+	openUnownedEventModal = (event: Event) => {
+		if (this.unownedEventModal)
+			this.unownedEventModal.beginEdit(event);
+	}
+
+	handleOverrideRequest = (eventID: number) => {
+		let events: Map<number, Event> = this.cloneStateEvents();
+		let eventWithRequest: Event | undefined = events.get(eventID);
+		if (eventWithRequest) {
+			eventWithRequest.pendingOverride = true;
+			events.set(eventID, eventWithRequest);
+			this.setState({ events: events });
+		}
+	}
+
+	// Client Events //////////////////////////////////////////////////////////////////////////////////////////////
+	public getStateFromDB(): void {
 		let queryData: {} = {
 			where: {
-				RoomName: ['"' + this.props.room + '"']
+				RoomName: this.props.room,
+				LocationName: this.props.location
 			}
 		};
 		let queryDataString = JSON.stringify(queryData);
-		request.get('/api/events').set('queryData', queryData).end((error: {}, res: any) => {
-			if (res && res.body)
-				this.setState({ events: this.parseDBEventsAsMap(res.body) });
+		request.get('/api/eventswithrelations').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (res && res.body) {
+				this.setState({ events: this.parseDBEvents(res.body) });
+				console.log(res.body);
+			}
 		});
 	}
 
-	cloneStateEvents(): Event[] {
-		let events: Event[] = [];
-		for (const key in this.state.events) {
-			if (this.state.events.hasOwnProperty(key))
-				events.push(this.state.events[key]);
-		}
+	cloneStateEvents = (): Map<number, Event> => {
+		let events: Map<number, Event> = new Map<number, Event>();
+		Array.from(this.state.events.keys()).forEach(key => {
+			let event = this.state.events.get(key);
+			if (event)
+				events.set(key, event);
+		});
 
 		return events;
 	}
 
-	editEvent(event: Event, delta: Duration): void {
-		let newEvent: Event = event;
-		newEvent.id = event.id;
-		newEvent.title = event.title;
-		newEvent.start = event.start;
-		newEvent.end = event.end;
-		let index: number = event.id;
-		let events = this.state.events;
-		events[index] = newEvent;
+	getNextEventIndex = () => {
+		let index: number = 0;
+		Array.from(this.state.events.keys()).forEach(key => {
+			key = Number(key);
+			if (key >= index && key !== Number.MAX_SAFE_INTEGER)
+				index = key + 1;
+		});
 
+		return index;
+	}
+
+	editEvent(event: Event, delta: Duration): void {
+		// prevent event from being edited to less than 30 minutes in duration
+		let start: Moment = moment(event.start);
+		let end: Moment = moment(event.end);
+		if (moment.duration(end.diff(start)).asMinutes() < 30)
+			end = start.clone().add({ minutes: 30 });
+
+		let editedEvent: Event = event;
+		editedEvent.id = event.id;
+		editedEvent.title = event.title;
+		editedEvent.start = start.toISOString();
+		editedEvent.end = end.toISOString();
+		let index: number | string = event.id;
+		let events = this.cloneStateEvents();
+
+		events.set(index, editedEvent);
 		this.setState({ events: events });
 	}
 
 	getStateEventsAsArray(): Event[] {
-		let events: Event[] = [];
-		for (const key in this.state.events) {
-			if (this.state.events.hasOwnProperty(key)) {
-				const event = this.state.events[key];
-				events.push(event);
-			}
-		}
-
-		return events;
+		return Array.from(this.state.events.values());
 	}
 
-	parseDBEventsAsMap(body: any): { number: Event } | {} {
-		let parsedEvents: { number: Event } | {} = {};
+	parseDBEvents(body: any): Map<number, Event> {
+		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
+			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid);
+			let color = '';
+			let borderColor = '';
 
-			let parsedEvent: Event = {
+			if (!userOwnsEvent) {
+				borderColor = 'rgba(255,255,255,.4)';
+				color = 'rgba(0,123,255,.6)';
+			}
+
+			let parsedEvent: any = {
 				id: event.EventID,
 				title: event.Title,
+				description: event.Description,
 				start: event.StartTime,
 				end: event.EndTime,
+				cwid: event.CWID,
+				ownerName: event.OwnerName,
+				groups: event.Groups,
+				pendingOverride: event.PendingOverride,
+				color: color,
+				borderColor: borderColor,
+				editable: userOwnsEvent
 			};
 
-			parsedEvents[event.EventID] = (parsedEvent);
+			parsedEvents.set(event.EventID, parsedEvent);
 		}
 
 		return parsedEvents;
@@ -189,36 +367,133 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 	// Event Persistence /////////////////////////////////////////////////////////////////////////////////////////////////
 	persistStateToDB(): void {
-		this.getStateEventsThatAreAlreadyInDB().then((eventsInDB) => {
-			this.persistExistingEventsToDB(eventsInDB).then(() => {
-				let eventsNotInDB = this.getStateEventsNotYetInDB(eventsInDB);
-				this.persistNewEventsToDB(eventsNotInDB);
+		let persistPromises: Promise<any>[] = [];
+
+		persistPromises.push(this.deleteDBEventsNotInClient());
+
+		persistPromises.push(new Promise((resolve, reject) => {
+			this.getClientEventIDsThatAreAlreadyInDB().then((eventIDsInDB) => {
+				this.updateExistingEventsInDB(eventIDsInDB).then(() => {
+					let eventsNotInDB = this.getClientEventsNotYetInDB(eventIDsInDB);
+					this.persistNewEventsToDB(eventsNotInDB).then(() => resolve()).catch(() => reject());
+				}).catch(() => reject());
+			}).catch(() => reject());
+		}));
+
+		Promise.all(persistPromises).then(() => {
+			// TODO: make this asynchronous
+			this.props.handleSendMessage('Changes saved successfully!', 'success');
+		}).catch(() => {
+			this.props.handleSendMessage('Error saving data.', 'error');
+		});
+	}
+
+	getClientEventIDsThatAreAlreadyInDB(): Promise<number[]> {
+		return new Promise((resolve, reject) => {
+			let ids: number[] = Array.from(this.state.events.keys());
+			console.log('CLIENT IDS');
+			console.log(ids);
+
+			let queryData = {
+				fields: ['EventID'], where: {
+					EventID: ids,
+					LocationName: this.props.location,
+					RoomName: this.props.room
+				}
+			};
+			let queryDataString = JSON.stringify(queryData);
+			let stateEventsThatAreAlreadyInDB: number[] = [];
+			request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body) {
+					console.log('GET EVENTS ALREADY IN DB....................');
+					console.log(JSON.stringify(res.body));
+					resolve(this.getEventIdsFromResponseBody(res.body));
+				} else
+					reject();
 			});
 		});
 	}
 
-	persistExistingEventsToDB(eventIDs: number[]): Promise<void> {
+	deleteDBEventsNotInClient(): Promise<any> {
+		return new Promise((resolveOuter, rejectOuter) => {
+			new Promise((resolve, reject) => {
+				let queryData = {
+					fields: 'EventID', where: {
+						LocationName: this.props.location,
+						RoomName: this.props.room
+					}
+				};
+				let queryDataString = JSON.stringify(queryData);
+				request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+					if (res && res.body)
+						resolve(res.body.map((event: any) => { return Number(event.EventID); }));
+				});
+			}).then((allDBEventIDsForRoom: number[]) => {
+				let clientEventIDs: number[] = Array.from(this.state.events.keys()).map(id => { return Number(id); });
+				let eventsIDsToDelete: number[] = [];
+
+				allDBEventIDsForRoom.forEach(id => {
+					if (!clientEventIDs.includes(id))
+						eventsIDsToDelete.push(Number(id));
+				});
+
+				if (eventsIDsToDelete.length > 0) {
+					let queryData = {
+						where: {
+							EventID: eventsIDsToDelete,
+							CWID: Number(this.props.cwid),
+							RoomName: this.props.room,
+							LocationName: this.props.location
+						}
+					};
+					let queryDataString = JSON.stringify(queryData);
+					request.delete('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+						if (res && res.body) {
+							console.log('deleted events, rows affected: ' + res.body);
+							resolveOuter();
+						} else
+							rejectOuter();
+					});
+				} else
+					resolveOuter();
+			}).catch(() => rejectOuter());
+		});
+	}
+
+	updateExistingEventsInDB(eventIDsInDB: number[]): Promise<void> {
 		return new Promise((resolve, reject) => {
+			console.log('PERSIST EXISTING......');
+			console.log(this.state.events);
+
 			let eventsToUpdate: Event[] = [];
-			eventIDs.forEach((id) => {
-				eventsToUpdate.push(this.state.events[id]);
+			eventIDsInDB.forEach((id) => {
+				let eventToUpdate = this.state.events.get(id);
+				console.log(eventToUpdate);
+				if (eventToUpdate && Number(eventToUpdate.cwid) === Number(this.props.cwid))
+					eventsToUpdate.push(eventToUpdate);
+				else
+					console.log('not in client or not matching cwid');
 			});
 
 			eventsToUpdate.forEach((event: Event) => {
 				let queryData = {
+					groups: event.groups,
 					setValues: {
-						'title': event.title,
-						'starttime': event.start,
-						'endtime': event.end
+						'Title': event.title,
+						'Description': event.description,
+						'StartTime': event.start,
+						'EndTime': event.end
 					},
-					where: { EventID: [event.id] }
+					where: { EventID: event.id, RoomName: this.props.room, LocationName: this.props.location }
 				};
 				let queryDataString = JSON.stringify(queryData);
 				request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
 					if (res && res.body) {
-						console.log('updated: ' + res.body);
-					} else
+						console.log('updated id: ' + event.id + ', ' + event.title + ', ' + event.description);
+					} else {
+						console.log('failed update,  id: ' + event.id + ', ' + event.title + ', ' + event.description);
 						reject();
+					}
 				});
 			});
 
@@ -226,71 +501,58 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		});
 	}
 
-	persistNewEventsToDB(events: { number: Event } | {}) {
-		let eventsToCreate: Event[] = [];
-		for (const key in events) {
-			if (events.hasOwnProperty(key))
-				eventsToCreate.push(events[key]);
-		}
-
-		eventsToCreate.forEach((event) => {
-			console.log('creating event:');
-			console.log(event);
-			let queryData = {
-				insertValues: {
-					'eventID': event.id,
-					'roomName': 'Room 1',
-					'title': event.title,
-					'description': '', // TODO: request this from user
-					'starttime': event.start,
-					'endtime': event.end
-				}
-			};
-			let queryDataString = JSON.stringify(queryData);
-			request.put('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-				if (res && res.body)
-					console.log('created: ' + res.body);
-			});
-		});
-	}
-
-	getStateEventsNotYetInDB(alreadyInDB: number[]): { number: Event } | {} {
-		let stateEventsNotYetInDB: { number: Event } | {} = this.cloneStateEvents();
-
-		console.log('state: ');
-		console.log(stateEventsNotYetInDB);
-		console.log('already there: ');
-		console.log(alreadyInDB);
+	getClientEventsNotYetInDB(alreadyInDB: number[]): Event[] {
+		console.log('GET STATE EVENTS NOT YET IN DB..................');
+		let clientEventsNotInDBMap: Map<number, Event> = this.cloneStateEvents();
 		alreadyInDB.forEach((id) => {
-			console.log('deleting: ' + id);
-			delete stateEventsNotYetInDB[id];
+			clientEventsNotInDBMap.delete(id);
 		});
 
-		return stateEventsNotYetInDB;
+		console.log(Array.from(clientEventsNotInDBMap.keys()));
+		let clientEventsNotYetInDB: Event[] = Array.from(clientEventsNotInDBMap.values());
+		return clientEventsNotYetInDB;
 	}
 
-	getStateEventsThatAreAlreadyInDB(): Promise<number[]> {
-		return new Promise((resolve, reject) => {
-			let ids: number[] = [];
-			for (const key in this.state.events) {
-				if (this.state.events.hasOwnProperty(key)) {
-					ids.push(parseInt(key, 10));
-				}
-			}
-
-			console.log('state: ');
-			console.log(this.state.events);
-			console.log('supposed to be all keys:');
-			console.log(ids);
-			let queryData = { fields: ['EventID'], where: { EventID: ids } };
-			let queryDataString = JSON.stringify(queryData);
-			let stateEventsThatAreAlreadyInDB: number[] = [];
-			request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-				if (res && res.body)
-					resolve(this.getEventIdsFromResponseBody(res.body));
-				else
-					reject();
+	persistNewEventsToDB(events: Event[]): Promise<any> {
+		return new Promise((resolveOuter, rejectOuter) => {
+			let eventsToCreate: Event[] = [];
+			console.log('PERSISTING NEW EVENTS........');
+			console.log(events);
+			events.forEach(event => {
+				eventsToCreate.push(event);
 			});
+
+			let persistNewEventsPromises: Promise<any>[] = [];
+
+			eventsToCreate.forEach((event) => {
+				persistNewEventsPromises.push(new Promise((resolve, reject) => {
+					console.log('persisting new event:');
+					console.log(event);
+					let queryData = {
+						groups: event.groups,
+						insertValues: {
+							'CWID': this.props.cwid,
+							'EventID': event.id,
+							'LocationName': this.props.location,
+							'RoomName': this.props.room,
+							'Title': event.title,
+							'Description': event.description,
+							'StartTime': event.start,
+							'EndTime': event.end
+						}
+					};
+					let queryDataString = JSON.stringify(queryData);
+					request.put('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+						if (res && res.body) {
+							resolve();
+							console.log('created: ' + JSON.stringify(res.body));
+						} else
+							reject();
+					});
+				}));
+			});
+
+			Promise.all(persistNewEventsPromises).then(() => resolveOuter()).catch(() => rejectOuter());
 		});
 	}
 
@@ -308,7 +570,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		this.currentView = view.name;
 		if (!this.currentDate)
 			this.currentDate = view.intervalStart;
-		if (this.currentDate.isBefore(view.intervalStart) || this.currentDate.isAfter(view.intervalEnd)) {
+		if (this.currentDate.isBefore(view.intervalStart) || this.currentDate.isAfter(view.intervalEnd.subtract(1, 'minutes'))) {
 			this.currentDate = view.intervalStart;
 			this.smallestTimeInterval = view.intervalEnd - view.intervalStart;
 		}

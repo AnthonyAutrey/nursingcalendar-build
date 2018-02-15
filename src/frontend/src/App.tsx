@@ -1,24 +1,72 @@
 import * as React from 'react';
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { Login } from './Login/Login';
+import { NavigationBar } from './Navigation/NavigationBar';
 import { Scheduler } from './Scheduler/Scheduler';
-import './App.css';
+import { ViewingCalendar } from './Home/ViewingCalendar';
+const request = require('superagent');
 
-class App extends React.Component<{}, {}> {
+interface State {
+	sessionRetreived: boolean;
+	cwid?: number;
+	role?: string;
+}
 
-	constructor(props: {}) {
-		super(props);
+class App extends React.Component<{}, State> {
 
-		this.state = { events: {} };
+	constructor(props: {}, state: State) {
+		super(props, state);
+
+		this.state = { sessionRetreived: false };
+	}
+
+	componentWillMount() {
+		this.getSession();
 	}
 
 	render() {
+		if (!this.state.sessionRetreived)
+			return null;
+
+		if (!(this.state.cwid && this.state.role))
+			return <Login handleLogin={this.handleLogin} />;
+
 		return (
 			<div className="App">
-				<header className="App-header">
-					<h1 className="App-title">Nursing Scheduler</h1>
-				</header>
-				<Scheduler />
+				<NavigationBar handleLogout={this.handleLogout} />
+				<Router>
+					<Switch>
+						<Route path="/" exact={true} component={ViewingCalendar} />
+						<Route path="/schedule" component={Scheduler} />
+						<Route component={() => <div>404</div>} />
+					</Switch>
+				</Router>
 			</div>
 		);
+	}
+
+	getSession = () => {
+		request.get('/api/session').end((error: {}, res: any) => {
+			if (res && res.body) {
+				this.setState({ sessionRetreived: true });
+				if (res.body.cwid && res.body.role)
+					this.setState({ cwid: res.body.cwid, role: res.body.role });
+			} else {
+				// TODO: handle failed session request
+				alert('failed?');
+			}
+		});
+	}
+
+	handleLogin = () => {
+		this.getSession();
+		this.forceUpdate();
+	}
+
+	handleLogout = () => {
+		request.get('/api/logout').end((error: {}, res: any) => {
+			this.setState({ cwid: undefined, role: undefined });
+		});
 	}
 }
 
