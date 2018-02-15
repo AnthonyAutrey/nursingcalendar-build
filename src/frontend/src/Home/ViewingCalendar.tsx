@@ -74,9 +74,9 @@ export class ViewingCalendar extends React.Component<{}, State> {
 					eventTextColor="white"
 					// eventDrop={(event: Event, delta: Duration) => this.editEvent(event, delta)}
 					// eventResize={(event: Event, delta: Duration) => this.editEvent(event, delta)}
-					height={700}
-					// height={() => {
-					// 	if (this.currentView === 'month')
+					height={'auto'}
+					// height={(view: any, x: any) => {
+					// 	if (x === 'month')
 					// 		return 700;
 
 					// 	return 'auto';

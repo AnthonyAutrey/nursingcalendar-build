@@ -1,7 +1,11 @@
 import * as React from 'react';
 
-export class NavigationBar extends React.Component<{}, {}> {
-	constructor(props: {}, state: {}) {
+interface Props {
+	handleLogout: any;
+}
+
+export class NavigationBar extends React.Component<Props, {}> {
+	constructor(props: Props, state: {}) {
 		super(props, state);
 	}
 
@@ -30,16 +34,27 @@ export class NavigationBar extends React.Component<{}, {}> {
 				</button>
 				<div className="collapse navbar-collapse" id="navbar">
 					<ul className="navbar-nav mt-2 mt-lg-0">
-						<li className="nav-item active">
-							<a className="nav-link" href="/">Home <span className="sr-only">(current)</span></a>
+						<li className="nav-item ml-2">
+							<a className="nav-link" href="/schedule">
+								<span className=" oi oi-pencil" />
+								&nbsp;
+								Schedule Events
+							</a>
 						</li>
 						<li className="nav-item">
-							<a className="nav-link" href="/schedule">Schedule Events</a>
+							<a className="nav-link disabled" href="#">
+								<span className=" oi oi-clipboard" />
+								&nbsp;
+								Manage Classes
+							</a>
 						</li>
 						<li className="nav-item">
-							<a className="nav-link disabled" href="#">Manage Classes</a>
+							<a className="nav-link" href="/" onClick={this.props.handleLogout}>
+								<span className=" oi oi-account-logout" />
+								&nbsp;
+								Logout
+							</a>
 						</li>
-
 					</ul>
 					<ul className="nav nav-pills mt-2 mt-lg-0 ml-auto">
 						<li className="nav-item dropdown">

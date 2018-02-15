@@ -16,6 +16,56 @@ $config = [
 
 $app = new \Slim\App($config);
 
+// Authentication Routes //////////////////////////////////////////////////////////////////////////////////////////////////
+
+$app->post('/login', function (Request $request, Response $response, array $args) {
+	session_start();
+	$queryData = json_decode($request->getHeader('queryData')[0]);
+
+	if(!isset($queryData->cwid))
+		return $response->withStatus(400);
+	else if (!isset($queryData->pin))
+		return $response->withStatus(400);
+	else {
+		$cwid = $queryData->cwid;
+		$pin = $queryData->pin;
+	}
+
+	// TODO: actually check LDAP, I guess.
+	if (true) {
+		$result = json_encode(['authenticated' => true]);
+		$response->getBody()->write($result);
+		$_SESSION["cwid"] = $cwid;
+		$_SESSION["role"] = 'admin';
+	} else
+		session_destroy();
+
+	$response = $response->withHeader('Content-type', 'application/json');
+    return $response;
+});
+
+$app->get('/logout', function (Request $request, Response $response, array $args) {
+	session_start();
+	session_destroy();
+	
+	$response->getBody()->write("Successfully logged out.");
+	return $response;
+});
+
+$app->get('/session', function (Request $request, Response $response, array $args) {
+	session_start();
+
+	if (isset($_SESSION))
+		$session = json_encode($_SESSION);
+	else 
+		$session = json_encode([]);		
+
+	$response->getBody()->write($session);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+});
+
+
 // Event Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //TODO: remove this example route

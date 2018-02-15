@@ -54,7 +54,7 @@ export class ViewEventModal extends React.Component<Props, State> {
 		if (this.state.event.groups.length > 0)
 			groupString[groupString.length - 1] = groupString[groupString.length - 1].slice(0, groupString[groupString.length - 1].length - 2) + '.';
 		else
-			groupString = ['No groups assigned'];
+			groupString = ['No groups assigned.'];
 
 		return (
 			<div style={backdropStyle}>
@@ -69,15 +69,19 @@ export class ViewEventModal extends React.Component<Props, State> {
 							</button>
 						</div>
 						<div className="modal-body pb-0 mb-0">
+							<div className="d-flex align-items-end">
+								<div className="font-weight-bold mb-0 mr-2">
+									Location:
+								</div>
+								<div className="mb-0">
+									{this.state.event.location + ', ' + this.state.event.room}
+								</div>
+							</div>
+							<hr />
 							<div className="form-group text-left">
-								<label className="font-weight-bold">Owner:</label>
+								<label className="font-weight-bold">Created By:</label>
 								<br />
 								{this.state.event.ownerName}
-							</div>
-							<div className="form-group text-left">
-								<label className="font-weight-bold">Location:</label>
-								<br />
-								{this.state.event.location + ', ' + this.state.event.room}
 							</div>
 							<div className="form-group text-left">
 								<label className="font-weight-bold">Description:</label>
@@ -90,29 +94,11 @@ export class ViewEventModal extends React.Component<Props, State> {
 								{groupString}
 							</div>
 						</div>
-						{/* <div className="modal-footer">
-							<div className="container-fluid m-0 p-0">
-								<div className="d-flex flex-wrap">
-									<div className="mr-auto">
-										{pendingOverrideMessage}
-										<button
-											// disabled={this.state.event.pendingOverride || !this.state.showRequestForm }
-											hidden={this.state.showRequestForm || this.state.event.pendingOverride}
-											type="button"
-											className="btn btn-danger"
-											onClick={this.showRequestForm}
-										>
-											<span className=" oi oi-loop" />
-											<span>&nbsp;&nbsp;</span>
-											Request This Timeslot
-										</button>
-									</div>
-									<div className="mr-0">
-										<button tabIndex={3} type="button" className="btn btn-primary" onClick={this.close}>Close</button>
-									</div>
-								</div>
+						<div className="modal-footer" >
+							<div className="mr-0">
+								<button tabIndex={3} type="button" className="btn btn-primary" onClick={this.close}>Close</button>
 							</div>
-						</div> */}
+						</div>
 					</div>
 				</div>
 			</div>
