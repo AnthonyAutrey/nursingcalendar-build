@@ -60,8 +60,8 @@ export class Scheduler extends React.Component<{}, State> {
 								handleSendMessage={this.handleCalendarMessage}
 								room={'Room 1'}
 								location="Nursing Building"
-								cwid={99999999}
-							// cwid={17700946}
+								// cwid={99999999}
+								cwid={17700946}
 							/>
 						</div>
 					</div>

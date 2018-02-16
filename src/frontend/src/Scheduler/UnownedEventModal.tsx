@@ -46,10 +46,17 @@ export class UnownedEventModal extends React.Component<Props, State> {
 		if (!this.state.event)
 			return null;
 
+		let descriptionString = this.state.event.description;
+		if (this.state.event.description === '')
+			descriptionString = 'No description.';
+
 		let groupString: string[] = this.state.event.groups.map(event => {
 			return event + ', ';
 		});
-		groupString[groupString.length - 1] = groupString[groupString.length - 1].slice(0, groupString[groupString.length - 1].length - 2) + '.';
+		if (this.state.event.groups.length > 0)
+			groupString[groupString.length - 1] = groupString[groupString.length - 1].slice(0, groupString[groupString.length - 1].length - 2) + '.';
+		else
+			groupString = ['No groups assigned.'];
 
 		let requestForm = null;
 		if (this.state.showRequestForm && !this.state.event.pendingOverride)
@@ -102,7 +109,7 @@ export class UnownedEventModal extends React.Component<Props, State> {
 							<div className="form-group text-left">
 								<label className="font-weight-bold">Description:</label>
 								<br />
-								{this.state.event.description}
+								{descriptionString}
 							</div>
 							<div className="form-group text-left">
 								<label className="font-weight-bold">Relevant Groups:</label>
@@ -117,7 +124,6 @@ export class UnownedEventModal extends React.Component<Props, State> {
 									<div className="mr-auto">
 										{pendingOverrideMessage}
 										<button
-											// disabled={this.state.event.pendingOverride || !this.state.showRequestForm }
 											hidden={this.state.showRequestForm || this.state.event.pendingOverride}
 											type="button"
 											className="btn btn-danger"
