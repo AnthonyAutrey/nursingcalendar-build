@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Room } from './Scheduler';
+import { RoomButton } from './RoomButton';
 const uuid = require('uuid/v4');
 
 interface Props {
@@ -16,9 +17,8 @@ export class RoomSelector extends React.Component<Props, {}> {
 	}
 
 	render() {
-		let buttons = this.props.rooms.map(room => {
-			let roomName = room.locationName + ' - ' + room.roomName;
-			return <button className="btn-primary btn-block" key={uuid()} onClick={function() {return 1; }}>{roomName}</button>; });
+		let buttons = this.props.rooms.map(thisRoom => {
+			return <RoomButton key={uuid()} room={thisRoom} />; });
 		return (
 			<div>{buttons}</div>
 		);
