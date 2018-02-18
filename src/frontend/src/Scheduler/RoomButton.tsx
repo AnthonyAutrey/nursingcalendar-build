@@ -3,35 +3,34 @@ import { Room } from './Scheduler';
 
 interface Props {
 	room: Room;
-}
-
-interface State {
+	index: number;
 	isSelected: boolean;
+	handleUpdateSelectedRoom: Function;
 }
 
-export class RoomButton extends React.Component<Props, State> {
-	constructor(props: Props, state: State) {
-		super(props, state);
-		this.state = {
-			isSelected: false
-		};
+export class RoomButton extends React.Component<Props, {}> {
+	constructor(props: Props) {
+		super(props);
 	}
 	render() {
-		let updateState = () => this.updateButtonState();
-		if (this.state.isSelected)
+		let buttonIndex = this.props.index;
+		if (this.props.isSelected)
 			return (
-			<button className="btn-primary btn-block" onClick={updateState}>
-			{this.props.room.locationName + '-' + this.props.room.roomName}<br/>
-			Capacity: {this.props.room.capacity}<br />
-			Resources: {}</button>
+			<button className="btn-primary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
+			{this.props.room.locationName + ' - ' + this.props.room.roomName}<br/>
+			Capacity: {this.props.room.capacity}<br/>
+			Resources: {this.props.room.resources.map(resource => {
+				if (resource.count == null)
+					return (<div>{resource.name}<br/></div>);
+				else
+					return (<div>{resource.count + ' ' + resource.name}<br/></div>);
+			})}
+			Index (for testing): {this.props.index}</button>
 			);
 		else
-			return <button className="btn-secondary btn-block" onClick={updateState}>{this.props.room.locationName + '-' + this.props.room.roomName}</button>;
-	}
-	updateButtonState() {
-		if (this.state.isSelected)
-			this.setState({isSelected: false});
-		else
-			this.setState({isSelected: true});
+			return (
+				<button className="btn-secondary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
+				{this.props.room.locationName + ' - ' + this.props.room.roomName}
+				</button>);
 	}
 }

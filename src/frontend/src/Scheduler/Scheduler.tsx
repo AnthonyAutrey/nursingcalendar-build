@@ -37,6 +37,8 @@ export class Scheduler extends React.Component<{}, State> {
 	}
 
 	render() {
+		let handleUpdateSelectedRoom = (index: number) => {this.handleUpdateSelectedRoom(index); };
+		let selectedRoom = this.state.selectedRoom;
 		return (
 			<div>
 				<button className="btn btn-primary" onClick={() => this.persistEventsToDB()}>Persist To DB</button>
@@ -44,7 +46,7 @@ export class Scheduler extends React.Component<{}, State> {
 					<div className="row">
 						<div className="col-3">
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
-							<RoomSelector rooms={this.state.rooms} selectedRoom={0}/>
+							<RoomSelector rooms={this.state.rooms} selectedRoom={selectedRoom} handleUpdateSelectedRoom={handleUpdateSelectedRoom}/>
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar room={'Room 1'} ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
@@ -128,6 +130,12 @@ export class Scheduler extends React.Component<{}, State> {
 	persistEventsToDB() {
 		if (this.schedulerCalendar)
 			this.schedulerCalendar.persistStateToDB();
+	}
+
+	// Handling Selected Room ///////////////////////////////////////////////////////////////////////////////////////////////////////
+	handleUpdateSelectedRoom(index: number) {
+		if (this.state.selectedRoom !== index)
+		this.setState({selectedRoom: index});
 	}
 }
 
