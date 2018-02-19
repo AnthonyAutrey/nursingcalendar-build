@@ -3,6 +3,7 @@ import { CSSProperties } from 'react';
 import { SchedulerCalendar } from './SchedulerCalendar';
 import { RoomFilter } from './RoomFilter';
 import { Toolbar } from './Toolbar';
+import { RoomSelector } from './RoomSelector';
 const request = require('superagent');
 
 interface State {
@@ -12,7 +13,7 @@ interface State {
 	toolbarStatus?: 'error' | 'success';
 }
 
-interface Room {
+export interface Room {
 	locationName: string;
 	roomName: string;
 	capacity: number;
@@ -42,10 +43,11 @@ export class Scheduler extends React.Component<{}, State> {
 	}
 
 	render() {
-
 		let bottomSpacerStyle: CSSProperties = {
 			height: 80
 		};
+		let handleUpdateSelectedRoom = (index: number) => { this.handleUpdateSelectedRoom(index); };
+		let selectedRoom = this.state.selectedRoom;
 
 		return (
 			<div>
@@ -53,6 +55,7 @@ export class Scheduler extends React.Component<{}, State> {
 					<div className="row">
 						<div className="col-3">
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
+							<RoomSelector rooms={this.state.rooms} selectedRoom={selectedRoom} handleUpdateSelectedRoom={handleUpdateSelectedRoom} />
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar
@@ -161,6 +164,12 @@ export class Scheduler extends React.Component<{}, State> {
 	persistEventsToDB = () => {
 		if (this.schedulerCalendar)
 			this.schedulerCalendar.persistStateToDB();
+	}
+
+	// Handling Selected Room ///////////////////////////////////////////////////////////////////////////////////////////////////////
+	handleUpdateSelectedRoom(index: number) {
+		if (this.state.selectedRoom !== index)
+			this.setState({ selectedRoom: index });
 	}
 }
 
