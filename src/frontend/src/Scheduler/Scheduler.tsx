@@ -37,7 +37,7 @@ export class Scheduler extends React.Component<{}, State> {
 	}
 
 	render() {
-		let handleUpdateSelectedRoom = (index: number) => {this.handleUpdateSelectedRoom(index); };
+		let handleUpdateSelectedRoom = (index: number) => { this.handleUpdateSelectedRoom(index); };
 		let selectedRoom = this.state.selectedRoom;
 		return (
 			<div>
@@ -46,7 +46,7 @@ export class Scheduler extends React.Component<{}, State> {
 					<div className="row">
 						<div className="col-3">
 							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
-							<RoomSelector rooms={this.state.rooms} selectedRoom={selectedRoom} handleUpdateSelectedRoom={handleUpdateSelectedRoom}/>
+							<RoomSelector rooms={this.state.rooms} selectedRoom={selectedRoom} handleUpdateSelectedRoom={handleUpdateSelectedRoom} />
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar room={'Room 1'} ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }} />
@@ -135,7 +135,7 @@ export class Scheduler extends React.Component<{}, State> {
 	// Handling Selected Room ///////////////////////////////////////////////////////////////////////////////////////////////////////
 	handleUpdateSelectedRoom(index: number) {
 		if (this.state.selectedRoom !== index)
-		this.setState({selectedRoom: index});
+			this.setState({ selectedRoom: index });
 	}
 }
 

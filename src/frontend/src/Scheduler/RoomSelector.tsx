@@ -12,17 +12,21 @@ interface Props {
 export class RoomSelector extends React.Component<Props, {}> {
 
 	constructor(props: Props, state: {}) {
-		super(props);
+		super(props, state);
 	}
 
 	render() {
-		let handleUpdateSelectedRoom = (index: number) => {this.props.handleUpdateSelectedRoom(index); };
-		let buttons = this.props.rooms.map((thisRoom, index) => {
-			if (index === this.props.selectedRoom)
-				return <RoomButton key={uuid()} room={thisRoom} index={index} isSelected={true} handleUpdateSelectedRoom={handleUpdateSelectedRoom}/>;
-			else
-				return <RoomButton key={uuid()} room={thisRoom} index={index} isSelected={false} handleUpdateSelectedRoom={handleUpdateSelectedRoom}/>;
-			});
+		let handleUpdateSelectedRoom = (index: number) => { this.props.handleUpdateSelectedRoom(index); };
+		let buttons = this.props.rooms.map((room, index) => {
+			return (
+				<RoomButton
+					key={uuid()}
+					room={room}
+					index={index}
+					isSelected={index === this.props.selectedRoom}
+					handleUpdateSelectedRoom={handleUpdateSelectedRoom}
+				/>);
+		});
 		return (
 			<div>{buttons}</div>
 		);

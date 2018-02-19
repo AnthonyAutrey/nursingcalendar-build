@@ -14,23 +14,26 @@ export class RoomButton extends React.Component<Props, {}> {
 	}
 	render() {
 		let buttonIndex = this.props.index;
-		if (this.props.isSelected)
-			return (
-			<button className="btn-primary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
-			{this.props.room.locationName + ' - ' + this.props.room.roomName}<br/>
-			Capacity: {this.props.room.capacity}<br/>
-			Resources: {this.props.room.resources.map(resource => {
-				if (resource.count == null)
-					return (<div>{resource.name}<br/></div>);
-				else
-					return (<div>{resource.count + ' ' + resource.name}<br/></div>);
-			})}
-			Index (for testing): {this.props.index}</button>
+		let button = (
+			<button className="btn btn-primary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
+				{this.props.room.locationName + ' - ' + this.props.room.roomName}<br />
+				Capacity: {this.props.room.capacity}<br />
+				Resources: {this.props.room.resources.map(resource => {
+					if (resource.count == null)
+						return (<div>{resource.name}<br /></div>);
+					else
+						return (<div>{resource.count + ' ' + resource.name}<br /></div>);
+				})}
+			</button>
+		);
+
+		if (!this.props.isSelected)
+			button = (
+				<button className="btn btn-secondary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
+					{this.props.room.locationName + ' - ' + this.props.room.roomName}
+				</button>
 			);
-		else
-			return (
-				<button className="btn-secondary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
-				{this.props.room.locationName + ' - ' + this.props.room.roomName}
-				</button>);
+
+		return button;
 	}
 }
