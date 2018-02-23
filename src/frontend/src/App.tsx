@@ -31,13 +31,17 @@ class App extends React.Component<{}, State> {
 		if (!(this.state.cwid && this.state.role))
 			return <Login handleLogin={this.handleLogin} />;
 
+		let cwid: number = this.state.cwid || 0;
+
 		return (
 			<div className="App">
 				<NavigationBar handleLogout={this.handleLogout} />
 				<Router>
 					<Switch>
 						<Route path="/" exact={true} component={ViewingCalendar} />
-						<Route path="/schedule" component={Scheduler} />
+						<Route path="/schedule" >
+							<Scheduler cwid={cwid} />
+						</Route>
 						<Route component={() => <div>404</div>} />
 					</Switch>
 				</Router>

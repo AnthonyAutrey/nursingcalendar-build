@@ -6,6 +6,10 @@ import { Toolbar } from './Toolbar';
 import { RoomSelector } from './RoomSelector';
 const request = require('superagent');
 
+interface Props {
+	cwid: number;
+}
+
 interface State {
 	rooms: Room[];
 	toolbarMessage: string;
@@ -26,13 +30,13 @@ export interface RoomFilters {
 	resources: { name: string, min?: number }[];
 }
 
-export class Scheduler extends React.Component<{}, State> {
+export class Scheduler extends React.Component<Props, State> {
 	private schedulerCalendar: SchedulerCalendar | null;
 	private roomComponentContainer: any;
 	private allRooms: Room[] = [];
 	private defaultToolbarMessage: string = 'Click and drag to schedule a new event.';
 
-	constructor(props: {}, state: State) {
+	constructor(props: Props, state: State) {
 		super(props, state);
 		this.state = {
 			rooms: [],
@@ -69,8 +73,7 @@ export class Scheduler extends React.Component<{}, State> {
 								handleSendMessage={this.handleCalendarMessage}
 								room={selectedRoomName}
 								location={selectedLocationName}
-								// cwid={99999999}
-								cwid={17700946}
+								cwid={this.props.cwid}
 							/>
 						</div>
 					</div>
