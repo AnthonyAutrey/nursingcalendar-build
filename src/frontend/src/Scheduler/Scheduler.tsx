@@ -8,7 +8,6 @@ const request = require('superagent');
 
 interface State {
 	rooms: Room[];
-	selectedRoom: number;
 	toolbarMessage: string;
 	toolbarStatus?: 'error' | 'success';
 }
@@ -37,18 +36,19 @@ export class Scheduler extends React.Component<{}, State> {
 		super(props, state);
 		this.state = {
 			rooms: [],
-			selectedRoom: 0,
 			toolbarMessage: this.defaultToolbarMessage
 		};
 		this.getAllRoomsFromDB();
 	}
 
 	render() {
+		if (this.state.rooms.length < 1)
+			return null;
+
 		let bottomSpacerStyle: CSSProperties = {
 			height: 80
 		};
-		let handleUpdateSelectedRoom = (index: number) => { this.handleUpdateSelectedRoom(index); };
-		let selectedRoom = this.state.selectedRoom;
+		let selectedRoomName = this.state.rooms[0].roomName;
 
 		return (
 			<div>
@@ -58,15 +58,15 @@ export class Scheduler extends React.Component<{}, State> {
 							<RoomFilter container={this.roomComponentContainer} filterChangeHandler={this.filterChangeHandler} />
 							<RoomSelector
 								rooms={this.state.rooms}
-								selectedRoom={selectedRoom}
-								handleUpdateSelectedRoom={handleUpdateSelectedRoom}
+								selectedRoom={0}
+								handleUpdateSelectedRoom={this.handleUpdateSelectedRoom}
 							/>
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar
 								ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }}
 								handleSendMessage={this.handleCalendarMessage}
-								room={'Room 1'}
+								room={selectedRoomName}
 								location="Nursing Building"
 								// cwid={99999999}
 								cwid={17700946}
@@ -138,14 +138,13 @@ export class Scheduler extends React.Component<{}, State> {
 			if ((!filters.capacity.min || room.capacity === null || Number(room.capacity) >= Number(filters.capacity.min)) &&
 				room.roomName.match(new RegExp(filters.searchText, 'i')) &&
 				this.roomMatchesEveryResource(room, filters.resources) &&
-				(!filters.location || room.locationName === filters.location))
+				(!filters.location || room.locationName === filters.location) &&
+				room !== this.state.rooms[0])
 				filteredRooms.push(room);
 		});
 
-		if (this.state.selectedRoom >= filteredRooms.length)
-			this.setState({ rooms: filteredRooms, selectedRoom: 0 });
-		else
-			this.setState({ rooms: filteredRooms });
+		filteredRooms.unshift(this.state.rooms[0]);
+		this.setState({ rooms: filteredRooms });
 	}
 
 	roomMatchesEveryResource(room: Room, filterResources: { name: string, min?: number }[]): boolean {
@@ -173,9 +172,18 @@ export class Scheduler extends React.Component<{}, State> {
 	}
 
 	// Handling Selected Room ///////////////////////////////////////////////////////////////////////////////////////////////////////
-	handleUpdateSelectedRoom(index: number) {
-		if (this.state.selectedRoom !== index)
-			this.setState({ selectedRoom: index });
+	handleUpdateSelectedRoom = (index: number) => {
+		let rooms = this.state.rooms.slice(0);
+		rooms.splice(index, 1);
+		rooms.sort((a, b) => {
+			if (a.roomName < b.roomName) return -1;
+			if (a.roomName > b.roomName) return 1;
+			return 0;
+		});
+		rooms.unshift(this.state.rooms[index]);
+
+		if (index !== 0)
+			this.setState({ rooms: rooms });
 	}
 }
 
