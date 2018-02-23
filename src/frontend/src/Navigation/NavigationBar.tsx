@@ -15,7 +15,7 @@ export class NavigationBar extends React.Component<Props, {}> {
 	componentWillMount() {
 		this.navLinks.push(
 			<li className="nav-item">
-				<a className="nav-link disabled" href="#">
+				<a className="nav-link" href="/classes">
 					<span className=" oi oi-clipboard" />
 					&nbsp;
 					Manage Classes
@@ -37,7 +37,7 @@ export class NavigationBar extends React.Component<Props, {}> {
 		if (this.props.role === 'administrator')
 			this.navLinks.push(
 				<li className="nav-item ml-2">
-					<a className="nav-link" href="#">
+					<a className="nav-link" href="/administration">
 						<span className=" oi oi-key" />
 						&nbsp;
 					Administration

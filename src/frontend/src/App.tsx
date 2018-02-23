@@ -31,24 +31,20 @@ class App extends React.Component<{}, State> {
 		if (!(this.state.cwid && this.state.role))
 			return <Login handleLogin={this.handleLogin} />;
 
-		let cwid: number = this.state.cwid || 0;
+		// let cwid: number = this.state.cwid || 0;
 
 		return (
 			<div className="App">
 				<NavigationBar role={this.state.role} handleLogout={this.handleLogout} />
 				<Router>
 					<Switch>
-						<Route path="/" exact={true} component={ViewingCalendar} />
-						<Route path="/schedule" >
-							<Scheduler cwid={cwid} />
-						</Route>
-						<Route component={() => <div>404</div>} />
+						{this.getRoutesAvailableToRole()}
 					</Switch>
 				</Router>
 			</div>
 		);
 	}
-
+	// Log in/out //////////////////////////////////////////////////////////////////////////////////////////////////////////
 	getSession = () => {
 		request.get('/api/session').end((error: {}, res: any) => {
 			if (res && res.body) {
@@ -71,6 +67,32 @@ class App extends React.Component<{}, State> {
 		request.get('/api/logout').end((error: {}, res: any) => {
 			this.setState({ cwid: undefined, role: undefined });
 		});
+	}
+
+	// Routes //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	getRoutesAvailableToRole(): JSX.Element[] {
+		let routes: JSX.Element[] = [
+			(<Route path="/" exact={true} component={ViewingCalendar} />),
+			(<Route path="/classes" component={() => <div>Create Manage Classes Component!</div>} />)
+		];
+
+		if (this.state.role === 'instructor' || this.state.role === 'administrator')
+			routes.push(
+				<Route path="/schedule" >
+					<Scheduler cwid={this.state.cwid || 0} />
+				</Route>
+			);
+
+		if (this.state.role === 'administrator')
+			routes.push(
+				<Route path="/administration" exact={true} component={() => <div>Create Admin Component!</div>} />
+			);
+
+		routes.push(
+			<Route component={() => <div>404</div>} />
+		);
+
+		return routes;
 	}
 }
 
