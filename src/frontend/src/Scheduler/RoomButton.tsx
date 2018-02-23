@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Room } from './Scheduler';
+const uuid = require('uuid/v4');
 
 interface Props {
 	room: Room;
@@ -12,17 +13,18 @@ export class RoomButton extends React.Component<Props, {}> {
 	constructor(props: Props) {
 		super(props);
 	}
+
 	render() {
 		let buttonIndex = this.props.index;
-		let button = (
+		let button: JSX.Element = (
 			<button className="btn btn-primary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
 				{this.props.room.locationName + ' - ' + this.props.room.roomName}<br />
 				Capacity: {this.props.room.capacity}<br />
 				Resources: {this.props.room.resources.map(resource => {
 					if (resource.count == null)
-						return (<div>{resource.name}<br /></div>);
+						return (<div key={uuid()}>{resource.name}<br /></div>);
 					else
-						return (<div>{resource.count + ' ' + resource.name}<br /></div>);
+						return (<div key={uuid()}>{resource.count + ' ' + resource.name}<br /></div>);
 				})}
 			</button>
 		);

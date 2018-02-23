@@ -27,6 +27,7 @@ export class RoomSelector extends React.Component<Props, {}> {
 					handleUpdateSelectedRoom={handleUpdateSelectedRoom}
 				/>);
 		});
+
 		return (
 			<div>{buttons}</div>
 		);
