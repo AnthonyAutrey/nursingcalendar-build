@@ -8,6 +8,7 @@ const request = require('superagent');
 
 interface Props {
 	cwid: number;
+	handleActiveRouteChange: Function;
 }
 
 interface State {
@@ -43,6 +44,10 @@ export class Scheduler extends React.Component<Props, State> {
 			toolbarMessage: this.defaultToolbarMessage
 		};
 		this.getAllRoomsFromDB();
+	}
+
+	componentWillMount() {
+		this.props.handleActiveRouteChange('Scheduler');
 	}
 
 	render() {

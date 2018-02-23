@@ -4,6 +4,10 @@ import { ViewEventModal } from './ViewEventModal';
 const request = require('superagent');
 const FullCalendarReact = require('fullcalendar-reactwrapper');
 
+interface Props {
+	handleActiveRouteChange: Function;
+}
+
 interface State {
 	events: Map<number, Event>;
 }
@@ -20,11 +24,11 @@ export interface Event {
 	groups: string[];
 }
 
-export class ViewingCalendar extends React.Component<{}, State> {
+export class ViewingCalendar extends React.Component<Props, State> {
 
 	private viewEventModal: ViewEventModal | null;
 
-	constructor(props: {}, state: State) {
+	constructor(props: Props, state: State) {
 		super(props, state);
 
 		this.state = { events: new Map<number, Event>() };
@@ -32,6 +36,7 @@ export class ViewingCalendar extends React.Component<{}, State> {
 
 	componentWillMount() {
 		this.getEventsFromDB();
+		this.props.handleActiveRouteChange('Home');
 	}
 
 	render() {

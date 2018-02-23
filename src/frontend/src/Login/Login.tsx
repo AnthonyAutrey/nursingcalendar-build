@@ -31,33 +31,35 @@ export class Login extends React.Component<Props, State> {
 				<div className="col-xl-4 offset-xl-4 col-lg-6 offset-lg-3">
 					<div className="card w-100">
 						<div className="card-body">
-							<h4 className="card-title">Login</h4>
-							<hr />
-							{
-								this.state.failedAuthentication &&
-								(<p className="text-danger font-weight-bold">
-									Login failed. Please try again.
-								</p>)
-							}
-							<div className="form-group row">
-								<div className="col-form-label col-md-3">CWID:</div>
-								<div className="col-md-9">
-									<input tabIndex={1} autoFocus={true} className="form-control" onChange={this.handleCWIDChange} type="text" />
+							<form onSubmit={this.handleSubmit}>
+								<h4 className="card-title">Login</h4>
+								<hr />
+								{
+									this.state.failedAuthentication &&
+									(<p className="text-danger font-weight-bold">
+										Login failed. Please try again.
+									</p>)
+								}
+								<div className="form-group row">
+									<div className="col-form-label col-md-3">CWID:</div>
+									<div className="col-md-9">
+										<input tabIndex={1} autoFocus={true} className="form-control" onChange={this.handleCWIDChange} type="text" />
+									</div>
 								</div>
-							</div>
-							<div className="form-group row">
-								<label className="col-form-label col-md-3">PIN:</label>
-								<div className="col-md-9">
-									<input tabIndex={2} className="form-control" onChange={this.handlePINChange} type="password" />
+								<div className="form-group row">
+									<label className="col-form-label col-md-3">PIN:</label>
+									<div className="col-md-9">
+										<input tabIndex={2} className="form-control" onChange={this.handlePINChange} type="password" />
+									</div>
 								</div>
-							</div>
-							<hr />
-							<div className="row">
-								<button tabIndex={3} type="button" onClick={this.handleSubmit} className="btn btn-primary btn-block mx-2 mt-2">
-									Submit
-								<span className="ml-2 oi oi-account-login" style={{ top: 1 }} />
-								</button>
-							</div>
+								<hr />
+								<div className="row">
+									<button tabIndex={3} type="submit" className="btn btn-primary btn-block mx-2 mt-2">
+										Submit
+									<span className="ml-2 oi oi-account-login" style={{ top: 1 }} />
+									</button>
+								</div>
+							</form>
 						</div>
 					</div>
 				</div>

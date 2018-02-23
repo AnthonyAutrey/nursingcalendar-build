@@ -10,14 +10,16 @@ interface State {
 	sessionRetreived: boolean;
 	cwid?: number;
 	role?: string;
+	activeRoute: string;
 }
 
 class App extends React.Component<{}, State> {
+	static r: boolean = false;
 
 	constructor(props: {}, state: State) {
 		super(props, state);
 
-		this.state = { sessionRetreived: false };
+		this.state = { sessionRetreived: false, activeRoute: '' };
 	}
 
 	componentWillMount() {
@@ -31,11 +33,9 @@ class App extends React.Component<{}, State> {
 		if (!(this.state.cwid && this.state.role))
 			return <Login handleLogin={this.handleLogin} />;
 
-		// let cwid: number = this.state.cwid || 0;
-
 		return (
 			<div className="App">
-				<NavigationBar role={this.state.role} handleLogout={this.handleLogout} />
+				<NavigationBar role={this.state.role} activeRoute={this.state.activeRoute} handleLogout={this.handleLogout} />
 				<Router>
 					<Switch>
 						{this.getRoutesAvailableToRole()}
@@ -65,34 +65,44 @@ class App extends React.Component<{}, State> {
 
 	handleLogout = () => {
 		request.get('/api/logout').end((error: {}, res: any) => {
-			this.setState({ cwid: undefined, role: undefined });
+			this.setState({ cwid: undefined, role: undefined }, () => {
+				return <Redirect to="/" />;
+			});
 		});
 	}
 
 	// Routes //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	getRoutesAvailableToRole(): JSX.Element[] {
 		let routes: JSX.Element[] = [
-			(<Route path="/" exact={true} component={ViewingCalendar} />),
-			(<Route path="/classes" component={() => <div>Create Manage Classes Component!</div>} />)
+			(
+				<Route key="/" path="/" exact={true}>
+					<ViewingCalendar handleActiveRouteChange={this.handleActiveRouteChange} />
+				</ Route>
+			),
+			(<Route key="/classes" path="/classes" component={() => <div>Create Manage Classes Component!</div>} />)
 		];
 
 		if (this.state.role === 'instructor' || this.state.role === 'administrator')
 			routes.push(
-				<Route path="/schedule" >
-					<Scheduler cwid={this.state.cwid || 0} />
+				<Route key="/schedule" path="/schedule" >
+					<Scheduler handleActiveRouteChange={this.handleActiveRouteChange} cwid={this.state.cwid || 0} />
 				</Route>
 			);
 
 		if (this.state.role === 'administrator')
 			routes.push(
-				<Route path="/administration" exact={true} component={() => <div>Create Admin Component!</div>} />
+				<Route key="/administration" path="/administration" exact={true} component={() => <div>Create Admin Component!</div>} />
 			);
 
 		routes.push(
-			<Route component={() => <div>404</div>} />
+			<Route key="404" component={() => <div>404</div>} />
 		);
 
 		return routes;
+	}
+
+	handleActiveRouteChange = (route: string) => {
+		this.setState({ activeRoute: route });
 	}
 }
 
