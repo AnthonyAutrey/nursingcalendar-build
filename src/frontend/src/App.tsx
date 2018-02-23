@@ -53,7 +53,7 @@ class App extends React.Component<{}, State> {
 					this.setState({ cwid: res.body.cwid, role: res.body.role });
 			} else {
 				// TODO: handle failed session request
-				alert('failed?');
+				alert('Unable to get session. Handle this properly!');
 			}
 		});
 	}

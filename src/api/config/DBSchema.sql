@@ -137,8 +137,9 @@ CREATE TABLE UserGroupRelation
 
 INSERT INTO Users (CWID, FirstName, LastName, UserRole)
 VALUES
-	(17700946, 'Nursey', 'McNurseFace', 'administrator'),
-	(99999999, 'Applesauce', 'Blueberry', 'administrator');
+	(00000000, 'Student', 'McStudentFace', 'student'),
+	(11111111, 'Instructor', 'McInstructorFace', 'instructor'),
+	(22222222, 'Admin', 'McAdminFace', 'administrator');
 
 INSERT INTO Locations (LocationName)
 VALUES

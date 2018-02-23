@@ -31,12 +31,18 @@ $app->post('/login', function (Request $request, Response $response, array $args
 		$pin = $queryData->pin;
 	}
 
-	// TODO: actually check LDAP, I guess.
-	if (true) {
+	// TODO: check LDAP to authenticate,
+	//	if authenticated, check DB for user. If not in DB, send them to NewUserComponent
+	// 	if in DB, override LDAP info with DB info
+
+	$queryString = 'Select * from users where CWID = '.$cwid;
+	$userResults = json_decode(DBUtil::runQuery($queryString));
+
+	if (count($userResults) > 0) {
 		$result = json_encode(['authenticated' => true]);
 		$response->getBody()->write($result);
 		$_SESSION["cwid"] = $cwid;
-		$_SESSION["role"] = 'admin';
+		$_SESSION["role"] = $userResults[0]->UserRole;
 	} else
 		session_destroy();
 

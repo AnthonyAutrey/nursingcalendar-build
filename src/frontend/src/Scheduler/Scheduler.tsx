@@ -65,7 +65,6 @@ export class Scheduler extends React.Component<{}, State> {
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar
-								// key={this.state.rooms[0].roomName + this.state.rooms[0].locationName}
 								ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }}
 								handleSendMessage={this.handleCalendarMessage}
 								room={selectedRoomName}
