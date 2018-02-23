@@ -35,7 +35,7 @@ class App extends React.Component<{}, State> {
 
 		return (
 			<div className="App">
-				<NavigationBar handleLogout={this.handleLogout} />
+				<NavigationBar role={this.state.role} handleLogout={this.handleLogout} />
 				<Router>
 					<Switch>
 						<Route path="/" exact={true} component={ViewingCalendar} />

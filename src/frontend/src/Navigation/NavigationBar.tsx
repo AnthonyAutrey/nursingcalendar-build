@@ -2,11 +2,58 @@ import * as React from 'react';
 
 interface Props {
 	handleLogout: any;
+	role: string;
 }
 
 export class NavigationBar extends React.Component<Props, {}> {
+	private navLinks: JSX.Element[] = [];
+
 	constructor(props: Props, state: {}) {
 		super(props, state);
+	}
+
+	componentWillMount() {
+		this.navLinks.push(
+			<li className="nav-item">
+				<a className="nav-link disabled" href="#">
+					<span className=" oi oi-clipboard" />
+					&nbsp;
+					Manage Classes
+				</a>
+			</li>
+		);
+
+		if (this.props.role === 'instructor' || this.props.role === 'administrator')
+			this.navLinks.unshift(
+				<li className="nav-item ml-2">
+					<a className="nav-link" href="/schedule">
+						<span className=" oi oi-pencil" />
+						&nbsp;
+					Schedule Events
+				</a>
+				</li>
+			);
+
+		if (this.props.role === 'administrator')
+			this.navLinks.push(
+				<li className="nav-item ml-2">
+					<a className="nav-link" href="#">
+						<span className=" oi oi-key" />
+						&nbsp;
+					Administration
+				</a>
+				</li>
+			);
+
+		this.navLinks.push(
+			<li className="nav-item">
+				<a className="nav-link" href="/" onClick={this.props.handleLogout}>
+					<span className=" oi oi-account-logout" />
+					&nbsp;
+					Logout
+				</a>
+			</li>
+		);
 	}
 
 	render() {
@@ -34,27 +81,7 @@ export class NavigationBar extends React.Component<Props, {}> {
 				</button>
 				<div className="collapse navbar-collapse" id="navbar">
 					<ul className="navbar-nav mt-2 mt-lg-0">
-						<li className="nav-item ml-2">
-							<a className="nav-link" href="/schedule">
-								<span className=" oi oi-pencil" />
-								&nbsp;
-								Schedule Events
-							</a>
-						</li>
-						<li className="nav-item">
-							<a className="nav-link disabled" href="#">
-								<span className=" oi oi-clipboard" />
-								&nbsp;
-								Manage Classes
-							</a>
-						</li>
-						<li className="nav-item">
-							<a className="nav-link" href="/" onClick={this.props.handleLogout}>
-								<span className=" oi oi-account-logout" />
-								&nbsp;
-								Logout
-							</a>
-						</li>
+						{this.navLinks}
 					</ul>
 					<ul className="nav nav-pills mt-2 mt-lg-0 ml-auto">
 						<li className="nav-item dropdown">
