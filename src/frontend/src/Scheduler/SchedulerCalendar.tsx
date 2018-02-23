@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { CSSProperties } from 'react';
 import * as ReactDOM from 'react-dom';
+import { CSSProperties } from 'react';
 import { CreateEventModal } from './CreateEventModal';
 import { EditEventModal } from './EditEventModal';
 import { UnownedEventModal } from './UnownedEventModal';
@@ -73,6 +73,10 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		const element = ReactDOM.findDOMNode(this);
 		if (element != null)
 			window.scrollTo(0, this.scrollPosition);
+	}
+
+	componentWillReceiveProps(nextProps: Props) {
+		this.getStateFromDB(nextProps.room, nextProps.location);
 	}
 
 	render() {
@@ -271,11 +275,11 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	}
 
 	// Client Events //////////////////////////////////////////////////////////////////////////////////////////////
-	public getStateFromDB(): void {
+	public getStateFromDB(room: string = this.props.room, location: string = this.props.location): void {
 		let queryData: {} = {
 			where: {
-				RoomName: this.props.room,
-				LocationName: this.props.location
+				RoomName: room,
+				LocationName: location
 			}
 		};
 		let queryDataString = JSON.stringify(queryData);
