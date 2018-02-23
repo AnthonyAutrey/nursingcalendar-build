@@ -29,6 +29,7 @@ export interface RoomFilters {
 
 export class Scheduler extends React.Component<{}, State> {
 	private schedulerCalendar: SchedulerCalendar | null;
+	private roomComponentContainer: any;
 	private allRooms: Room[] = [];
 	private defaultToolbarMessage: string = 'Click and drag to schedule a new event.';
 
@@ -53,9 +54,13 @@ export class Scheduler extends React.Component<{}, State> {
 			<div>
 				<div className="Scheduler container-fluid">
 					<div className="row">
-						<div className="col-3">
-							<RoomFilter filterChangeHandler={this.filterChangeHandler} />
-							<RoomSelector rooms={this.state.rooms} selectedRoom={selectedRoom} handleUpdateSelectedRoom={handleUpdateSelectedRoom} />
+						<div className="col-3" ref={(container) => { this.roomComponentContainer = container; }}>
+							<RoomFilter container={this.roomComponentContainer} filterChangeHandler={this.filterChangeHandler} />
+							<RoomSelector
+								rooms={this.state.rooms}
+								selectedRoom={selectedRoom}
+								handleUpdateSelectedRoom={handleUpdateSelectedRoom}
+							/>
 						</div>
 						<div className="col-9">
 							<SchedulerCalendar
@@ -137,9 +142,10 @@ export class Scheduler extends React.Component<{}, State> {
 				filteredRooms.push(room);
 		});
 
-		console.log(JSON.stringify(filteredRooms.map(room => {
-			return room.roomName;
-		})));
+		if (this.state.selectedRoom >= filteredRooms.length)
+			this.setState({ rooms: filteredRooms, selectedRoom: 0 });
+		else
+			this.setState({ rooms: filteredRooms });
 	}
 
 	roomMatchesEveryResource(room: Room, filterResources: { name: string, min?: number }[]): boolean {

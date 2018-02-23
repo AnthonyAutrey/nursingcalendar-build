@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { RoomFilters } from './Scheduler';
+import { RoomSelector } from './RoomSelector';
 import { FilterResource } from './FilterResource';
 import './scheduler.css';
 const uuid = require('uuid/v4');
 const request = require('superagent');
 
 interface Props {
+	container: any;
 	filterChangeHandler: Function;
 }
 
@@ -29,7 +31,6 @@ export class RoomFilter extends React.Component<Props, State> {
 	// HACK: godawful hack to prevent resource from being added when resources array is empty
 	// and React decided to click 'add resource' button automatically
 	private addResourceFunction: Function;
-	private roomFilter: any;
 
 	constructor(props: Props, state: State) {
 
@@ -63,7 +64,7 @@ export class RoomFilter extends React.Component<Props, State> {
 	}
 
 	handleClick = (e: any) => {
-		if (this.roomFilter && this.roomFilter.contains(e.target))
+		if (this.props.container && this.props.container.contains(e.target))
 			return;
 		else
 			this.closeComponent();
@@ -158,7 +159,7 @@ export class RoomFilter extends React.Component<Props, State> {
 			extraFilters = <span />;
 
 		return (
-			<div className="pb-1" ref={(roomFilter) => { this.roomFilter = roomFilter; }}>
+			<div className="pb-1">
 				<div className="form-group">
 					<div className="input-group">
 						<input
