@@ -83,7 +83,7 @@ class App extends React.Component<{}, State> {
 		if (this.state.role === 'instructor' || this.state.role === 'administrator')
 			routes.push(
 				<Route key="/schedule" path="/schedule" >
-					<Scheduler handleActiveRouteChange={this.handleActiveRouteChange} cwid={this.state.cwid || 0} />
+					<Scheduler handleActiveRouteChange={this.handleActiveRouteChange} cwid={this.state.cwid || 0} role={this.state.role || ''} />
 				</Route>
 			);
 

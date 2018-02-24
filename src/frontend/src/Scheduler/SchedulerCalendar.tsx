@@ -4,17 +4,18 @@ import { CSSProperties } from 'react';
 import { CreateEventModal } from './CreateEventModal';
 import { EditEventModal } from './EditEventModal';
 import { UnownedEventModal } from './UnownedEventModal';
+import { Loading } from '../Generic/Loading';
 
 import { Duration, Moment } from 'moment';
 import * as moment from 'moment';
 const FullCalendarReact = require('fullcalendar-reactwrapper');
-// const fullcalendarCSS = require('../../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css');
 const request = require('superagent');
 
 interface Props {
 	location: string;
 	room: string;
 	cwid: number;
+	role: string;
 	handleSendMessage: Function;
 }
 
@@ -22,6 +23,7 @@ interface State {
 	events: Map<number, Event>;
 	showCreateModal: boolean;
 	groupOptionsFromAPI: string[];
+	loading: boolean;
 }
 
 export interface Event {
@@ -44,6 +46,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	private smallestTimeInterval: number = Number.MAX_SAFE_INTEGER;
 	private editEventModal: EditEventModal | null;
 	private unownedEventModal: UnownedEventModal | null;
+	private eventCache: Map<number, Event>;
 
 	constructor(props: Props, state: State) {
 		super(props, state);
@@ -51,7 +54,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		this.state = {
 			events: new Map<number, Event>(),
 			showCreateModal: false,
-			groupOptionsFromAPI: []
+			groupOptionsFromAPI: [],
+			loading: false
 		};
 	}
 
@@ -76,12 +80,18 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	}
 
 	componentWillReceiveProps(nextProps: Props) {
-		this.getStateFromDB(nextProps.room, nextProps.location);
+		if (nextProps.room !== this.props.room || nextProps.location !== this.props.location)
+			this.getStateFromDB(nextProps.room, nextProps.location);
 	}
 
 	render() {
+		let loading = null;
+		if (this.state.loading)
+			loading = <Loading />;
+
 		return (
 			<div className="SchedulerCalendar">
+				{loading}
 				<CreateEventModal
 					show={this.state.showCreateModal}
 					groupOptionsFromAPI={this.state.groupOptionsFromAPI}
@@ -109,10 +119,13 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 								this.props.handleSendMessage('Select a date to schedule events for that week.', 'info');
 								this.forceUpdate();
 							}
+						},
+						roomLabel: {
+							text: this.props.location + ' - ' + this.props.room
 						}
 					}}
 					header={{
-						left: '',
+						left: 'roomLabel',
 						center: 'title',
 						right: 'prev,selectDate,next today'
 					}}
@@ -276,6 +289,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 	// Client Events //////////////////////////////////////////////////////////////////////////////////////////////
 	public getStateFromDB(room: string = this.props.room, location: string = this.props.location): void {
+		this.setState({ loading: true });
 		let queryData: {} = {
 			where: {
 				RoomName: room,
@@ -285,8 +299,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let queryDataString = JSON.stringify(queryData);
 		request.get('/api/eventswithrelations').set('queryData', queryDataString).end((error: {}, res: any) => {
 			if (res && res.body) {
-				this.setState({ events: this.parseDBEvents(res.body) });
-				console.log(res.body);
+				this.eventCache = this.parseDBEvents(res.body);
+				this.setState({ events: this.eventCache, loading: false });
 			}
 		});
 	}
@@ -339,7 +353,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	parseDBEvents(body: any): Map<number, Event> {
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
-			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid);
+			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid) || this.props.role === 'administrator';
 			let color = '';
 			let borderColor = '';
 
@@ -387,6 +401,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		Promise.all(persistPromises).then(() => {
 			// TODO: make this asynchronous
 			this.props.handleSendMessage('Changes saved successfully!', 'success');
+			this.eventCache = this.state.events;
 		}).catch(() => {
 			this.props.handleSendMessage('Error saving data.', 'error');
 		});
@@ -578,6 +593,11 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			this.currentDate = view.intervalStart;
 			this.smallestTimeInterval = view.intervalEnd - view.intervalStart;
 		}
+	}
+
+	// Prevent Leaving Without Save /////////////////////////////////////////////////////////////////////////////////////////////////
+	public eventsHaveBeenModified() {
+		return this.eventCache !== this.state.events;
 	}
 }
 

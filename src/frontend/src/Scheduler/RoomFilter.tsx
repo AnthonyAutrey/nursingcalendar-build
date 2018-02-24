@@ -18,15 +18,8 @@ interface State {
 
 export class RoomFilter extends React.Component<Props, State> {
 
-	private allLocations: string[] = ['location 1', 'location 2'];
-	private allResources: { name: string, enumerable: boolean }[] = [
-		{ name: 'Manequinns', enumerable: true },
-		{ name: 'Beds', enumerable: true },
-		{ name: 'Audio/Video', enumerable: false },
-		{ name: 'Clinical', enumerable: false },
-		{ name: 'Robot', enumerable: true },
-		{ name: 'Needle Station', enumerable: true }
-	];
+	private allLocations: string[] = [];
+	private allResources: { name: string, enumerable: boolean }[] = [];
 	private unselectedResources: string[] = this.getResourceNames();
 	// HACK: godawful hack to prevent resource from being added when resources array is empty
 	// and React decided to click 'add resource' button automatically
@@ -64,7 +57,8 @@ export class RoomFilter extends React.Component<Props, State> {
 	}
 
 	handleClick = (e: any) => {
-		if (this.props.container && this.props.container.contains(e.target))
+		let container = this.props.container;
+		if (!container || (container && container.contains(e.target)))
 			return;
 		else
 			this.closeComponent();

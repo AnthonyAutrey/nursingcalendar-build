@@ -8,13 +8,16 @@ const request = require('superagent');
 
 interface Props {
 	cwid: number;
+	role: string;
 	handleActiveRouteChange: Function;
 }
 
 interface State {
 	rooms: Room[];
+	selectedRoom: number;
 	toolbarMessage: string;
 	toolbarStatus?: 'error' | 'success';
+	initialized: boolean;
 }
 
 export interface Room {
@@ -36,12 +39,15 @@ export class Scheduler extends React.Component<Props, State> {
 	private roomComponentContainer: any;
 	private allRooms: Room[] = [];
 	private defaultToolbarMessage: string = 'Click and drag to schedule a new event.';
+	private lastSelectedRoom: Room;
 
 	constructor(props: Props, state: State) {
 		super(props, state);
 		this.state = {
 			rooms: [],
-			toolbarMessage: this.defaultToolbarMessage
+			selectedRoom: 0,
+			toolbarMessage: this.defaultToolbarMessage,
+			initialized: false
 		};
 		this.getAllRoomsFromDB();
 	}
@@ -51,14 +57,15 @@ export class Scheduler extends React.Component<Props, State> {
 	}
 
 	render() {
-		if (this.state.rooms.length < 1)
+		if (!this.state.initialized)
 			return null;
 
 		let bottomSpacerStyle: CSSProperties = {
 			height: 80
 		};
-		let selectedRoomName = this.state.rooms[0].roomName;
-		let selectedLocationName = this.state.rooms[0].locationName;
+		let selectedRoom = this.state.rooms.indexOf(this.lastSelectedRoom);
+		let selectedRoomName = this.lastSelectedRoom.roomName;
+		let selectedLocationName = this.lastSelectedRoom.locationName;
 
 		return (
 			<div>
@@ -68,7 +75,7 @@ export class Scheduler extends React.Component<Props, State> {
 							<RoomFilter container={this.roomComponentContainer} filterChangeHandler={this.filterChangeHandler} />
 							<RoomSelector
 								rooms={this.state.rooms}
-								selectedRoom={0}
+								selectedRoom={selectedRoom}
 								handleUpdateSelectedRoom={this.handleUpdateSelectedRoom}
 							/>
 						</div>
@@ -79,6 +86,7 @@ export class Scheduler extends React.Component<Props, State> {
 								room={selectedRoomName}
 								location={selectedLocationName}
 								cwid={this.props.cwid}
+								role={this.props.role}
 							/>
 						</div>
 					</div>
@@ -101,7 +109,8 @@ export class Scheduler extends React.Component<Props, State> {
 				let rooms: any[] = res.body;
 				let parsedRooms = this.parseRoomsFromDB(rooms);
 				this.allRooms = parsedRooms;
-				this.setState({ rooms: parsedRooms });
+				this.lastSelectedRoom = this.allRooms[0];
+				this.setState({ rooms: parsedRooms, initialized: true });
 			}
 		});
 	}
@@ -147,12 +156,10 @@ export class Scheduler extends React.Component<Props, State> {
 			if ((!filters.capacity.min || room.capacity === null || Number(room.capacity) >= Number(filters.capacity.min)) &&
 				room.roomName.match(new RegExp(filters.searchText, 'i')) &&
 				this.roomMatchesEveryResource(room, filters.resources) &&
-				(!filters.location || room.locationName === filters.location) &&
-				room !== this.state.rooms[0])
+				(!filters.location || room.locationName === filters.location))
 				filteredRooms.push(room);
 		});
 
-		filteredRooms.unshift(this.state.rooms[0]);
 		this.setState({ rooms: filteredRooms });
 	}
 
@@ -182,17 +189,17 @@ export class Scheduler extends React.Component<Props, State> {
 
 	// Handling Selected Room ///////////////////////////////////////////////////////////////////////////////////////////////////////
 	handleUpdateSelectedRoom = (index: number) => {
-		let rooms = this.state.rooms.slice(0);
-		rooms.splice(index, 1);
-		rooms.sort((a, b) => {
-			if (a.roomName < b.roomName) return -1;
-			if (a.roomName > b.roomName) return 1;
-			return 0;
-		});
-		rooms.unshift(this.state.rooms[index]);
+		let shouldLeaveRoom: boolean = true;
 
-		if (index !== 0)
-			this.setState({ rooms: rooms });
+		if (this.schedulerCalendar &&
+			this.schedulerCalendar.eventsHaveBeenModified() &&
+			!confirm('You have unsaved changes. Are you sure you want to leave this room?'))
+			shouldLeaveRoom = false;
+
+		if (shouldLeaveRoom) {
+			this.lastSelectedRoom = this.state.rooms[index];
+			this.setState({ selectedRoom: index });
+		}
 	}
 }
 

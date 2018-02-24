@@ -11,6 +11,13 @@
 .ulm-red {
 	color: #800029;	
 }
+
+button.fc-roomLabel-button, button.fc-roomLabel-button:hover {
+	border-width: 0;
+	background-color: transparent;
+	font-weight: bold;
+	cursor: default;
+}
 /* .btn-primary, .btn-primary:hover {
 	color: #eebf78;
 } */

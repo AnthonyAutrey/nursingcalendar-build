@@ -9,7 +9,7 @@ interface Props {
 }
 
 interface State {
-	events: Map<number, Event>;
+	events: Event[];
 }
 
 export interface Event {
@@ -31,7 +31,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	constructor(props: Props, state: State) {
 		super(props, state);
 
-		this.state = { events: new Map<number, Event>() };
+		this.state = { events: [] };
 	}
 
 	componentWillMount() {
@@ -75,7 +75,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					// 		this.forceUpdate();
 					// 	}
 					// }}
-					events={this.getStateEventsAsArray()}
+					events={this.state.events}
 					eventTextColor="white"
 					// eventDrop={(event: Event, delta: Duration) => this.editEvent(event, delta)}
 					// eventResize={(event: Event, delta: Duration) => this.editEvent(event, delta)}
@@ -106,15 +106,13 @@ export class ViewingCalendar extends React.Component<Props, State> {
 
 	public getEventsFromDB(): void {
 		request.get('/api/eventswithrelations').end((error: {}, res: any) => {
-			if (res && res.body) {
+			if (res && res.body)
 				this.setState({ events: this.parseDBEvents(res.body) });
-				console.log(res.body);
-			}
 		});
 	}
 
-	parseDBEvents(body: any): Map<number, Event> {
-		let parsedEvents: Map<number, Event> = new Map();
+	parseDBEvents(body: any): Event[] {
+		let parsedEvents: Event[] = [];
 		for (let event of body) {
 			// let color = '';
 			// let borderColor = '';
@@ -133,14 +131,10 @@ export class ViewingCalendar extends React.Component<Props, State> {
 				// borderColor: borderColor
 			};
 
-			parsedEvents.set(event.EventID, parsedEvent);
+			parsedEvents.push(parsedEvent);
 		}
 
 		return parsedEvents;
-	}
-
-	getStateEventsAsArray(): Event[] {
-		return Array.from(this.state.events.values());
 	}
 
 	openViewEventModal = (event: Event) => {
