@@ -259,7 +259,18 @@ $app->get('/resources', function (Request $request, Response $response, array $a
 	return $response;	
 });
 
-// Groups ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// User Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+$app->get('/usergroups/{cwid}', function (Request $request, Response $response, array $args) {
+	$cwid = $args['cwid'];
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('UserGroupRelation', $queryData['fields'], ['CWID' => $cwid]);
+	$groups = DBUtil::runQuery($queryString);
+	$response->getBody()->write($groups);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+// Group Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $app->get('/groups', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
 	$queryString = DBUtil::buildSelectQuery('groups', $queryData['fields'], $queryData['where']);
@@ -269,7 +280,7 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 	return $response;	
 });
 
-// Override Requests /////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Override Request Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Create //
 $app->put('/overriderequests', function (Request $request, Response $response, array $args) {

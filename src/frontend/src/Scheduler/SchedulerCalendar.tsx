@@ -267,7 +267,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	handleEventClick = (event: any, jsEvent: any, view: any) => {
 		let events = this.cloneStateEvents();
 		let clickedEvent: Event | undefined = events.get(event.id);
-		if (clickedEvent && Number(clickedEvent.cwid) === Number(this.props.cwid))
+		if (clickedEvent && Number(clickedEvent.cwid) === Number(this.props.cwid) || clickedEvent && this.props.role === 'administrator')
 			this.openEditEventModal(clickedEvent.id, clickedEvent.title, clickedEvent.description, clickedEvent.groups);
 		else if (clickedEvent)
 			this.openUnownedEventModal(clickedEvent);

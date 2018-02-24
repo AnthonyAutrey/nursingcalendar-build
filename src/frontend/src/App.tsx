@@ -74,7 +74,7 @@ class App extends React.Component<{}, State> {
 		let routes: JSX.Element[] = [
 			(
 				<Route key="/" path="/" exact={true}>
-					<ViewingCalendar handleActiveRouteChange={this.handleActiveRouteChange} />
+					<ViewingCalendar cwid={this.state.cwid || 0} role={this.state.role || ''} handleActiveRouteChange={this.handleActiveRouteChange} />
 				</ Route>
 			),
 			(<Route key="/classes" path="/classes" component={() => <div>Create Manage Classes Component!</div>} />)

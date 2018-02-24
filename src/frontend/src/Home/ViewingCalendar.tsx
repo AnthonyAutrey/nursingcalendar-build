@@ -5,6 +5,8 @@ const request = require('superagent');
 const FullCalendarReact = require('fullcalendar-reactwrapper');
 
 interface Props {
+	cwid: number;
+	role: string;
 	handleActiveRouteChange: Function;
 }
 
@@ -105,10 +107,50 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	}
 
 	public getEventsFromDB(): void {
-		request.get('/api/eventswithrelations').end((error: {}, res: any) => {
-			if (res && res.body)
-				this.setState({ events: this.parseDBEvents(res.body) });
+		if (this.props.role === 'student')
+			this.getStudentEvents();
+		else
+			request.get('/api/eventswithrelations').end((error: {}, res: any) => {
+				if (res && res.body)
+					this.setState({ events: this.parseDBEvents(res.body) });
+			});
+	}
+
+	getStudentEvents(): string[] {
+		let groups: string[] = [];
+
+		let queryData = {
+			fields: 'GroupName'
+		};
+		let queryDataString = JSON.stringify(queryData);
+
+		new Promise((resolve, reject) => {
+			request.get('/api/usergroups/' + this.props.cwid).set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body)
+					resolve(res.body);
+				else
+					reject();
+			});
+		}).then((userGroups: any) => {
+			let eventQueryData = {
+				where: {
+					GroupName: userGroups.map((group: any) => {
+						return group.GroupName;
+					})
+				}
+			};
+
+			let eventQueryDataString = JSON.stringify(eventQueryData);
+			request.get('/api/eventswithrelations').set('queryData', eventQueryDataString).end((error: {}, res: any) => {
+				if (res && res.body)
+					this.setState({ events: this.parseDBEvents(res.body) });
+			});
+
+		}).catch(() => {
+			// TODO: Handle Failure
 		});
+
+		return groups;
 	}
 
 	parseDBEvents(body: any): Event[] {
