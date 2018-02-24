@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { UnownedEventModal } from '../Scheduler/UnownedEventModal';
 import { ViewEventModal } from './ViewEventModal';
+import { Loading } from '../Generic/Loading';
 const request = require('superagent');
 const FullCalendarReact = require('fullcalendar-reactwrapper');
 
@@ -12,6 +13,7 @@ interface Props {
 
 interface State {
 	events: Event[];
+	loading: boolean;
 }
 
 export interface Event {
@@ -33,7 +35,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	constructor(props: Props, state: State) {
 		super(props, state);
 
-		this.state = { events: [] };
+		this.state = { events: [], loading: false };
 	}
 
 	componentWillMount() {
@@ -42,8 +44,13 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	}
 
 	render() {
+		let loading = null;
+		if (this.state.loading)
+			loading = <Loading />;
+
 		return (
 			<div className="ViewingCalendar">
+				{loading}
 				<ViewEventModal ref={viewEventModal => { this.viewEventModal = viewEventModal; }} />
 				<FullCalendarReact
 					id="calendar"
@@ -109,14 +116,19 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	public getEventsFromDB(): void {
 		if (this.props.role === 'student')
 			this.getStudentEvents();
-		else
+		else {
+			this.setState({ loading: true });
 			request.get('/api/eventswithrelations').end((error: {}, res: any) => {
 				if (res && res.body)
-					this.setState({ events: this.parseDBEvents(res.body) });
+					this.setState({ events: this.parseDBEvents(res.body), loading: false });
 			});
+
+		}
 	}
 
 	getStudentEvents(): string[] {
+		this.setState({ loading: true });
+
 		let groups: string[] = [];
 
 		let queryData = {
@@ -143,7 +155,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			let eventQueryDataString = JSON.stringify(eventQueryData);
 			request.get('/api/eventswithrelations').set('queryData', eventQueryDataString).end((error: {}, res: any) => {
 				if (res && res.body)
-					this.setState({ events: this.parseDBEvents(res.body) });
+					this.setState({ events: this.parseDBEvents(res.body), loading: false });
 			});
 
 		}).catch(() => {
