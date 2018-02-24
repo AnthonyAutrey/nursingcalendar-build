@@ -4,6 +4,7 @@ import { Login } from './Login/Login';
 import { NavigationBar } from './Navigation/NavigationBar';
 import { Scheduler } from './Scheduler/Scheduler';
 import { ViewingCalendar } from './Home/ViewingCalendar';
+import { Administration } from './Administration/Administration';
 const request = require('superagent');
 
 interface State {
@@ -89,7 +90,9 @@ class App extends React.Component<{}, State> {
 
 		if (this.state.role === 'administrator')
 			routes.push(
-				<Route key="/administration" path="/administration" exact={true} component={() => <div>Create Admin Component!</div>} />
+				<Route key="/administration" path="/administration">
+					<Administration />
+				</Route>
 			);
 
 		routes.push(
