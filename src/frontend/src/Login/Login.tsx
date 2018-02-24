@@ -75,7 +75,9 @@ export class Login extends React.Component<Props, State> {
 		this.setState({ pin: event.target.value });
 	}
 
-	handleSubmit = () => {
+	handleSubmit = (e: any) => {
+		e.preventDefault();
+
 		let queryData: {} = {
 			cwid: this.state.cwid,
 			pin: this.state.pin

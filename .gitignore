@@ -11,6 +11,7 @@
 /session_store/*
 !/public/api
 !/public/.htaccess
+src/api/config/PublishDates.json
 
 #  configuration
 /src/frontend/.DS_Store

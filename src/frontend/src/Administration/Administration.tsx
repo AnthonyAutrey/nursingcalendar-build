@@ -1,79 +1,121 @@
 import * as React from 'react';
+import { Loading } from '../Generic/Loading';
+const request = require('superagent');
 
-interface State {
-	publishStartDate: Date;
-	publishEndDate: Date;
+interface Props {
+	handleShowAlert: Function;
 }
 
-export class Administration extends React.Component<{}, State> {
-	constructor(props: {}, state: State) {
+interface State {
+	publishStartDate: string;
+	publishEndDate: string;
+	loading: boolean;
+}
+
+export class Administration extends React.Component<Props, State> {
+	constructor(props: Props, state: State) {
 		super(props, state);
 
 		this.state = {
-			publishStartDate: new Date(),
-			publishEndDate: new Date()
+			publishStartDate: '',
+			publishEndDate: '',
+			loading: false
 		};
 	}
 
-	render() {
-		return (
+	componentWillMount() {
+		this.getPublishDatesFromAPI();
+	}
 
-			<div className="col-lg-6 offset-lg-3">
-				<div className="w-100 px-5">
-					<div className="card-body">
-						<form onSubmit={this.handleSubmitPublishPeriod} >
-							<h4 className="card-title">Calendar Publish Period</h4>
-							<hr />
-							<p>During this period, the calendar will be visible to students and events will have to be approved before being created or modified.</p>
-							<div className="form-group row">
-								<div className="col-form-label col-md-3">Start Date:</div>
-								<div className="col-md-9">
-									<input
-										className="form-control"
-										value={this.getDateString(this.state.publishStartDate)}
-										onChange={this.handlePublishStartDateChange}
-										type="date"
-									/>
-								</div>
-							</div>
-							<div className="form-group row">
-								<label className="col-form-label col-md-3">End Date:</label>
-								<div className="col-md-9">
-									<input
-										className="form-control"
-										value={this.getDateString(this.state.publishEndDate)}
-										onChange={this.handlePublishEndDateChange}
-										type="date"
-									/>
-								</div>
-							</div>
-							<hr />
-							<div className="row">
-								<button tabIndex={3} type="submit" className="btn btn-primary btn-block mx-2 mt-2">
-									Submit
-								</button>
-							</div>
-						</form>
+	render() {
+		let dates = null;
+		let loading = null;
+		if (this.state.loading)
+			loading = <Loading />;
+		else {
+			dates = (
+				<div>
+					<div className="form-group row">
+						<div className="col-form-label col-md-3">Start Date:</div>
+						<div className="col-md-9">
+							<input
+								className="form-control"
+								value={this.state.publishStartDate}
+								onChange={this.handlePublishStartDateChange}
+								type="date"
+							/>
+						</div>
+					</div>
+					<div className="form-group row">
+						<label className="col-form-label col-md-3">End Date:</label>
+						<div className="col-md-9">
+							<input
+								className="form-control"
+								value={this.state.publishEndDate}
+								onChange={this.handlePublishEndDateChange}
+								type="date"
+							/>
+						</div>
 					</div>
 				</div>
-				<hr />
-				<form method="get" action="/logs" >
-					<button type="submit" className="btn btn-primary btn-block mb-1" >
-						View Logs
+			);
+		}
+
+		return (
+			<div>
+				{loading}
+				<div className="col-lg-6 offset-lg-3">
+					<hr />
+					<div className="w-100 px-5">
+						<div className="card-body">
+							<form onSubmit={this.handleSubmitPublishPeriod} >
+								<h4 className="card-title">Calendar Publish Period</h4>
+								<hr />
+								<p className="d-none d-md-block" >
+									During this period, the calendar will be visible to students and events will have to be approved before being created or modified.
+								</p>
+								{dates}
+								<hr />
+								<div className="row">
+									<button tabIndex={3} type="submit" className="btn btn-primary btn-block mx-2 mt-2">
+										Submit
+								</button>
+								</div>
+							</form>
+						</div>
+					</div>
+					<hr />
+					<form method="get" action="/logs" >
+						<button type="submit" className="btn btn-primary btn-block mb-1" >
+							View Logs
 					</button>
-				</form>
-				<form method="get" action="/manageRooms" >
-					<button type="submit" className="btn btn-primary btn-block mb-1" >
-						Manage Rooms
+					</form>
+					<form method="get" action="/manageRooms" >
+						<button type="submit" className="btn btn-primary btn-block mb-1" >
+							Manage Rooms
 					</button>
-				</form>
-				<form method="get" action="/manageAdmin" >
-					<button type="submit" className="btn btn-primary btn-block mb-1" >
-						Manage Admin Rights
+					</form>
+					<form method="get" action="/manageAdmin" >
+						<button type="submit" className="btn btn-primary btn-block mb-1" >
+							Manage Admin Rights
 					</button>
-				</form>
+					</form>
+				</div>
 			</div>
 		);
+	}
+
+	getPublishDatesFromAPI = () => {
+		this.setState({ loading: true });
+
+		request.get('/api/publishdates').end((error: {}, res: any) => {
+			if (res && res.body)
+				this.setState({ publishStartDate: res.body.Start, publishEndDate: res.body.End, loading: false });
+			else {
+				this.props.handleShowAlert('error', 'Error getting calendar publish dates.');
+				this.setState({ loading: false });
+			}
+		});
 	}
 
 	getDateString = (date: Date): string => {
@@ -87,18 +129,38 @@ export class Administration extends React.Component<{}, State> {
 	handlePublishStartDateChange = (e: any) => {
 		let date = new Date(e.target.value);
 		date.setDate(date.getDate() + 1);
-		this.setState({ publishStartDate: date });
+		let dateString = this.getDateString(date);
+		this.setState({ publishStartDate: dateString });
 	}
 
 	handlePublishEndDateChange = (e: any) => {
 		let date = new Date(e.target.value);
 		date.setDate(date.getDate() + 1);
-		this.setState({ publishEndDate: date });
+		let dateString = this.getDateString(date);
+		this.setState({ publishEndDate: dateString });
 	}
 
 	handleSubmitPublishPeriod = (e: any) => {
 		e.preventDefault();
-		alert('Submit: ' + this.state.publishStartDate + ', ' + this.state.publishEndDate);
+
+		let queryData: {} = {
+			insertValues: {
+				Start: this.state.publishStartDate,
+				End: this.state.publishEndDate
+			}
+		};
+
+		console.log('inserting...........');
+		console.log('start: ' + this.state.publishStartDate);
+		console.log('emd: ' + this.state.publishEndDate);
+
+		let queryDataString = JSON.stringify(queryData);
+		request.put('/api/publishdates').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (res && res.statusCode === 201)
+				this.props.handleShowAlert('success', 'Successfully saved calendar publish period!');
+			else
+				this.props.handleShowAlert('error', 'Error saving calendar publish period.');
+		});
 	}
 }
 

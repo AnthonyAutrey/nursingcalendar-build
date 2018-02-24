@@ -5,6 +5,7 @@ import { NavigationBar } from './Navigation/NavigationBar';
 import { Scheduler } from './Scheduler/Scheduler';
 import { ViewingCalendar } from './Home/ViewingCalendar';
 import { Administration } from './Administration/Administration';
+import { Alert } from './Generic/Alert';
 const request = require('superagent');
 
 interface State {
@@ -15,6 +16,8 @@ interface State {
 }
 
 class App extends React.Component<{}, State> {
+	private alert: Alert | null = null;
+
 	constructor(props: {}, state: State) {
 		super(props, state);
 
@@ -34,6 +37,7 @@ class App extends React.Component<{}, State> {
 
 		return (
 			<div className="App">
+				<Alert ref={alert => { this.alert = alert; }} />
 				<NavigationBar role={this.state.role} activeRoute={this.state.activeRoute} handleLogout={this.handleLogout} />
 				<Router>
 					<Switch>
@@ -70,6 +74,12 @@ class App extends React.Component<{}, State> {
 		});
 	}
 
+	// Alert ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	handleShowAlert = (style: 'success' | 'error', message: string) => {
+		if (this.alert)
+			this.alert.display(style, message);
+	}
+
 	// Routes //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	getRoutesAvailableToRole(): JSX.Element[] {
 		let routes: JSX.Element[] = [
@@ -91,7 +101,7 @@ class App extends React.Component<{}, State> {
 		if (this.state.role === 'administrator')
 			routes.push(
 				<Route key="/administration" path="/administration">
-					<Administration />
+					<Administration handleShowAlert={this.handleShowAlert} />
 				</Route>
 			);
 

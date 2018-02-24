@@ -146,6 +146,7 @@ export class RoomFilter extends React.Component<Props, State> {
 					</div>
 				</div>
 				{resourceComponents}
+				<hr />
 			</div>
 		);
 
