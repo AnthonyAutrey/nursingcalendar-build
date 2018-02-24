@@ -32,13 +32,6 @@ export class EditEventModal extends React.Component<Props, State> {
 		};
 	}
 
-	// componentWillMount() {
-	// 	request.get('/api/classes').end((error: {}, res: any) => {
-	// 		if (res && res.body)
-	// 			this.groupOptionsFromAPI = res.body;
-	// 	});
-	// }
-
 	render() {
 		if (!this.state.show)
 			return null;

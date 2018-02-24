@@ -60,7 +60,7 @@ CREATE TABLE Events
 
 CREATE TABLE Groups
 (
-	GroupName VARCHAR(20) NOT NULL,
+	GroupName VARCHAR(60) NOT NULL,
 	Description VARCHAR(300) NOT NULL,
 	PRIMARY KEY (GroupName)
 );
@@ -117,15 +117,20 @@ CREATE TABLE RoomResourceRelation
 CREATE TABLE EventGroupRelation
 (
 	EventID INT NOT NULL,
-	GroupName VARCHAR(20) NOT NULL,
+	LocationName VARCHAR(20) NOT NULL,
+	RoomName VARCHAR(20) NOT NULL,
+	GroupName VARCHAR(60) NOT NULL,
 	PRIMARY KEY (EventID, GroupName),
-	FOREIGN KEY (EventID) REFERENCES Events(EventID)
+	FOREIGN KEY (EventID) REFERENCES Events(EventID),
+	FOREIGN KEY (LocationName) REFERENCES Events(LocationName),
+	FOREIGN KEY (RoomName) REFERENCES Events(RoomName),
+	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName)
 );
 
 CREATE TABLE UserGroupRelation
 (
 	CWID INT NOT NULL,
-	GroupName VARCHAR(20) NOT NULL,
+	GroupName VARCHAR(60) NOT NULL,
 	PRIMARY KEY (CWID, GroupName),
 	FOREIGN KEY (CWID) REFERENCES Users(CWID),
 	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName)
@@ -173,3 +178,29 @@ INSERT INTO RoomResourceRelation (LocationName, RoomName, ResourceName, Count)
 		('St. Francis', 'Second Floor', 'Clinicals', null),
 		('Glenwood', 'First Floor', 'Clinicals', null),
 		('Glenwood', 'Second Floor', 'Clinicals', null);
+
+INSERT INTO Groups (GroupName, Description)
+VALUES
+	('Level 1', 'All Level 1 Students'),
+	('Level 2', 'All Level 2 Students'),
+	('Level 3', 'All Level 3 Students'),
+	('Level 4', 'All Level 4 Students'),
+	('Level 5', 'All Level 5 Students'),
+	('Anatomy and Physiology', 'The body and diseases'),
+	('Gerontology', 'Aging processes and treatments'),
+	('Nursing Research', 'Researching techniques'),
+	('Med Surg Clinicals', 'Med Surg Clinicals'),
+	('Pediatrics Clinicals', 'Pediatrics Clinicals'),
+	('Maternity Clinicals', 'Maternity Clinicals'),
+	('Med Surg - Rotation 1', 'First clinical rotation group');
+
+INSERT INTO UserGroupRelation (CWID, GroupName)
+VALUES
+	(00000000, 'Level 2'),
+	(11111111, 'Anatomy and Physiology'),
+	(00000000, 'Gerontology'),
+	(00000000, 'Nursing Research'),
+	(00000000, 'Med Surg Clinicals'),
+	(00000000, 'Med Surg - Rotation 1'),
+	(00000000, 'Pediatrics Clinicals'),
+	(11111111, 'Maternity Clinicals');
