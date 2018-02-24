@@ -39,10 +39,10 @@ export class NavigationBar extends React.Component<Props, {}> {
 
 		return (
 			<nav className="navbar navbar-expand-md navbar-light bg-light border-bottom mb-3">
-				<a className="navbar-brand text-primary" href="/">
-					<h2>
+				<a className="navbar-brand text-primary garamond mr-4 ml-2" href="/">
+					<h1>
 						ULM Nursing Schedule
-					</h2>
+					</h1>
 				</a>
 				<button
 					className="navbar-toggler border-0"

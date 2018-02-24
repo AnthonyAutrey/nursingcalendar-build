@@ -14,8 +14,6 @@ interface State {
 }
 
 class App extends React.Component<{}, State> {
-	static r: boolean = false;
-
 	constructor(props: {}, state: State) {
 		super(props, state);
 

@@ -1,0 +1,17 @@
+.garamond {
+	font-family: 'EB Garamond', serif;
+	text-shadow: 0px 1px rgb(223, 222, 222);
+	/* text-shadow: 0px 1px rgb(214, 214, 214), 0 0 4px white; */
+}
+
+.garamond h1 {
+	font-size: 2.3em;
+}
+
+.ulm-red {
+	color: #800029;	
+}
+/* .btn-primary, .btn-primary:hover {
+	color: #eebf78;
+} */
+

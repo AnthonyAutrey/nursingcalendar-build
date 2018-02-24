@@ -344,8 +344,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			let borderColor = '';
 
 			if (!userOwnsEvent) {
-				borderColor = 'rgba(255,255,255,.4)';
-				color = 'rgba(0,123,255,.6)';
+				borderColor = 'rgba(128,0,41,.4)';
+				color = 'rgba(128,0,41,.6)';
 			}
 
 			let parsedEvent: any = {
