@@ -494,7 +494,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			eventIDsInDB.forEach((id) => {
 				let eventToUpdate = this.state.events.get(id);
 				console.log(eventToUpdate);
-				if (eventToUpdate && Number(eventToUpdate.cwid) === Number(this.props.cwid))
+				if (eventToUpdate && Number(eventToUpdate.cwid) === Number(this.props.cwid) || eventToUpdate && this.props.role === 'administrator')
 					eventsToUpdate.push(eventToUpdate);
 				else
 					console.log('not in client or not matching cwid');
