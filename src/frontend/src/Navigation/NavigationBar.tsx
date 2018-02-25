@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { NotificationDropdown } from './NotificationDropdown';
+import { CSSProperties } from 'react';
 const uuid = require('uuid/v4');
 
 interface Props {
@@ -31,19 +33,14 @@ export class NavigationBar extends React.Component<Props, {}> {
 	}
 
 	render() {
-		let style = {
-			top: 3
+		let headerStyle: CSSProperties = {
+			whiteSpace: 'normal'
 		};
 
 		let navLinks: JSX.Element[] = this.getNavLinks();
 
 		return (
 			<nav className="navbar navbar-expand-md navbar-light bg-light border-bottom mb-3">
-				<a className="navbar-brand text-primary garamond mr-4 ml-2" href="/">
-					<h1>
-						ULM Nursing Schedule
-					</h1>
-				</a>
 				<button
 					className="navbar-toggler border-0"
 					type="button"
@@ -56,30 +53,15 @@ export class NavigationBar extends React.Component<Props, {}> {
 					<span className="bg-light text-dark oi oi-menu" />
 				</button>
 				<div className="collapse navbar-collapse" id="navbar">
+					<a className="navbar-brand text-primary garamond mr-4 ml-2" href="/">
+						<h1 style={headerStyle} >
+							ULM Nursing Schedule
+						</h1>
+					</a>
 					<ul className="navbar-nav mt-2 mt-lg-0">
 						{navLinks}
 					</ul>
-					<ul className="nav nav-pills mt-2 mt-lg-0 ml-auto">
-						<li className="nav-item dropdown">
-							<a
-								className="nav-link dropdown-toggle bg-secondary text-light"
-								href="#"
-								id="navbarDropdown"
-								role="button"
-								data-toggle="dropdown"
-								aria-haspopup="true"
-								aria-expanded="false"
-							>
-								<span className="oi oi-bell mr-2" style={style} />
-								2 Notifications
-							</a>
-							<div className="dropdown-menu" aria-labelledby="navbarDropdown">
-								<div className="dropdown-item">
-									Notification
-								</div>
-							</div>
-						</li>
-					</ul>
+					<NotificationDropdown />
 				</div>
 			</nav>
 		);

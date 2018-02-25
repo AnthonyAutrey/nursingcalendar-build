@@ -6,6 +6,7 @@ import { Scheduler } from './Scheduler/Scheduler';
 import { ViewingCalendar } from './Home/ViewingCalendar';
 import { Administration } from './Administration/Administration';
 import { Alert } from './Generic/Alert';
+import { Loading } from './Generic/Loading';
 const request = require('superagent');
 
 interface State {
@@ -30,7 +31,7 @@ class App extends React.Component<{}, State> {
 
 	render() {
 		if (!this.state.sessionRetreived)
-			return null;
+			return <Loading />;
 
 		if (!(this.state.cwid && this.state.role))
 			return <Login handleLogin={this.handleLogin} />;
@@ -54,9 +55,6 @@ class App extends React.Component<{}, State> {
 				this.setState({ sessionRetreived: true });
 				if (res.body.cwid && res.body.role)
 					this.setState({ cwid: res.body.cwid, role: res.body.role });
-			} else {
-				// TODO: handle failed session request
-				alert('Unable to get session. Handle this properly!');
 			}
 		});
 	}

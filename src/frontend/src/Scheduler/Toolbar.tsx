@@ -56,7 +56,7 @@ export class Toolbar extends React.Component<Props, {}> {
 						<button tabIndex={3} type="button" onClick={() => this.props.handleSave()} className="btn btn-primary mr-2">
 							<span className=" oi oi-file" />
 							&nbsp;
-							Save All Changes
+							Submit All Changes
 						</button>
 					</div>
 				</div>

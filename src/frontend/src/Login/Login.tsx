@@ -25,7 +25,7 @@ export class Login extends React.Component<Props, State> {
 	render() {
 		return (
 			<div className="continer">
-				<div className="bg-light text-center mb-4 pb-4 pt-3 garamond ulm-red">
+				<div className="bg-light text-center mb-4 pb-4 pt-3 garamond ulm-red border-bottom">
 					<h5 className="display-4">ULM Nursing Schedule</h5>
 				</div>
 				<div className="col-xl-4 offset-xl-4 col-lg-6 offset-lg-3">
