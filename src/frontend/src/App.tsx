@@ -39,7 +39,7 @@ class App extends React.Component<{}, State> {
 		return (
 			<div className="App">
 				<Alert ref={alert => { this.alert = alert; }} />
-				<NavigationBar role={this.state.role} activeRoute={this.state.activeRoute} handleLogout={this.handleLogout} />
+				<NavigationBar cwid={this.state.cwid} role={this.state.role} activeRoute={this.state.activeRoute} handleLogout={this.handleLogout} />
 				<Router>
 					<Switch>
 						{this.getRoutesAvailableToRole()}

@@ -4,6 +4,7 @@ import { CSSProperties } from 'react';
 const uuid = require('uuid/v4');
 
 interface Props {
+	cwid: number;
 	handleLogout: any;
 	role: string;
 	activeRoute: string;
@@ -61,7 +62,7 @@ export class NavigationBar extends React.Component<Props, {}> {
 					<ul className="navbar-nav mt-2 mt-lg-0">
 						{navLinks}
 					</ul>
-					<NotificationDropdown />
+					<NotificationDropdown cwid={this.props.cwid} />
 				</div>
 			</nav>
 		);

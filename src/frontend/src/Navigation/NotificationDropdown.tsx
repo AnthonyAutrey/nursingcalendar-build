@@ -2,35 +2,43 @@ import * as React from 'react';
 import { Notification } from './Notification';
 import { CSSProperties } from 'react';
 const uuid = require('uuid/v4');
+const request = require('superagent');
+
+interface Props {
+	cwid: number;
+}
 
 interface State {
 	open: boolean;
 	notifications: NotificationData[];
+	loading: boolean;
 }
 
 interface NotificationData {
+	id: number;
 	title: string;
 	message: string;
+	sendTime: Date;
+	hasBeenSeen: boolean;
+	fromCWID: number;
 }
 
-export class NotificationDropdown extends React.Component<{}, State> {
+export class NotificationDropdown extends React.Component<Props, State> {
 	private container: any;
 
-	constructor(props: {}, state: State) {
+	constructor(props: Props, state: State) {
 		super(props, state);
 
 		this.state = {
 			open: false,
-			notifications: [
-				{ title: 'Important Message', message: 'This is a very important message.' },
-				{ title: 'A Very Long Title, I Mean Reeaaallly Long. Sooooooooooooooooooo Long.', message: 'This is another very important message.' },
-				{ title: 'Third Title', message: 'This is another very, very, important message. Yuuuuuuuge.' }
-			]
+			notifications: [],
+			loading: true
 		};
 	}
 
 	componentWillMount() {
 		document.addEventListener('mousedown', this.handleClick, false);
+		this.getNotificationsFromDB();
 	}
 
 	componentWillUnMount() {
@@ -38,6 +46,17 @@ export class NotificationDropdown extends React.Component<{}, State> {
 	}
 
 	render() {
+
+		if (this.state.loading)
+			return (
+				<ul className="nav nav-pills mt-2 mt-lg-0 ml-auto" ref={container => { this.container = container; }}>
+					<li className="nav-item dropdown">
+						<a className="nav-link bg-secondary text-light"	>
+							Loading...
+						</a>
+					</li>
+				</ul>
+			);
 
 		const styleLarge: CSSProperties = {
 			zIndex: Number.MAX_SAFE_INTEGER,
@@ -57,10 +76,10 @@ export class NotificationDropdown extends React.Component<{}, State> {
 			notifications = (
 				<div>
 					<div className="card d-md-none p-1 bg-light" style={styleSmall}>
-						{this.getNotifications()}
+						{this.getNotificationComponents()}
 					</div>
 					<div className="card d-none d-md-block p-1 bg-light" style={styleLarge}>
-						{this.getNotifications()}
+						{this.getNotificationComponents()}
 					</div>
 				</div>
 			);
@@ -73,6 +92,10 @@ export class NotificationDropdown extends React.Component<{}, State> {
 		if (this.state.notifications.length === 1)
 			notificationString = this.state.notifications.length + ' Notification';
 
+		let bell = null;
+		if (this.state.notifications.length > 0)
+			bell = <span className="oi oi-bell mr-2" style={{ top: 2 }} />;
+
 		return (
 			<ul className="nav nav-pills mt-2 mt-lg-0 ml-auto" ref={container => { this.container = container; }}>
 				<li className="nav-item dropdown">
@@ -81,7 +104,7 @@ export class NotificationDropdown extends React.Component<{}, State> {
 						href="#"
 						onClick={this.toggleOpen}
 					>
-						<span className="oi oi-bell mr-2" />
+						{bell}
 						{notificationString}
 						{openCloseIndicator}
 					</a>
@@ -95,7 +118,32 @@ export class NotificationDropdown extends React.Component<{}, State> {
 		this.setState({ open: !this.state.open });
 	}
 
-	getNotifications = () => {
+	getNotificationsFromDB = () => {
+		request.get('/api/notifications/' + this.props.cwid).end((error: {}, res: any) => {
+			if (res && res.body) {
+				let notifications = this.parseNotificationsFromDB(res.body);
+				this.setState({ notifications: notifications, loading: false });
+			}
+		});
+	}
+
+	parseNotificationsFromDB = (dBnotifications: any): NotificationData[] => {
+		let notifications = dBnotifications.map((dBnotification: any) => {
+			let notification: NotificationData = {
+				id: dBnotification.NotificationID,
+				title: dBnotification.Title,
+				message: dBnotification.Message,
+				sendTime: dBnotification.SendTime,
+				hasBeenSeen: dBnotification.HasBeenSeen,
+				fromCWID: dBnotification.FromCWID
+			};
+			return notification;
+		});
+
+		return notifications;
+	}
+
+	getNotificationComponents = () => {
 		let notifications: JSX.Element[] = this.state.notifications.map((notification, index) => {
 			return (
 				<Notification
@@ -123,13 +171,18 @@ export class NotificationDropdown extends React.Component<{}, State> {
 	}
 
 	deleteNotification = (index: number) => {
-		let notifications = this.state.notifications.slice(0);
-		notifications.splice(index, 1);
+		let deleteID: number = this.state.notifications[index].id;
+		request.delete('/api/notifications/' + deleteID).end((error: {}, res: any) => {
+			if (res && res.body) {
+				let notifications = this.state.notifications.slice(0);
+				notifications.splice(index, 1);
 
-		if (notifications.length <= 0)
-			this.setState({ notifications: notifications, open: false });
-		else
-			this.setState({ notifications: notifications });
+				if (notifications.length <= 0)
+					this.setState({ notifications: notifications, open: false });
+				else
+					this.setState({ notifications: notifications });
+			}
+		});
 	}
 
 	handleClick = (e: any) => {

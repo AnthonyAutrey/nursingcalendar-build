@@ -280,7 +280,29 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 	return $response;	
 });
 
-// Override Request Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Notification Routes //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/notifications/{cwid}', function (Request $request, Response $response, array $args) {
+	$cwid = $args['cwid'];
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('notifications', $queryData['fields'], ['ToCWID' => $cwid]);
+	$notifications = DBUtil::runQuery($queryString);
+	$response->getBody()->write($notifications);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+$app->delete('/notifications/{id}', function (Request $request, Response $response, array $args) {
+	$id = $args['id'];
+	$deleteGroupsQuery = DBUtil::buildDeleteQuery('notifications', ['NotificationID' => $id]);
+	$results = DBUtil::runCommand($deleteGroupsQuery);
+	$response->getBody()->write($results);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+// Override Request Routes //////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Create //
 $app->put('/overriderequests', function (Request $request, Response $response, array $args) {

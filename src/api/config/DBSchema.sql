@@ -74,14 +74,14 @@ CREATE TABLE Preferences
 
 CREATE TABLE Notifications
 (
-	ID INT NOT NULL,
-	Title VARCHAR(20) NOT NULL,
+	NotificationID INT NOT NULL AUTO_INCREMENT,
+	Title VARCHAR(60) NOT NULL,
 	Message VARCHAR(300) NOT NULL,
-	SendTime DateTime NOT NULL,
-	HasBeenSeen Boolean NOT NULL,
-	FromCWID INT,	-- if NULL, notification is from sender
+	SendTime DateTime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	HasBeenSeen Boolean NOT NULL DEFAULT 0,
+	FromCWID INT,	-- if NULL, notification is from system
 	ToCWID INT NOT NULL,
-	PRIMARY KEY (ID),
+	PRIMARY KEY (NotificationID),
 	FOREIGN KEY (FromCWID) REFERENCES Users(CWID),
 	FOREIGN KEY (ToCWID) REFERENCES Users(CWID)
 );
@@ -204,3 +204,15 @@ VALUES
 	(00000000, 'Med Surg - Rotation 1'),
 	(00000000, 'Pediatrics Clinicals'),
 	(11111111, 'Maternity Clinicals');
+
+INSERT INTO Notifications (ToCWID, Title, Message)
+VALUES
+	(00000000, 'Message to Students', 'This is a very important message.'),
+	(00000000, 'Another Message', 'This is a very important message. Lorem ipsum and whatnot.'),
+	(00000000, 'Regarding Nursing Research...', 'Hello. This is God speaking. Plz write.'),
+	(00000000, 'Pediatrics Clinicals', 'This is a very important message.'),
+	(11111111, 'Message for Instructor','This is a very important message.'),
+	(11111111, 'Med Surg - Rotation 1', 'This is a very, super, very important message.'),
+	(11111111, 'Maternity Clinicals', 'This is a very important message.'),
+	(22222222, 'Admin Message', 'This is a very important message.'),
+	(22222222, 'Med Surg Clinicals', 'This is a very important message.');
