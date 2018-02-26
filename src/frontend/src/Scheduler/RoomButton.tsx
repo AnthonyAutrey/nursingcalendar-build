@@ -18,22 +18,36 @@ export class RoomButton extends React.Component<Props, {}> {
 		let buttonIndex = this.props.index;
 		let button: JSX.Element = (
 			<button className="btn btn-primary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
-				<div className="h4 underline"><b>{this.props.room.locationName + ' - ' + this.props.room.roomName}</b></div>
-				<div className="">
-					<b>Capacity: </b> {this.props.room.capacity}<br />
-					<b>Resources: </b>
-					{this.props.room.resources.map((resource, index) => {
-						if (index !== this.props.room.resources.length - 1)
-							if (resource.count === null)
-								return (resource.name + ', ');
-							else
-								return (resource.count + ' ' + resource.name + ', ');
-						else
-							if (resource.count === null)
-								return (resource.name);
-							else
-								return (resource.count + ' ' + resource.name);
-					})}
+				<div className="h5"><b>{this.props.room.locationName + ' - ' + this.props.room.roomName}</b></div>
+				<hr className="bg-white my-1 w-50" />
+				<div className="px-5">
+					<div className="row mx-5">
+						<div className="col-3 text-left">
+							<b>Capacity: </b>
+						</div>
+						<div className="col-9 text-left">
+							{this.props.room.capacity}
+						</div>
+					</div>
+					<div className="row mx-5">
+						<div className="col-3 text-left">
+							<b>Resources: </b>
+						</div>
+						<div className="col-9 text-left">
+							{this.props.room.resources.map((resource, index) => {
+								if (index !== this.props.room.resources.length - 1)
+									if (resource.count === null)
+										return (resource.name + ', ');
+									else
+										return (resource.count + ' ' + resource.name + ', ');
+								else
+									if (resource.count === null)
+										return (resource.name);
+									else
+										return (resource.count + ' ' + resource.name);
+							})}
+						</div>
+					</div>
 				</div>
 			</button>
 		);
