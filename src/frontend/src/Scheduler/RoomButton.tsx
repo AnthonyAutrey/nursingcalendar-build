@@ -18,13 +18,20 @@ export class RoomButton extends React.Component<Props, {}> {
 		let buttonIndex = this.props.index;
 		let button: JSX.Element = (
 			<button className="btn btn-primary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
-				{this.props.room.locationName + ' - ' + this.props.room.roomName}<br />
-				Capacity: {this.props.room.capacity}<br />
-				Resources: {this.props.room.resources.map(resource => {
-					if (resource.count == null)
-						return (<div key={uuid()}>{resource.name}<br /></div>);
+				<div className="h4 underline"><b>{this.props.room.locationName + ' - ' + this.props.room.roomName}</b></div>
+				<b>Capacity:</b> {this.props.room.capacity}<br />
+				<b>Resources:</b><br />
+				{this.props.room.resources.map((resource, index) => {
+					if (index !== this.props.room.resources.length - 1)
+						if (resource.count === null)
+							return (resource.name + ', ');
+						else
+							return (resource.count + ' ' + resource.name + ', ');
 					else
-						return (<div key={uuid()}>{resource.count + ' ' + resource.name}<br /></div>);
+						if (resource.count === null)
+							return (resource.name);
+						else
+							return (resource.count + ' ' + resource.name);
 				})}
 			</button>
 		);
