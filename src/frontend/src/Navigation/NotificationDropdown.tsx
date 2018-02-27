@@ -114,6 +114,9 @@ export class NotificationDropdown extends React.Component<Props, State> {
 	}
 
 	toggleOpen = () => {
+		if (this.state.open)
+			this.setNotificationsAsSeen();
+
 		this.setState({ open: !this.state.open });
 	}
 
@@ -128,18 +131,54 @@ export class NotificationDropdown extends React.Component<Props, State> {
 
 	parseNotificationsFromDB = (dBnotifications: any): NotificationData[] => {
 		let notifications = dBnotifications.map((dBnotification: any) => {
+			let hasBeenSeen: boolean = false;
+			if (Number.parseInt(dBnotification.HasBeenSeen) === 1)
+				hasBeenSeen = true;
+
 			let notification: NotificationData = {
 				id: dBnotification.NotificationID,
 				title: dBnotification.Title,
 				message: dBnotification.Message,
 				sendTime: dBnotification.SendTime,
-				hasBeenSeen: dBnotification.HasBeenSeen,
+				hasBeenSeen: hasBeenSeen,
 				fromCWID: dBnotification.FromCWID
 			};
 			return notification;
 		});
 
 		return notifications;
+	}
+
+	setNotificationsAsSeen = () => {
+		let unseenNotificationIDs: number[] = [];
+		let unseenNotifications = this.state.notifications.forEach(notification => {
+			if (!notification.hasBeenSeen)
+				unseenNotificationIDs.push(notification.id);
+		});
+
+		if (unseenNotificationIDs.length > 0) {
+			let queryData = {
+				setValues: {
+					'HasBeenSeen': 1
+				},
+				where: { NotificationID: unseenNotificationIDs }
+			};
+
+			let queryDataString = JSON.stringify(queryData);
+			request.post('/api/notifications').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body) {
+					let notifications = this.state.notifications.slice(0);
+					notifications.forEach(notification => {
+						notification.hasBeenSeen = true;
+					});
+
+					console.log(notifications);
+					this.setState({ notifications: notifications });
+				} else {
+					alert('didnt work');
+				}
+			});
+		}
 	}
 
 	getNotificationComponents = () => {
@@ -150,6 +189,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 					index={index}
 					title={notification.title}
 					message={notification.message}
+					hasBeenSeen={notification.hasBeenSeen}
 					handleDeleteNotification={this.deleteNotification}
 				/>
 			);

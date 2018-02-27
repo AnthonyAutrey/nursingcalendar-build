@@ -293,6 +293,27 @@ $app->get('/notifications/{cwid}', function (Request $request, Response $respons
 	return $response;	
 });
 
+// Update //
+$app->post('/notifications', function (Request $request, Response $response, array $args) {
+	$results = [];
+	$queryData = getUpdateQueryData($request);
+
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['setValues']) ||
+		!count($queryData['setValues']) > 0 ||
+		!isset($queryData['where'])
+		) {
+		return $response->withStatus(400);
+	}
+
+	$queryString = DBUtil::buildUpdateQuery('notifications', $queryData['setValues'], $queryData['where']);	
+	$results = DBUtil::runCommand($queryString);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+});
+
+// Delete //
 $app->delete('/notifications/{id}', function (Request $request, Response $response, array $args) {
 	$id = $args['id'];
 	$deleteGroupsQuery = DBUtil::buildDeleteQuery('notifications', ['NotificationID' => $id]);

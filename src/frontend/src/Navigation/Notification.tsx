@@ -4,6 +4,7 @@ interface Props {
 	index: number;
 	title: string;
 	message: string;
+	hasBeenSeen: boolean;
 	handleDeleteNotification: Function;
 }
 
@@ -13,8 +14,14 @@ export class Notification extends React.Component<Props, {}> {
 	}
 
 	render() {
+		let style = {};
+		if (this.props.hasBeenSeen)
+			style = {
+				color: '#898989',
+			};
+
 		return (
-			<div className="card p-2 mb-1">
+			<div className="card p-2 mb-1" style={style}>
 				<div className="d-flex">
 					<div className="w-100 mr-2">
 						<h6 className="mt-2" style={{ wordBreak: 'break-all' }}><strong>{this.props.title}</strong></h6>
