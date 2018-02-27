@@ -111,7 +111,7 @@ class DBUtil {
 				foreach ($fields as $field) {
 					$fieldString .= "$field, ";
 				}
-				$fieldString = substr($fieldString, 0, -2);
+				$fieldString = substr($fieldString, 0, -2); //remove last comma
 				$fieldString = str_replace(";","", $fieldString);
 			}
 		}
