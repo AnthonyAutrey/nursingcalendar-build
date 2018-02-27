@@ -163,14 +163,26 @@ export class Scheduler extends React.Component<Props, State> {
 	filterChangeHandler = (filters: RoomFilters) => {
 		let filteredRooms: Room[] = [];
 		this.allRooms.forEach(room => {
+			let roomNameLocationString = room.roomName + ' ' + room.locationName;
 			if ((!filters.capacity.min || room.capacity === null || Number(room.capacity) >= Number(filters.capacity.min)) &&
-				room.roomName.match(new RegExp(filters.searchText, 'i')) &&
+				this.stringSearch(filters.searchText, roomNameLocationString) &&
 				this.roomMatchesEveryResource(room, filters.resources) &&
 				(!filters.location || room.locationName === filters.location))
 				filteredRooms.push(room);
 		});
 
 		this.setState({ rooms: filteredRooms });
+	}
+
+	stringSearch(searchString: string, targetString: string): boolean {
+		let stringSplits: string[] = searchString.split(' ');
+		let matchFound: boolean = true;
+		stringSplits.forEach(stringSplit => {
+			if (!targetString.match(new RegExp(stringSplit, 'i')))
+				matchFound = false;
+		});
+
+		return matchFound;
 	}
 
 	roomMatchesEveryResource(room: Room, filterResources: { name: string, min?: number }[]): boolean {
