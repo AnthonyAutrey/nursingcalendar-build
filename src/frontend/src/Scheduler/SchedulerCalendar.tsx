@@ -16,7 +16,9 @@ interface Props {
 	room: string;
 	cwid: number;
 	role: string;
-	handleSendMessage: Function;
+	handleToolbarMessage: Function;
+	handleToolbarText: Function;
+	handleToolbarReset: Function;
 }
 
 interface State {
@@ -122,7 +124,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 							text: 'Month',
 							click: () => {
 								this.currentView = 'month';
-								this.props.handleSendMessage('Select a date to schedule events for that week.', 'info');
+								this.props.handleToolbarText('Select a date to schedule events for that week.', 'info');
 								this.forceUpdate();
 							}
 						},
@@ -157,6 +159,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 						if (this.currentView === 'month') {
 							this.currentDate = date;
 							this.currentView = 'agendaWeek';
+							this.props.handleToolbarReset();
 							this.forceUpdate();
 						}
 					}}
@@ -406,10 +409,10 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 		Promise.all(persistPromises).then(() => {
 			// TODO: make this asynchronous
-			this.props.handleSendMessage('Changes saved successfully!', 'success');
+			this.props.handleToolbarMessage('Changes saved successfully!', 'success');
 			this.eventCache = this.state.events;
 		}).catch(() => {
-			this.props.handleSendMessage('Error saving data.', 'error');
+			this.props.handleToolbarMessage('Error saving data.', 'error');
 		});
 	}
 

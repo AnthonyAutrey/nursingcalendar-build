@@ -16,7 +16,7 @@ interface State {
 	rooms: Room[];
 	selectedRoom: number;
 	toolbarMessage: string;
-	toolbarStatus?: 'error' | 'success';
+	toolbarStatus?: 'error' | 'success' | 'info';
 	initialized: boolean;
 }
 
@@ -82,7 +82,9 @@ export class Scheduler extends React.Component<Props, State> {
 						<div className="col-md-9">
 							<SchedulerCalendar
 								ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }}
-								handleSendMessage={this.handleCalendarMessage}
+								handleToolbarMessage={this.handleToolbarMessage}
+								handleToolbarText={this.setToolbarText}
+								handleToolbarReset={this.resetToolbar}
 								room={selectedRoomName}
 								location={selectedLocationName}
 								cwid={this.props.cwid}
@@ -142,7 +144,15 @@ export class Scheduler extends React.Component<Props, State> {
 	}
 
 	// Toolbar //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	handleCalendarMessage = (message: string, style?: 'success' | 'error') => {
+	setToolbarText = (message: string, style: 'success' | 'error' | 'info' | undefined) => {
+		this.setState({ toolbarMessage: message, toolbarStatus: style });
+	}
+
+	resetToolbar = () => {
+		this.setState({ toolbarMessage: this.defaultToolbarMessage, toolbarStatus: undefined });
+	}
+
+	handleToolbarMessage = (message: string, style?: 'success' | 'error') => {
 		this.setState({ toolbarMessage: message, toolbarStatus: style });
 		setTimeout(() => {
 			this.setState({ toolbarMessage: this.defaultToolbarMessage, toolbarStatus: undefined });
