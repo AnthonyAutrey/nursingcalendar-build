@@ -100,8 +100,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 			<ul className="nav nav-pills mt-2 mt-lg-0 ml-auto" ref={container => { this.container = container; }}>
 				<li className="nav-item dropdown">
 					<a
-						className="nav-link bg-secondary text-light"
-						href="#"
+						className="nav-link bg-secondary text-light cursor-p"
 						onClick={this.toggleOpen}
 					>
 						{bell}
