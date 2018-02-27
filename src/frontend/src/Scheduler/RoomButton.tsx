@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Room } from './Scheduler';
+import { CSSProperties } from 'react';
 const uuid = require('uuid/v4');
 
 interface Props {
@@ -16,40 +17,36 @@ export class RoomButton extends React.Component<Props, {}> {
 
 	render() {
 		let buttonIndex = this.props.index;
+
+		let resourceStrings: string[] = this.props.room.resources.map((resource, index) => {
+			if (index !== this.props.room.resources.length - 1)
+				if (resource.count === null)
+					return (resource.name + ', ');
+				else
+					return (resource.count + ' ' + resource.name + ', ');
+			else
+				if (resource.count === null)
+					return (resource.name);
+				else
+					return (resource.count + ' ' + resource.name);
+		});
+
+		let buttonStyle: CSSProperties = {
+			wordBreak: 'break-word',
+			whiteSpace: 'normal'
+		};
+
 		let button: JSX.Element = (
-			<button className="btn btn-primary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
-				<div className="h5"><b>{this.props.room.locationName + ' - ' + this.props.room.roomName}</b></div>
+			<div className="btn btn-primary btn-block" style={buttonStyle} onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
+				<h5 className="font-weight-bold">{this.props.room.locationName + ' - ' + this.props.room.roomName}</h5>
 				<hr className="bg-white my-1 w-50" />
-				<div className="px-5">
-					<div className="row mx-5">
-						<div className="col-3 text-left">
-							<b>Capacity: </b>
-						</div>
-						<div className="col-9 text-left">
-							{this.props.room.capacity}
-						</div>
-					</div>
-					<div className="row mx-5">
-						<div className="col-3 text-left">
-							<b>Resources: </b>
-						</div>
-						<div className="col-9 text-left">
-							{this.props.room.resources.map((resource, index) => {
-								if (index !== this.props.room.resources.length - 1)
-									if (resource.count === null)
-										return (resource.name + ', ');
-									else
-										return (resource.count + ' ' + resource.name + ', ');
-								else
-									if (resource.count === null)
-										return (resource.name);
-									else
-										return (resource.count + ' ' + resource.name);
-							})}
-						</div>
-					</div>
+				<div className="col-10 offset-1 text-center">
+					<b>Capacity: </b> {this.props.room.capacity || 'n/a'}
+					<br />
+					<b>Resources: </b>
+					{resourceStrings}
 				</div>
-			</button>
+			</div>
 		);
 
 		if (!this.props.isSelected)
