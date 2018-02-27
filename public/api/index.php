@@ -331,6 +331,23 @@ $app->get('/users', function (Request $request, Response $response, array $args)
 	return $response;	
 });
 
+// Preference Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/preferences/{CWID}', function (Request $request, Response $response, array $args) {
+	$cwid = $args['CWID'];
+	$queryData = getSelectQueryData($request);
+	// if (isset($queryData['where']))
+	// 	$queryData['where']->CWID = $cwid;
+	// else
+	// 	$queryData->where = ['CWID'=> $cwid] 
+	$queryString = DBUtil::buildSelectQuery('preferences', $queryData['fields'], ['CWID'=> $cwid]);
+	$events = DBUtil::runQuery($queryString);
+	$response->getBody()->write($events);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
 // Group Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $app->get('/groups', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
