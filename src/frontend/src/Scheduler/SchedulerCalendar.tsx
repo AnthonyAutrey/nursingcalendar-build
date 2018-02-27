@@ -308,8 +308,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let queryDataString = JSON.stringify(queryData);
 		request.get('/api/eventswithrelations').set('queryData', queryDataString).end((error: {}, res: any) => {
 			if (res && res.body) {
+				let events = this.parseDBEvents(res.body);
 				this.eventCache = this.parseDBEvents(res.body);
-				this.setState({ events: this.eventCache, loading: false });
+				this.setState({ events: events, loading: false });
 			}
 		});
 	}
@@ -319,10 +320,27 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		Array.from(this.state.events.keys()).forEach(key => {
 			let event = this.state.events.get(key);
 			if (event)
-				events.set(key, event);
+				events.set(key, this.cloneEvent(event));
 		});
 
 		return events;
+	}
+
+	cloneEvent(event: any): any {
+		return {
+			cwid: event.cwid,
+			description: event.description,
+			end: event.end,
+			groups: event.groups,
+			id: event.id,
+			ownerName: event.ownerName,
+			pendingOverride: event.pendingOverride,
+			start: event.start,
+			title: event.title,
+			editable: event.editable,
+			color: event.color,
+			borderColor: event.borderColor
+		};
 	}
 
 	getNextEventIndex = () => {
@@ -392,6 +410,19 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		return parsedEvents;
 	}
 
+	eventsAreEqual(event1?: Event, event2?: Event): boolean {
+		return (event1 !== undefined && event2 !== undefined &&
+			event1.cwid === event2.cwid &&
+			event1.description === event2.description &&
+			event1.end === event2.end &&
+			event1.groups === event2.groups &&
+			event1.id === event2.id &&
+			event1.ownerName === event2.ownerName &&
+			event1.pendingOverride === event2.pendingOverride &&
+			event1.start === event2.start &&
+			event1.title === event2.title);
+	}
+
 	// Event Persistence /////////////////////////////////////////////////////////////////////////////////////////////////
 	persistStateToDB(): void {
 		let persistPromises: Promise<any>[] = [];
@@ -400,6 +431,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 		persistPromises.push(new Promise((resolve, reject) => {
 			this.getClientEventIDsThatAreAlreadyInDB().then((eventIDsInDB) => {
+				this.sendNotificationsToOwnersIfModifiedByNonOwner(eventIDsInDB);
 				this.updateExistingEventsInDB(eventIDsInDB).then(() => {
 					let eventsNotInDB = this.getClientEventsNotYetInDB(eventIDsInDB);
 					this.persistNewEventsToDB(eventsNotInDB).then(() => resolve()).catch(() => reject());
@@ -410,7 +442,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		Promise.all(persistPromises).then(() => {
 			// TODO: make this asynchronous
 			this.props.handleToolbarMessage('Changes saved successfully!', 'success');
-			this.eventCache = this.state.events;
+			this.eventCache = this.cloneStateEvents();
 		}).catch(() => {
 			this.props.handleToolbarMessage('Error saving data.', 'error');
 		});
@@ -488,6 +520,33 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		});
 	}
 
+	sendNotificationsToOwnersIfModifiedByNonOwner(eventIDsInDB: number[]) {
+		let unownedEvents: Event[] = [];
+		this.state.events.forEach(event => {
+			if (eventIDsInDB.includes(event.id) &&
+				Number(event.cwid) !== Number(this.props.cwid) &&
+				!this.eventsAreEqual(this.eventCache.get(event.id), event))
+				unownedEvents.push(event);
+		});
+
+		unownedEvents.forEach(unownedEvent => {
+			let queryData = {
+				insertValues: {
+					'Title': 'Event changed!',
+					'Message': 'Your event, \'' + unownedEvent.title + '\', has been modified by an admin!',
+					'ToCWID': unownedEvent.cwid
+				}
+			};
+			let queryDataString = JSON.stringify(queryData);
+			request.put('/api/notifications').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body)
+					console.log('sent notification to unowned event owner! ' + JSON.stringify(res.body));
+				else
+					alert('sending unowned event notification failed! Handle this properly!');
+			});
+		});
+	}
+
 	updateExistingEventsInDB(eventIDsInDB: number[]): Promise<void> {
 		return new Promise((resolve, reject) => {
 			console.log('PERSIST EXISTING......');
@@ -495,12 +554,14 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 			let eventsToUpdate: Event[] = [];
 			eventIDsInDB.forEach((id) => {
+
 				let eventToUpdate = this.state.events.get(id);
 				console.log(eventToUpdate);
-				if (eventToUpdate && Number(eventToUpdate.cwid) === Number(this.props.cwid) || eventToUpdate && this.props.role === 'administrator')
+				if ((eventToUpdate && Number(eventToUpdate.cwid) === Number(this.props.cwid) || eventToUpdate && this.props.role === 'administrator') &&
+					!this.eventsAreEqual(eventToUpdate, this.eventCache.get(id)))
 					eventsToUpdate.push(eventToUpdate);
 				else
-					console.log('not in client or not matching cwid');
+					console.log('not in client or not matching cwid OR not modified!');
 			});
 
 			eventsToUpdate.forEach((event: Event) => {
@@ -606,7 +667,13 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 	// Prevent Leaving Without Save /////////////////////////////////////////////////////////////////////////////////////////////////
 	public eventsHaveBeenModified() {
-		return this.eventCache !== this.state.events;
+		let eventsHaveBeenModified = false;
+		this.state.events.forEach(event => {
+			if (!this.eventsAreEqual(event, this.eventCache.get(event.id)))
+				eventsHaveBeenModified = true;
+		});
+
+		return eventsHaveBeenModified;
 	}
 }
 

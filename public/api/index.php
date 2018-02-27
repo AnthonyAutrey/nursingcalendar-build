@@ -282,6 +282,26 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 
 // Notification Routes //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Insert //
+$app->put('/notifications', function (Request $request, Response $response, array $args) {
+	$queryData = getInsertQueryData($request);
+
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['insertValues']) ||
+		!isset($queryData['insertValues']['ToCWID']) ||
+		!isset($queryData['insertValues']['Title']) ||
+		!isset($queryData['insertValues']['Message'])
+		) {
+		return $response->withStatus(400);
+	}
+
+	$queryString = DBUtil::buildInsertQuery('notifications', $queryData['insertValues']);
+	$results = DBUtil::runCommand($queryString);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+});
+
 // Read //
 $app->get('/notifications/{cwid}', function (Request $request, Response $response, array $args) {
 	$cwid = $args['cwid'];
