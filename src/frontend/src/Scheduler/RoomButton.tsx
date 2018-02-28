@@ -51,7 +51,7 @@ export class RoomButton extends React.Component<Props, {}> {
 
 		if (!this.props.isSelected)
 			button = (
-				<button className="btn btn-secondary btn-block" onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
+				<button className="btn btn-secondary btn-block" style={buttonStyle} onClick={() => this.props.handleUpdateSelectedRoom(this.props.index)}>
 					{this.props.room.locationName + ' - ' + this.props.room.roomName}
 				</button>
 			);
