@@ -337,13 +337,13 @@ $app->get('/users', function (Request $request, Response $response, array $args)
 $app->get('/preferences/{CWID}', function (Request $request, Response $response, array $args) {
 	$cwid = $args['CWID'];
 	$queryData = getSelectQueryData($request);
-	// if (isset($queryData['where']))
-	// 	$queryData['where']->CWID = $cwid;
-	// else
-	// 	$queryData->where = ['CWID'=> $cwid] 
+	if (isset($queryData['where']))
+		$queryData['where']['CWID'] = $cwid;
+	else
+		$queryData['where'] = ['CWID'=> $cwid]; 
 	$queryString = DBUtil::buildSelectQuery('preferences', $queryData['fields'], ['CWID'=> $cwid]);
-	$events = DBUtil::runQuery($queryString);
-	$response->getBody()->write($events);
+	$preferences = DBUtil::runQuery($queryString);
+	$response->getBody()->write($preferences);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
 });
