@@ -215,6 +215,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			groups: [],
 			pendingOverride: false
 		});
+
 		this.setState({ events: events, showCreateModal: true });
 	}
 
@@ -222,7 +223,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let events: Map<number, Event> = this.cloneStateEvents();
 		let index = this.getNextEventIndex();
 		let placeholder = events.get(Number.MAX_SAFE_INTEGER);
-		if (placeholder)
+		if (placeholder) {
 			events.set(index, {
 				id: index,
 				title: title,
@@ -234,6 +235,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				groups: groups,
 				pendingOverride: false
 			});
+			events.delete(Number.MAX_SAFE_INTEGER);
+		}
 
 		this.setState({ events: events }, () => this.closeEventCreationModal());
 	}
@@ -426,7 +429,6 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	// Event Persistence /////////////////////////////////////////////////////////////////////////////////////////////////
 	persistStateToDB(): void {
 		let persistPromises: Promise<any>[] = [];
-
 		persistPromises.push(this.deleteDBEventsNotInClient());
 
 		persistPromises.push(new Promise((resolve, reject) => {
@@ -440,7 +442,6 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		}));
 
 		Promise.all(persistPromises).then(() => {
-			// TODO: make this asynchronous
 			this.props.handleToolbarMessage('Changes saved successfully!', 'success');
 			this.eventCache = this.cloneStateEvents();
 		}).catch(() => {
@@ -451,8 +452,6 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	getClientEventIDsThatAreAlreadyInDB(): Promise<number[]> {
 		return new Promise((resolve, reject) => {
 			let ids: number[] = Array.from(this.state.events.keys());
-			console.log('CLIENT IDS');
-			console.log(ids);
 
 			let queryData = {
 				fields: ['EventID'], where: {
@@ -464,11 +463,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			let queryDataString = JSON.stringify(queryData);
 			let stateEventsThatAreAlreadyInDB: number[] = [];
 			request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-				if (res && res.body) {
-					console.log('GET EVENTS ALREADY IN DB....................');
-					console.log(JSON.stringify(res.body));
+				if (res && res.body)
 					resolve(this.getEventIdsFromResponseBody(res.body));
-				} else
+				else
 					reject();
 			});
 		});
@@ -508,10 +505,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					};
 					let queryDataString = JSON.stringify(queryData);
 					request.delete('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-						if (res && res.body) {
-							console.log('deleted events, rows affected: ' + res.body);
+						if (res && res.body)
 							resolveOuter();
-						} else
+						else
 							rejectOuter();
 					});
 				} else
@@ -539,9 +535,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			};
 			let queryDataString = JSON.stringify(queryData);
 			request.put('/api/notifications').set('queryData', queryDataString).end((error: {}, res: any) => {
-				if (res && res.body)
-					console.log('sent notification to unowned event owner! ' + JSON.stringify(res.body));
-				else
+				if (!res || !res.body)
 					alert('sending unowned event notification failed! Handle this properly!');
 			});
 		});
@@ -549,19 +543,12 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 	updateExistingEventsInDB(eventIDsInDB: number[]): Promise<void> {
 		return new Promise((resolve, reject) => {
-			console.log('PERSIST EXISTING......');
-			console.log(this.state.events);
-
 			let eventsToUpdate: Event[] = [];
 			eventIDsInDB.forEach((id) => {
-
 				let eventToUpdate = this.state.events.get(id);
-				console.log(eventToUpdate);
 				if ((eventToUpdate && Number(eventToUpdate.cwid) === Number(this.props.cwid) || eventToUpdate && this.props.role === 'administrator') &&
 					!this.eventsAreEqual(eventToUpdate, this.eventCache.get(id)))
 					eventsToUpdate.push(eventToUpdate);
-				else
-					console.log('not in client or not matching cwid OR not modified!');
 			});
 
 			eventsToUpdate.forEach((event: Event) => {
@@ -577,12 +564,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				};
 				let queryDataString = JSON.stringify(queryData);
 				request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-					if (res && res.body) {
-						console.log('updated id: ' + event.id + ', ' + event.title + ', ' + event.description);
-					} else {
-						console.log('failed update,  id: ' + event.id + ', ' + event.title + ', ' + event.description);
+					if (!res || !res.body)
 						reject();
-					}
 				});
 			});
 
@@ -591,13 +574,11 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	}
 
 	getClientEventsNotYetInDB(alreadyInDB: number[]): Event[] {
-		console.log('GET STATE EVENTS NOT YET IN DB..................');
 		let clientEventsNotInDBMap: Map<number, Event> = this.cloneStateEvents();
 		alreadyInDB.forEach((id) => {
 			clientEventsNotInDBMap.delete(id);
 		});
 
-		console.log(Array.from(clientEventsNotInDBMap.keys()));
 		let clientEventsNotYetInDB: Event[] = Array.from(clientEventsNotInDBMap.values());
 		return clientEventsNotYetInDB;
 	}
@@ -605,8 +586,6 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	persistNewEventsToDB(events: Event[]): Promise<any> {
 		return new Promise((resolveOuter, rejectOuter) => {
 			let eventsToCreate: Event[] = [];
-			console.log('PERSISTING NEW EVENTS........');
-			console.log(events);
 			events.forEach(event => {
 				eventsToCreate.push(event);
 			});
@@ -615,8 +594,6 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 			eventsToCreate.forEach((event) => {
 				persistNewEventsPromises.push(new Promise((resolve, reject) => {
-					console.log('persisting new event:');
-					console.log(event);
 					let queryData = {
 						groups: event.groups,
 						insertValues: {
@@ -632,10 +609,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					};
 					let queryDataString = JSON.stringify(queryData);
 					request.put('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-						if (res && res.body) {
+						if (res && res.body)
 							resolve();
-							console.log('created: ' + JSON.stringify(res.body));
-						} else
+						else
 							reject();
 					});
 				}));
