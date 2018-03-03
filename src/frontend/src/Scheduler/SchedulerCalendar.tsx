@@ -30,6 +30,8 @@ interface State {
 
 export interface Event {
 	id: number;
+	location: string;
+	room: string;
 	title: string;
 	description: string;
 	start: string;
@@ -206,6 +208,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let events = this.cloneStateEvents();
 		events.set(Number.MAX_SAFE_INTEGER, {
 			id: Number.MAX_SAFE_INTEGER,
+			location: '',
+			room: '',
 			title: 'New Event',
 			description: 'modal placeholder',
 			start: start.toISOString(),
@@ -226,6 +230,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		if (placeholder) {
 			events.set(index, {
 				id: index,
+				location: this.props.location,
+				room: this.props.room,
 				title: title,
 				description: description,
 				start: placeholder.start,
@@ -296,6 +302,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			eventWithRequest.pendingOverride = true;
 			events.set(eventID, eventWithRequest);
 			this.setState({ events: events });
+			if (this.unownedEventModal)
+				this.unownedEventModal.beginEdit(eventWithRequest);
 		}
 	}
 
@@ -336,6 +344,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			end: event.end,
 			groups: event.groups,
 			id: event.id,
+			location: event.location,
+			room: event.room,
 			ownerName: event.ownerName,
 			pendingOverride: event.pendingOverride,
 			start: event.start,
@@ -394,6 +404,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 			let parsedEvent: any = {
 				id: event.EventID,
+				location: event.LocationName,
+				room: event.RoomName,
 				title: event.Title,
 				description: event.Description,
 				start: event.StartTime,
