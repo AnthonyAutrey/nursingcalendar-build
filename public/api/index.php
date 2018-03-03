@@ -100,7 +100,7 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 	$queryData = getSelectQueryData($request);
 	$queryString = DBUtil::buildSelectQuery(
 		'Events natural left outer join EventGroupRelation '.
-		'left outer join (select EventID as OverrideID from overrideRequests) overrideJoin on EventID = OverrideID '.
+		'left outer join (SELECT EventID as OverrideID from overrideRequests) overrideJoin on EventID = OverrideID '.
 		'NATURAL join (select CWID, FirstName, LastName from Users) userJoin',
 		'*',
 		$queryData['where']
@@ -344,6 +344,24 @@ $app->delete('/notifications/{id}', function (Request $request, Response $respon
 });
 
 // Override Request Routes //////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/overriderequests/{id}', function (Request $request, Response $response, array $args) {
+	$id = $args['id'];
+	$queryData = getSelectQueryData($request);
+	if (!isset($queryData['where']))
+		$queryData['where'] = ['CWID' => $id];
+	else
+		$queryData['where']['CWID'] = $id;
+
+	$tableString = 'OverrideRequests NATURAL JOIN events '.
+		'NATURAL JOIN (SELECT CWID as RequestorCWID, FirstName as RequestorFirstName, LastName as RequestorLastName from Users) reqUser ';
+	$queryString = DBUtil::buildSelectQuery($tableString, $queryData['fields'], $queryData['where']);
+	$overrideRequests = DBUtil::runQuery($queryString);
+	$response->getBody()->write($overrideRequests);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
 
 // Create //
 $app->put('/overriderequests', function (Request $request, Response $response, array $args) {
