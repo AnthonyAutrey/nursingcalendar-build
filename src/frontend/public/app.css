@@ -22,3 +22,8 @@ button.fc-roomLabel-button, button.fc-roomLabel-button:hover {
 .cursor-p {
 	cursor: pointer;
 }
+
+::selection {
+	background: #bd955a;
+	color: #fff;
+}

@@ -112,9 +112,9 @@ export class NotificationDropdown extends React.Component<Props, State> {
 			bell = <span className="oi oi-bell mr-2" style={{ top: 2 }} />;
 
 		return (
-			<div ref={container => { this.container = container; }}>
+			<div className="mt-2 mt-lg-0 ml-auto" ref={container => { this.container = container; }}>
 				<ViewEventModal hideCreatedBy={true} hideGroups={true} ref={viewEventModal => { this.viewEventModal = viewEventModal; }} />
-				<ul className="nav nav-pills mt-2 mt-lg-0 ml-auto">
+				<ul className="nav nav-pills">
 					<li className="nav-item dropdown">
 						<a
 							className="nav-link bg-secondary text-light cursor-p"
