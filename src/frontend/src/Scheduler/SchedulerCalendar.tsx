@@ -187,6 +187,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					selectHelper={true}
 					viewRender={(view: any) => this.cacheViewAndDate(view)}
 					firstDay={1}
+					eventLongPressDelay={0}
+					selectLongPressDelay={300}
 					select={this.handleCalendarSelect}
 				/>
 			</div>
