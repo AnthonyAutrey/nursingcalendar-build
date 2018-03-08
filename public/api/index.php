@@ -263,7 +263,7 @@ $app->get('/resources', function (Request $request, Response $response, array $a
 $app->get('/usergroups/{cwid}', function (Request $request, Response $response, array $args) {
 	$cwid = $args['cwid'];
 	$queryData = getSelectQueryData($request);
-	$queryString = DBUtil::buildSelectQuery('UserGroupRelation', $queryData['fields'], ['CWID' => $cwid]);
+	$queryString = DBUtil::buildSelectQuery('UserGroupRelation Natural Join Groups', $queryData['fields'], ['CWID' => $cwid]);
 	$groups = DBUtil::runQuery($queryString);
 	$response->getBody()->write($groups);
 	$response = $response->withHeader('Content-type', 'application/json');
