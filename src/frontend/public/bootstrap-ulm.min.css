@@ -6019,8 +6019,3 @@ visibility: visible !important; }
 
 .invisible {
 visibility: hidden !important; }
-
-.underline {
-	padding-bottom: 2px;
-	border-bottom: 2px solid;
-}

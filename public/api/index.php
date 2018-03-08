@@ -100,7 +100,7 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 	$queryData = getSelectQueryData($request);
 	$queryString = DBUtil::buildSelectQuery(
 		'Events natural left outer join EventGroupRelation '.
-		'NATURAL left outer join (SELECT EventID as OverrideID from overrideRequests) overrideJoin '.
+		'left outer join (SELECT EventID as OverrideID from overrideRequests) overrideJoin on EventID = OverrideID '.
 		'NATURAL join (select CWID, FirstName, LastName from Users) userJoin',
 		'*',
 		$queryData['where']
@@ -114,12 +114,12 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 			$joinedEvent->LocationName.
 			$joinedEvent->RoomName
 		])) {
-			if($joinedEvent->GroupName == null)
+			if(is_null($joinedEvent->GroupName))
 				$groups = [];
 			else
 				$groups = [$joinedEvent->GroupName];
 
-			if($joinedEvent->OverrideID == null)
+			if(is_null($joinedEvent->OverrideID))
 				$pendingOverride = false;
 			else
 				$pendingOverride = true;
@@ -128,7 +128,7 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 				$joinedEvent->EventID.
 				$joinedEvent->LocationName.
 				$joinedEvent->RoomName
-				]  = [
+			] = [
 				'EventID' => $joinedEvent->EventID,
 				'LocationName' => $joinedEvent->LocationName,
 				'RoomName' => $joinedEvent->RoomName,
@@ -299,6 +299,26 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 
 // Notification Routes //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Insert //
+$app->put('/notifications', function (Request $request, Response $response, array $args) {
+	$queryData = getInsertQueryData($request);
+
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['insertValues']) ||
+		!isset($queryData['insertValues']['ToCWID']) ||
+		!isset($queryData['insertValues']['Title']) ||
+		!isset($queryData['insertValues']['Message'])
+		) {
+		return $response->withStatus(400);
+	}
+
+	$queryString = DBUtil::buildInsertQuery('notifications', $queryData['insertValues']);
+	$results = DBUtil::runCommand($queryString);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+});
+
 // Read //
 $app->get('/notifications/{cwid}', function (Request $request, Response $response, array $args) {
 	$cwid = $args['cwid'];
@@ -310,6 +330,27 @@ $app->get('/notifications/{cwid}', function (Request $request, Response $respons
 	return $response;	
 });
 
+// Update //
+$app->post('/notifications', function (Request $request, Response $response, array $args) {
+	$results = [];
+	$queryData = getUpdateQueryData($request);
+
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['setValues']) ||
+		!count($queryData['setValues']) > 0 ||
+		!isset($queryData['where'])
+		) {
+		return $response->withStatus(400);
+	}
+
+	$queryString = DBUtil::buildUpdateQuery('notifications', $queryData['setValues'], $queryData['where']);	
+	$results = DBUtil::runCommand($queryString);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+});
+
+// Delete //
 $app->delete('/notifications/{id}', function (Request $request, Response $response, array $args) {
 	$id = $args['id'];
 	$deleteGroupsQuery = DBUtil::buildDeleteQuery('notifications', ['NotificationID' => $id]);
@@ -320,6 +361,24 @@ $app->delete('/notifications/{id}', function (Request $request, Response $respon
 });
 
 // Override Request Routes //////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/overriderequests/{id}', function (Request $request, Response $response, array $args) {
+	$id = $args['id'];
+	$queryData = getSelectQueryData($request);
+	if (!isset($queryData['where']))
+		$queryData['where'] = ['CWID' => $id];
+	else
+		$queryData['where']['CWID'] = $id;
+
+	$tableString = 'OverrideRequests NATURAL JOIN events '.
+		'NATURAL JOIN (SELECT CWID as RequestorCWID, FirstName as RequestorFirstName, LastName as RequestorLastName from Users) reqUser ';
+	$queryString = DBUtil::buildSelectQuery($tableString, $queryData['fields'], $queryData['where']);
+	$overrideRequests = DBUtil::runQuery($queryString);
+	$response->getBody()->write($overrideRequests);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
 
 // Create //
 $app->put('/overriderequests', function (Request $request, Response $response, array $args) {
@@ -393,7 +452,7 @@ function getSelectQueryData(Request $request) : array {
 	$fields = null;
 	$where = null;
 
-	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+	if(count($request->getHeader('queryData')) > 0 and (!is_null($request->getHeader('queryData')[0])))
 		$queryData = json_decode($request->getHeader('queryData')[0]);
 	if (isset($queryData->fields))
 		$fields = $queryData->fields;
@@ -406,7 +465,7 @@ function getSelectQueryData(Request $request) : array {
 function getInsertQueryData(Request $request) : array {
 	$insertValues = null;
 
-	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+	if(count($request->getHeader('queryData')) > 0 and (!is_null($request->getHeader('queryData')[0])))
 		$queryData = json_decode($request->getHeader('queryData')[0]);
 	if (isset($queryData->insertValues))
 		$insertValues = $queryData->insertValues;
@@ -419,7 +478,7 @@ function getUpdateQueryData(Request $request) : array {
 	$setValues = null;
 	$where = null;
 
-	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+	if(count($request->getHeader('queryData')) > 0 and (!is_null($request->getHeader('queryData')[0])))
 		$queryData = json_decode($request->getHeader('queryData')[0]);
 	if (isset($queryData->setValues))
 		$setValues = $queryData->setValues;
@@ -433,7 +492,7 @@ function getDeleteQueryData(Request $request) : array {
 	$queryData = null;
 	$where = null;
 
-	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+	if(count($request->getHeader('queryData')) > 0 and (!is_null($request->getHeader('queryData')[0])))
 		$queryData = json_decode($request->getHeader('queryData')[0]);
 	if (isset($queryData->where))
 		$where = $queryData->where;
@@ -445,7 +504,7 @@ function getDeleteQueryData(Request $request) : array {
 function getEventGroupsToInsert(Request $request) : array {
 	$groups = null;
 
-	if(count($request->getHeader('queryData')) > 0 and ($request->getHeader('queryData')[0] !== null))
+	if(count($request->getHeader('queryData')) > 0 and (!is_null($request->getHeader('queryData')[0])))
 		$queryData = json_decode($request->getHeader('queryData')[0]);
 	if (isset($queryData->groups))
 		$groups = $queryData->groups;

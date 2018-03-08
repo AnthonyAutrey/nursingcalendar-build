@@ -180,6 +180,8 @@ export class UnownedEventModal extends React.Component<Props, State> {
 					let queryData = {
 						insertValues: {
 							'EventID': this.state.event.id,
+							'LocationName': this.state.event.location,
+							'RoomName': this.state.event.room,
 							'Message': this.state.requestMessage,
 							'Time': this.getCurrentDateTimeInSqlFormat(),
 							'Accepted': 'false',

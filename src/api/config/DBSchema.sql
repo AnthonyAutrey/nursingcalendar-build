@@ -13,22 +13,22 @@ USE nursing_calendar;
 
 CREATE TABLE Locations
 (
-	LocationName VARCHAR(20) NOT NULL,
+	LocationName varchar(60) NOT NULL,
 	PRIMARY KEY (LocationName)
 );
 
 CREATE TABLE Rooms
 (
-	RoomName VARCHAR(20) NOT NULL,
+	RoomName varchar(60) NOT NULL,
 	Capacity SmallInt, -- if NULL, room should be regarded as having infinite capacity
-	LocationName VARCHAR(20) NOT NULL,
+	LocationName varchar(60) NOT NULL,
 	PRIMARY KEY (RoomName, LocationName),
 	FOREIGN KEY (LocationName) REFERENCES Locations(LocationName)
 );
 
 CREATE TABLE Resources
 (
-	ResourceName VARCHAR(20) NOT NULL,
+	ResourceName varchar(60) NOT NULL,
 	IsEnumerable Boolean NOT NULL DEFAULT 1,
 	PRIMARY KEY (ResourceName)
 );
@@ -45,9 +45,9 @@ CREATE TABLE Users
 CREATE TABLE Events
 (
 	EventID INT NOT NULL,
-	LocationName VARCHAR(20) NOT NULL,
-	RoomName VARCHAR(20) NOT NULL,
-	Title VARCHAR(20) NOT NULL,
+	LocationName varchar(60) NOT NULL,
+	RoomName varchar(60) NOT NULL,
+	Title varchar(60) NOT NULL,
 	Description VARCHAR(300) NOT NULL,
 	StartTime DateTime NOT NULL,
 	EndTime DateTime NOT NULL,
@@ -89,6 +89,8 @@ CREATE TABLE Notifications
 CREATE TABLE OverrideRequests
 (
 	EventID INT NOT NULL,
+	LocationName varchar(60) NOT NULL,
+	RoomName varchar(60) NOT NULL,
 	Message VARCHAR(300) NOT NULL,
 	OwnerResponse VARCHAR(300),
 	AdminResponse VARCHAR(300),
@@ -96,17 +98,19 @@ CREATE TABLE OverrideRequests
 	Accepted Boolean NOT NULL,
 	RequestorCWID INT NOT NULL,
 	ResolvingAdminCWID INT, -- if NULL, Admin has not yet resolved this
-	PRIMARY KEY (EventID),
+	PRIMARY KEY (EventID, LocationName, RoomName),
 	FOREIGN KEY (EventID) REFERENCES Events(EventID),
+	FOREIGN KEY (LocationName) REFERENCES Events(LocationName),
+	FOREIGN KEY (RoomName) REFERENCES Events(RoomName),
 	FOREIGN KEY (RequestorCWID) REFERENCES Users(CWID),
 	FOREIGN KEY (ResolvingAdminCWID) REFERENCES Users(CWID)
 );
 
 CREATE TABLE RoomResourceRelation
 (
-	LocationName VARCHAR(20) NOT NULL,
-	RoomName VARCHAR(20) NOT NULL,
-	ResourceName VARCHAR(20) NOT NULL,
+	LocationName varchar(60) NOT NULL,
+	RoomName varchar(60) NOT NULL,
+	ResourceName varchar(60) NOT NULL,
 	Count SmallInt, -- if NULL, this resource isn't countable (example: AV capability)
 	PRIMARY KEY (LocationName, RoomName, ResourceName),
 	FOREIGN KEY (LocationName) REFERENCES Locations(LocationName),
@@ -117,8 +121,8 @@ CREATE TABLE RoomResourceRelation
 CREATE TABLE EventGroupRelation
 (
 	EventID INT NOT NULL,
-	LocationName VARCHAR(20) NOT NULL,
-	RoomName VARCHAR(20) NOT NULL,
+	LocationName varchar(60) NOT NULL,
+	RoomName varchar(60) NOT NULL,
 	GroupName VARCHAR(60) NOT NULL,
 	PRIMARY KEY (EventID, GroupName),
 	FOREIGN KEY (EventID) REFERENCES Events(EventID),
@@ -192,27 +196,21 @@ VALUES
 	('Med Surg Clinicals', 'Med Surg Clinicals'),
 	('Pediatrics Clinicals', 'Pediatrics Clinicals'),
 	('Maternity Clinicals', 'Maternity Clinicals'),
-	('Med Surg - Rotation 1', 'First clinical rotation group');
+	('Med Surg - Rotation 1', 'First clinical rotation group'),
+	('Med Surg - Rotation 2', 'Second clinical rotation group');
 
 INSERT INTO UserGroupRelation (CWID, GroupName)
 VALUES
 	(00000000, 'Level 2'),
 	(11111111, 'Anatomy and Physiology'),
-	(00000000, 'Gerontology'),
 	(00000000, 'Nursing Research'),
 	(00000000, 'Med Surg Clinicals'),
 	(00000000, 'Med Surg - Rotation 1'),
-	(00000000, 'Pediatrics Clinicals'),
 	(11111111, 'Maternity Clinicals');
 
 INSERT INTO Notifications (ToCWID, Title, Message)
 VALUES
 	(00000000, 'Message to Students', 'This is a very important message.'),
-	(00000000, 'Another Message', 'This is a very important message. Lorem ipsum and whatnot.'),
 	(00000000, 'Regarding Nursing Research...', 'Hello. This is God speaking. Plz write.'),
-	(00000000, 'Pediatrics Clinicals', 'This is a very important message.'),
-	(11111111, 'Message for Instructor','This is a very important message.'),
-	(11111111, 'Med Surg - Rotation 1', 'This is a very, super, very important message.'),
-	(11111111, 'Maternity Clinicals', 'This is a very important message.'),
 	(22222222, 'Admin Message', 'This is a very important message.'),
 	(22222222, 'Med Surg Clinicals', 'This is a very important message.');

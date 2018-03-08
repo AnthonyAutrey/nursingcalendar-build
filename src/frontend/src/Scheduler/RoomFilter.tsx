@@ -113,14 +113,13 @@ export class RoomFilter extends React.Component<Props, State> {
 		let addButton: any = null;
 		if (this.state.roomFilters.resources.length < this.allResources.length)
 			addButton = (
-				<a
-					href="#"
-					className="addButton btn btn-primary w-100"
+				<span
+					className="addButton btn btn-primary w-100 cursor-p"
 					onClick={() => { this.addResourceFunction(); }}
 				>
 					Add Resource &nbsp;&nbsp;
 					<span className="plusIcon oi oi-size-sm oi-plus" />
-				</a>
+				</span>
 			);
 
 		let extraFilters = (

@@ -16,7 +16,7 @@ interface State {
 	rooms: Room[];
 	selectedRoom: number;
 	toolbarMessage: string;
-	toolbarStatus?: 'error' | 'success';
+	toolbarStatus?: 'error' | 'success' | 'info';
 	initialized: boolean;
 }
 
@@ -82,7 +82,9 @@ export class Scheduler extends React.Component<Props, State> {
 						<div className="col-md-9">
 							<SchedulerCalendar
 								ref={(schedulerCalendar) => { this.schedulerCalendar = schedulerCalendar; }}
-								handleSendMessage={this.handleCalendarMessage}
+								handleToolbarMessage={this.handleToolbarMessage}
+								handleToolbarText={this.setToolbarText}
+								handleToolbarReset={this.resetToolbar}
 								room={selectedRoomName}
 								location={selectedLocationName}
 								cwid={this.props.cwid}
@@ -142,7 +144,15 @@ export class Scheduler extends React.Component<Props, State> {
 	}
 
 	// Toolbar //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	handleCalendarMessage = (message: string, style?: 'success' | 'error') => {
+	setToolbarText = (message: string, style: 'success' | 'error' | 'info' | undefined) => {
+		this.setState({ toolbarMessage: message, toolbarStatus: style });
+	}
+
+	resetToolbar = () => {
+		this.setState({ toolbarMessage: this.defaultToolbarMessage, toolbarStatus: undefined });
+	}
+
+	handleToolbarMessage = (message: string, style?: 'success' | 'error') => {
 		this.setState({ toolbarMessage: message, toolbarStatus: style });
 		setTimeout(() => {
 			this.setState({ toolbarMessage: this.defaultToolbarMessage, toolbarStatus: undefined });
@@ -153,14 +163,26 @@ export class Scheduler extends React.Component<Props, State> {
 	filterChangeHandler = (filters: RoomFilters) => {
 		let filteredRooms: Room[] = [];
 		this.allRooms.forEach(room => {
+			let roomNameLocationString = room.roomName + ' ' + room.locationName;
 			if ((!filters.capacity.min || room.capacity === null || Number(room.capacity) >= Number(filters.capacity.min)) &&
-				room.roomName.match(new RegExp(filters.searchText, 'i')) &&
+				this.stringSearch(filters.searchText, roomNameLocationString) &&
 				this.roomMatchesEveryResource(room, filters.resources) &&
 				(!filters.location || room.locationName === filters.location))
 				filteredRooms.push(room);
 		});
 
 		this.setState({ rooms: filteredRooms });
+	}
+
+	stringSearch(searchString: string, targetString: string): boolean {
+		let stringSplits: string[] = searchString.split(' ');
+		let matchFound: boolean = true;
+		stringSplits.forEach(stringSplit => {
+			if (!targetString.match(new RegExp(stringSplit, 'i')))
+				matchFound = false;
+		});
+
+		return matchFound;
 	}
 
 	roomMatchesEveryResource(room: Room, filterResources: { name: string, min?: number }[]): boolean {

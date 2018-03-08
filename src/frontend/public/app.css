@@ -18,7 +18,12 @@ button.fc-roomLabel-button, button.fc-roomLabel-button:hover {
 	font-weight: bold;
 	cursor: default;
 }
-/* .btn-primary, .btn-primary:hover {
-	color: #eebf78;
-} */
 
+.cursor-p {
+	cursor: pointer;
+}
+
+::selection {
+	background: #bd955a;
+	color: #fff;
+}

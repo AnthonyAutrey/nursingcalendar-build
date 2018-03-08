@@ -151,7 +151,6 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					})
 				}
 			};
-
 			let eventQueryDataString = JSON.stringify(eventQueryData);
 			request.get('/api/eventswithrelations').set('queryData', eventQueryDataString).end((error: {}, res: any) => {
 				if (res && res.body)

@@ -7,6 +7,7 @@ import { ViewingCalendar } from './Home/ViewingCalendar';
 import { Administration } from './Administration/Administration';
 import { Alert } from './Generic/Alert';
 import { Loading } from './Generic/Loading';
+import { NotFound } from './Generic/NotFound';
 const request = require('superagent');
 
 interface State {
@@ -104,7 +105,7 @@ class App extends React.Component<{}, State> {
 			);
 
 		routes.push(
-			<Route key="404" component={() => <div>404</div>} />
+			<Route key="404" component={NotFound} />
 		);
 
 		return routes;
