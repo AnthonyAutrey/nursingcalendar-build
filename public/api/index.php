@@ -73,17 +73,6 @@ $app->get('/session', function (Request $request, Response $response, array $arg
 
 
 // Event Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-$app->get('/hello[/{name}]', function (Request $request, Response $response, array $args) {
-
-	if (isset($args['name']))
-		$name = $args['name'];
-	else
-		$name = 'anonymous';
-
-	$response->getBody()->write("Hello, $name");
-
-    return $response;
-});
 
 // Read //
 $app->get('/events', function (Request $request, Response $response, array $args) {
