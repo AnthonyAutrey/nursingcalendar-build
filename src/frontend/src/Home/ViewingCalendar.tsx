@@ -31,6 +31,7 @@ export interface Event {
 export class ViewingCalendar extends React.Component<Props, State> {
 
 	private viewEventModal: ViewEventModal | null;
+	private collapseEvents: boolean = true;
 
 	constructor(props: Props, state: State) {
 		super(props, state);
@@ -54,8 +55,17 @@ export class ViewingCalendar extends React.Component<Props, State> {
 				<ViewEventModal ref={viewEventModal => { this.viewEventModal = viewEventModal; }} />
 				<FullCalendarReact
 					id="calendar"
+					customButtons={{
+						expand: {
+							text: this.collapseEvents ? 'Expand All' : 'Collapse All',
+							click: () => {
+								this.collapseEvents = !this.collapseEvents;
+								this.forceUpdate();
+							}
+						}
+					}}
 					header={{
-						left: 'prev,next today',
+						left: 'prev,next today expand',
 						center: 'title',
 						right: 'month,agendaWeek,agendaDay'
 					}}
@@ -75,7 +85,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					slotEventOverlap={false}
 					allDaySlot={false}
 					eventOverlap={true}
-					eventLimit={true} // allow "more" link when too many events
+					eventLimit={this.collapseEvents} // allow "more" link when too many events
 					eventClick={this.openViewEventModal}
 					// dayClick={(date: any) => {
 					// 	if (this.currentView === 'month') {
