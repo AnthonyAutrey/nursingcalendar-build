@@ -663,6 +663,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				eventsHaveBeenModified = true;
 		});
 
+		if (this.state.events.size !== this.eventCache.size)
+			eventsHaveBeenModified = true;
+
 		return eventsHaveBeenModified;
 	}
 }
