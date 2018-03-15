@@ -28,7 +28,7 @@ export class OverrideRequest extends React.Component<Props, State> {
 
 	render() {
 		let title: JSX.Element = (
-			<h6 className="mt-2" style={{ wordBreak: 'break-all' }}>
+			<h6 className="mt-2">
 				<strong>
 					Request for Timeslot of Event:
 					<a href="#" onClick={() => this.props.handleShowEvent(this.props.overrideRequestData.event)}>

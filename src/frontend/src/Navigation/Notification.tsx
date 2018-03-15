@@ -24,7 +24,7 @@ export class Notification extends React.Component<Props, {}> {
 			<div className="card p-2 mb-1" style={style}>
 				<div className="d-flex">
 					<div className="w-100 mr-2">
-						<h6 className="mt-2" style={{ wordBreak: 'break-all' }}><strong>{this.props.title}</strong></h6>
+						<h6 className="mt-2"><strong>{this.props.title}</strong></h6>
 						<hr />
 					</div>
 					<div className="ml-auto">

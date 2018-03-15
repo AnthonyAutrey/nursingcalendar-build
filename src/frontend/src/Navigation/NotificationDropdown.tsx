@@ -336,7 +336,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 			insertValues: {
 				'Title': 'Timeslot Request Granted.',
 				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title +
-					'\' has been granted. Event owner\'s response: "' + reply + '" The timeslot has been reserved for you and can now be modified.',
+					'\' has been granted. Event owner\'s response: "' + reply + '". The timeslot has been reserved for you and can now be modified.',
 				'ToCWID': overrideRequest.fromCWID
 			}
 		};
@@ -368,7 +368,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 		let queryData = {
 			insertValues: {
 				'Title': 'Timeslot Request Denied.',
-				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title + '\' has been denied. Event owner\'s response: "' + reply + '"',
+				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title + '\' has been denied. Event owner\'s response: "' + reply + '".',
 				'ToCWID': overrideRequest.fromCWID
 			}
 		};

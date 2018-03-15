@@ -5,14 +5,17 @@ import { NavigationBar } from './Navigation/NavigationBar';
 import { Scheduler } from './Scheduler/Scheduler';
 import { ViewingCalendar } from './Home/ViewingCalendar';
 import { Administration } from './Administration/Administration';
+import { ManageInstructors } from './Administration/ManageInstructors';
 import { Alert } from './Generic/Alert';
 import { Loading } from './Generic/Loading';
+import { NotFound } from './Generic/NotFound';
 const request = require('superagent');
 
 interface State {
-	loading: boolean;
+	sessionRetreived: boolean;
 	cwid?: number;
 	role?: string;
+	name?: string;
 	activeRoute: string;
 }
 
@@ -22,7 +25,7 @@ class App extends React.Component<{}, State> {
 	constructor(props: {}, state: State) {
 		super(props, state);
 
-		this.state = { loading: false, activeRoute: '' };
+		this.state = { sessionRetreived: false, activeRoute: '' };
 	}
 
 	componentWillMount() {
@@ -30,7 +33,7 @@ class App extends React.Component<{}, State> {
 	}
 
 	render() {
-		if (this.state.loading)
+		if (!this.state.sessionRetreived)
 			return <Loading />;
 
 		if (!(this.state.cwid && this.state.role))
@@ -39,7 +42,13 @@ class App extends React.Component<{}, State> {
 		return (
 			<div className="App">
 				<Alert ref={alert => { this.alert = alert; }} />
-				<NavigationBar cwid={this.state.cwid} role={this.state.role} activeRoute={this.state.activeRoute} handleLogout={this.handleLogout} />
+				<NavigationBar
+					cwid={this.state.cwid}
+					role={this.state.role}
+					name={this.state.name}
+					activeRoute={this.state.activeRoute}
+					handleLogout={this.handleLogout}
+				/>
 				<Router>
 					<Switch>
 						{this.getRoutesAvailableToRole()}
@@ -52,9 +61,9 @@ class App extends React.Component<{}, State> {
 	getSession = () => {
 		request.get('/api/session').end((error: {}, res: any) => {
 			if (res && res.body) {
-				this.setState({ loading: false });
-				if (res.body.cwid && res.body.role)
-					this.setState({ cwid: res.body.cwid, role: res.body.role });
+				this.setState({ sessionRetreived: true });
+				if (res.body.cwid && res.body.role && res.body.firstName && res.body.lastName)
+					this.setState({ cwid: res.body.cwid, role: res.body.role, name: res.body.firstName + ' ' + res.body.lastName });
 			}
 		});
 	}
@@ -92,25 +101,25 @@ class App extends React.Component<{}, State> {
 		if (this.state.role === 'instructor' || this.state.role === 'administrator')
 			routes.push(
 				<Route key="/schedule" path="/schedule" >
-					<Scheduler 
-						handleActiveRouteChange={this.handleActiveRouteChange} 
-						cwid={this.state.cwid || 0} 
-						role={this.state.role || ''}
-						// handleStartLoading={() => this.setState({loading: true})}
-						// handleEndLoading={() => this.setState({loading: false})}
-					/>
+					<Scheduler handleActiveRouteChange={this.handleActiveRouteChange} cwid={this.state.cwid || 0} role={this.state.role || ''} />
 				</Route>
 			);
 
 		if (this.state.role === 'administrator')
 			routes.push(
-				<Route key="/administration" path="/administration">
-					<Administration handleShowAlert={this.handleShowAlert} />
-				</Route>
+				(
+					<Route key="/administration" path="/administration">
+						<Administration handleShowAlert={this.handleShowAlert} />
+					</Route>
+				), (
+					<Route key="/manageInstructors" path="/manageInstructors">
+						<ManageInstructors handleShowAlert={this.handleShowAlert} />
+					</Route>
+				)
 			);
 
 		routes.push(
-			<Route key="404" component={() => <div>404</div>} />
+			<Route key="404" component={NotFound} />
 		);
 
 		return routes;
