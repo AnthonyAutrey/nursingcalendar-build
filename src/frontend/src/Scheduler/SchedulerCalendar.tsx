@@ -40,6 +40,7 @@ export interface Event {
 	ownerName: string;
 	groups: string[];
 	pendingOverride: boolean;
+	color?: string;
 }
 
 export class SchedulerCalendar extends React.Component<Props, State> {
@@ -51,6 +52,17 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	private editEventModal: EditEventModal | null;
 	private unownedEventModal: UnownedEventModal | null;
 	private eventCache: Map<number, Event>;
+	private eventColors: string[] = [
+		'#555B6E', '#BD955A', '#800029',
+		'#8B173C', '#C39E69', '#64697B',
+		'#972E4F', '#C9A878', '#737888',
+		'#750026', '#AC8852', '#4E5364',
+		'#690022', '#9B7A4A', '#464B5B',
+	];
+	// '#A24563', '#CFB187', '#838795', // lighter deviations from base colors
+	// '#AE5C76', '#D5BB96', '#9296A2', 
+	// '#5E001E', '#8A6D42', '#3E4351', // darker deviations from base colors
+	// '#52001B', '#795F3A', '#373A46'
 
 	constructor(props: Props, state: State) {
 		super(props, state);
@@ -241,7 +253,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				cwid: this.props.cwid,
 				ownerName: '',
 				groups: groups,
-				pendingOverride: false
+				pendingOverride: false,
+				color: this.getColor(groups[0])
 			});
 			events.delete(Number.MAX_SAFE_INTEGER);
 		}
@@ -267,6 +280,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			eventToModify.title = title;
 			eventToModify.description = description;
 			eventToModify.groups = groups;
+			eventToModify.color = this.getColor(groups[0]);
 			events.set(eventID, eventToModify);
 			this.setState({ events: events });
 		}
@@ -396,8 +410,11 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid) || this.props.role === 'administrator';
-			let color = '';
+			let color = this.getColor(event.Groups[0]);
 			let borderColor = '';
+
+			// let cTest = this.getHash(event.Groups[0]);
+			// this.getColor(event.Groups[0]);
 
 			if (!userOwnsEvent) {
 				borderColor = 'rgba(128,0,41,.4)';
@@ -667,6 +684,23 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			eventsHaveBeenModified = true;
 
 		return eventsHaveBeenModified;
+	}
+
+	// Event Coloring //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	getHash = (s: string) => {
+		let hash = 0;
+		for (let i = 0; i < s.length; i++) {
+			let char = s.charCodeAt(i);
+			hash += char;
+		}
+		return hash;
+	}
+
+	getColor = (eventGroup: string): string => {
+		let hash = this.getHash(eventGroup);
+		let index = hash % this.eventColors.length;
+
+		return this.eventColors[index];
 	}
 }
 
