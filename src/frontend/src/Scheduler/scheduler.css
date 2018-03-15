@@ -18,6 +18,8 @@
 	box-shadow: none;
 }
 
-.SchedulerCalendar .fc-basic-view {
+.SchedulerCalendar .fc-basic-view,
+.ViewingCalendar .fc-basic-view,
+.ViewingCalendar .fc-widget-content {
 	cursor: pointer;
 }

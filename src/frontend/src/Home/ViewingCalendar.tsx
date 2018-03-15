@@ -35,6 +35,10 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	private viewEventModal: ViewEventModal | null;
 	private collapseEvents: boolean = false;
 
+	private currentView: String | null = null;
+	private currentDate: any | null = null;
+	private smallestTimeInterval: number = Number.MAX_SAFE_INTEGER;
+
 	constructor(props: Props, state: State) {
 		super(props, state);
 
@@ -77,25 +81,29 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					// 	else
 					// 		return null;
 					// })()}
-					// defaultView={(() => {
-					// 	if (this.currentView)
-					// 		return this.currentView;
-					// 	else
-					// 		return 'agendaWeek';
-					// })()}
+					defaultView={(() => {
+						if (this.currentView)
+							return this.currentView;
+						else
+							return 'month';
+					})()}
 					editable={false}
 					slotEventOverlap={false}
 					allDaySlot={false}
 					eventOverlap={true}
 					eventLimit={this.collapseEvents} // allow "more" link when too many events
 					eventClick={this.openViewEventModal}
-					// dayClick={(date: any) => {
-					// 	if (this.currentView === 'month') {
-					// 		this.currentDate = date;
-					// 		this.currentView = 'agendaWeek';
-					// 		this.forceUpdate();
-					// 	}
-					// }}
+					dayClick={(date: any) => {
+						if (this.currentView === 'month') {
+							this.currentDate = date;
+							this.currentView = 'agendaWeek';
+							this.forceUpdate();
+						} else if (this.currentView === 'agendaWeek') {
+							this.currentDate = date;
+							this.currentView = 'agendaDay';
+							this.forceUpdate();
+						}
+					}}
 					events={this.state.events}
 					eventTextColor="white"
 					// eventDrop={(event: Event, delta: Duration) => this.editEvent(event, delta)}
@@ -117,7 +125,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					// selectable={true}
 					selectOverlap={false}
 					selectHelper={true}
-					// viewRender={(view: any) => this.cacheViewAndDate(view)}
+					viewRender={(view: any) => this.cacheViewAndDate(view)}
 					firstDay={1}
 				// select={this.handleCalendarSelect}
 				/>
@@ -205,6 +213,17 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	openViewEventModal = (event: Event) => {
 		if (this.viewEventModal)
 			this.viewEventModal.beginView(event);
+	}
+
+	// Store Calendar State /////////////////////////////////////////////////////////////////////////////////////////////////////////
+	cacheViewAndDate(view: any) {
+		this.currentView = view.name;
+		if (!this.currentDate)
+			this.currentDate = view.intervalStart;
+		if (this.currentDate.isBefore(view.intervalStart) || this.currentDate.isAfter(view.intervalEnd.subtract(1, 'minutes'))) {
+			this.currentDate = view.intervalStart;
+			this.smallestTimeInterval = view.intervalEnd - view.intervalStart;
+		}
 	}
 }
 
