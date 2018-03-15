@@ -126,8 +126,8 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	}
 
 	public getEventsFromDB(): void {
-		if (this.props.role === 'student')
-			this.getStudentEvents();
+		if (this.props.role === 'student' || this.props.role === 'instructor')
+			this.getUserFilteredEvents();
 		else {
 			this.setState({ loading: true });
 			request.get('/api/eventswithrelations').end((error: {}, res: any) => {
@@ -138,7 +138,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 		}
 	}
 
-	getStudentEvents(): string[] {
+	getUserFilteredEvents(): string[] {
 		this.setState({ loading: true });
 
 		let groups: string[] = [];

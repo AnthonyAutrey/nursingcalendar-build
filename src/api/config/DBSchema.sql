@@ -324,12 +324,13 @@ VALUES
 	(10, 'Nursing Building', 'Lab 218', 'Rest and Sleep', '', '2018-03-14 10:30:00', '2018-03-14 12:00:00', 22222222),
 	(11, 'Nursing Building', 'Lab 218', 'Safety and Security', '', '2018-03-14 13:00:00', '2018-03-14 15:00:00', 22222222),
 	(12, 'Nursing Building', 'Lab 218', 'Practice Medication', '', '2018-03-14 15:00:00', '2018-03-14 17:00:00', 22222222);
-
+	
 INSERT INTO EventGroupRelation (EventID, LocationName, RoomName, GroupName)
 VALUES
 	(0, 'Nursing Building', 'Lab 218', 'NURS 2009'),
+	(0, 'Nursing Building', 'Lab 218', 'NURS 2004'),
 	(1, 'Nursing Building', 'Lab 218', 'NURS 2009'),
-	(2, 'Nursing Building', 'Lab 218', 'NURS 2009'),
+	(2, 'Nursing Building', 'Lab 218', 'NURS 4066'),
 	(3, 'Nursing Building', 'Lab 218', 'Semester 1'),
 	(4, 'Nursing Building', 'Lab 218', 'NURS 2004'),
 	(5, 'Nursing Building', 'Lab 218', 'NURS 2009'),
@@ -338,5 +339,5 @@ VALUES
 	(8, 'Nursing Building', 'Lab 218', 'NURS 2011'),
 	(9, 'Nursing Building', 'Lab 218', 'NURS 2013'),
 	(10, 'Nursing Building', 'Lab 218', 'NURS 2011'),
-	(11, 'Nursing Building', 'Lab 218', 'NURS 2009'),
-	(12, 'Nursing Building', 'Lab 218', 'NURS 2009');
+	(11, 'Nursing Building', 'Lab 218', 'NURS 4000'),
+	(12, 'Nursing Building', 'Lab 218', 'NURS 4001');
