@@ -204,7 +204,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 					index={index}
 					overrideRequestData={overrideRequest}
 					handleShowEvent={(event: Event) => this.handleShowEvent(event)}
-					handleGrant={() => alert('grant')}
+					handleGrant={this.handleOverrideRequestGrant}
 					handleDeny={this.handleOverrideRequestDeny}
 					isAdminRequest={false}
 				/>
@@ -297,13 +297,64 @@ export class NotificationDropdown extends React.Component<Props, State> {
 		return overrideRequests;
 	}
 
+	handleOverrideRequestGrant = (index: number, reply: string) => {
+		let overrideRequestToGrant: OverrideRequestData = this.state.overrideRequests[index];
+		let queryData = {
+			setValues: {
+				'Title': 'Reserved',
+				'Description': 'This event has been reserved following a timeslot request',
+				'CWID': overrideRequestToGrant.fromCWID
+			},
+			where: {
+				EventID: overrideRequestToGrant.event.id,
+				RoomName: overrideRequestToGrant.event.room,
+				LocationName: overrideRequestToGrant.event.location
+			}
+		};
+		let queryDataString = JSON.stringify(queryData);
+		request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (res && res.body) {
+				let path: string = overrideRequestToGrant.event.id + '/' + overrideRequestToGrant.event.location +
+					'/' + overrideRequestToGrant.event.room;
+				request.delete('/api/overriderequests/' + path).end((err: {}, delRes: any) => {
+					if (delRes && delRes.body) {
+						this.sendOverrideGrantMessage(overrideRequestToGrant, reply);
+						let overrideRequests = this.state.overrideRequests.slice(0);
+						overrideRequests.splice(index, 1);
+						this.setState({ overrideRequests: overrideRequests });
+					} else
+						alert('failed deleting override request. Handle properly!');
+					// TODO: handle this failed message
+				});
+			} else
+				alert('failed while granting override request. Handle properly!');
+		});
+	}
+
+	sendOverrideGrantMessage = (overrideRequest: OverrideRequestData, reply: string) => {
+		let queryData = {
+			insertValues: {
+				'Title': 'Timeslot Request Granted.',
+				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title +
+					'\' has been granted. Event owner\'s response: "' + reply + '" The timeslot has been reserved for you and can now be modified.',
+				'ToCWID': overrideRequest.fromCWID
+			}
+		};
+		let queryDataString = JSON.stringify(queryData);
+		request.put('/api/notifications').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (!res || !res.body)
+				alert('sending denied override request notification failed! Handle this properly!');
+			// TODO: handle this error properly
+		});
+	}
+
 	handleOverrideRequestDeny = (index: number, reply: string) => {
 		let overrideRequestToDeny: OverrideRequestData = this.state.overrideRequests[index];
 		let path: string = overrideRequestToDeny.event.id + '/' + overrideRequestToDeny.event.location + '/' + overrideRequestToDeny.event.room;
 		request.delete('/api/overriderequests/' + path).end((error: {}, res: any) => {
 			if (res && res.body) {
 				// TODO: send notification
-				this.sendOverrideMessage(overrideRequestToDeny, reply);
+				this.sendOverrideDenyMessage(overrideRequestToDeny, reply);
 				let overrideRequests = this.state.overrideRequests.slice(0);
 				overrideRequests.splice(index, 1);
 				this.setState({ overrideRequests: overrideRequests });
@@ -313,7 +364,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 		});
 	}
 
-	sendOverrideMessage = (overrideRequest: OverrideRequestData, reply: string) => {
+	sendOverrideDenyMessage = (overrideRequest: OverrideRequestData, reply: string) => {
 		let queryData = {
 			insertValues: {
 				'Title': 'Timeslot Request Denied.',

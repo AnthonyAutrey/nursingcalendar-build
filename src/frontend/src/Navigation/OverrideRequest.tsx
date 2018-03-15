@@ -71,7 +71,13 @@ export class OverrideRequest extends React.Component<Props, State> {
 						<button onClick={this.handleDeny} type="button" className="btn btn-danger btn-sm btn-block">Deny</button>
 					</div>
 					<div className="w-100 ml-1">
-						<button onClick={() => this.props.handleGrant()} type="button" className="btn btn-success btn-sm btn-block">Grant</button>
+						<button
+							onClick={() => this.props.handleGrant(this.props.index, this.state.reply)}
+							type="button"
+							className="btn btn-success btn-sm btn-block"
+						>
+							Grant
+						</button>
 					</div>
 				</div>
 			</div>
