@@ -251,6 +251,8 @@ $app->get('/resources', function (Request $request, Response $response, array $a
 });
 
 // User Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
 $app->get('/usergroups/{cwid}', function (Request $request, Response $response, array $args) {
 	$cwid = $args['cwid'];
 	$queryData = getSelectQueryData($request);
