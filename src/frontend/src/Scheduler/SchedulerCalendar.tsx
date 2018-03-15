@@ -67,7 +67,11 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 	componentWillMount() {
 		this.getStateFromDB();
-		request.get('/api/groups').end((error: {}, res: any) => {
+		let route = '/api/groups';
+		if (this.props.role === 'instructor')
+			route = '/api/usergroups/' + this.props.cwid;
+
+		request.get(route).end((error: {}, res: any) => {
 			if (res && res.body) {
 				let groups: string[] = [];
 				res.body.forEach((group: any) => {

@@ -7,6 +7,7 @@ interface Props {
 	cwid: number;
 	handleLogout: any;
 	role: string;
+	name?: string;
 	activeRoute: string;
 }
 
@@ -62,6 +63,9 @@ export class NavigationBar extends React.Component<Props, {}> {
 					<ul className="navbar-nav mt-2 mt-lg-0">
 						{navLinks}
 					</ul>
+					<div className="ml-auto mr-3">
+						{this.props.name}
+					</div>
 					<NotificationDropdown cwid={this.props.cwid} />
 				</div>
 			</nav>

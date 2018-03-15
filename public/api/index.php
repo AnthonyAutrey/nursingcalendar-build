@@ -43,6 +43,8 @@ $app->post('/login', function (Request $request, Response $response, array $args
 		$response->getBody()->write($result);
 		$_SESSION["cwid"] = $cwid;
 		$_SESSION["role"] = $userResults[0]->UserRole;
+		$_SESSION["firstName"] = $userResults[0]->FirstName;
+		$_SESSION["lastName"] = $userResults[0]->LastName;
 	} else
 		session_destroy();
 
@@ -270,9 +272,35 @@ $app->get('/usergroups/{cwid}', function (Request $request, Response $response, 
 	return $response;	
 });
 
+// Create //
+$app->put('/usergroups', function (Request $request, Response $response, array $args) {
+	$queryData = getInsertQueryData($request);
+
+	// return with 'bad request' response if request isn't correct
+	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['CWID'])) {
+		return $response->withStatus(400);
+	}
+
+	$queryString = DBUtil::buildInsertQuery('UserGroupRelation', $queryData['insertValues']);
+	$results = ['Insert User Group' => DBUtil::runCommand($queryString)];
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+});
+
+// Delete //
+$app->delete('/usergroups', function (Request $request, Response $response, array $args) {
+	$queryData = getDeleteQueryData($request);
+	$deleteUserGroupsQuery = DBUtil::buildDeleteQuery('UserGroupRelation', $queryData['where']);
+	$results = DBUtil::runCommand($deleteUserGroupsQuery);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
 $app->get('/users', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
-	$queryString = DBUtil::buildSelectQuery('Users Natural Join UserGroupRelation Natural Join Groups', $queryData['fields'], $queryData['where']);
+	$queryString = DBUtil::buildSelectQuery('Users Natural Left Outer Join (UserGroupRelation Natural Join Groups)', $queryData['fields'], $queryData['where']);
 	$joinedUsers = json_decode(DBUtil::runQuery($queryString));
 	$userMap = [];
 	foreach ($joinedUsers as $key => $joinedUser) {
@@ -280,7 +308,7 @@ $app->get('/users', function (Request $request, Response $response, array $args)
 			if(is_null($joinedUser->GroupName))
 				$groups = [];
 			else
-				$groups = ['Name'=>$joinedUser->GroupName, 'Description'=>$joinedUser->Description];
+				$groups = [['Name'=>$joinedUser->GroupName, 'Description'=>$joinedUser->Description]];
 
 			$userMap[$joinedUser->CWID] = [
 				'CWID' => $joinedUser->CWID,

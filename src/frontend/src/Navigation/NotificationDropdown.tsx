@@ -64,7 +64,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 
 		if (this.state.loading)
 			return (
-				<ul className="nav nav-pills mt-2 mt-lg-0 ml-auto" ref={container => { this.container = container; }}>
+				<ul className="nav nav-pills mt-2 mt-lg-0 ml-1" ref={container => { this.container = container; }}>
 					<li className="nav-item dropdown">
 						<a className="nav-link bg-secondary text-light"	>
 							Loading...
@@ -105,14 +105,14 @@ export class NotificationDropdown extends React.Component<Props, State> {
 
 		let notificationString: string = (this.state.notifications.length + this.state.overrideRequests.length) + ' Notifications';
 		if (this.state.notifications.length + this.state.overrideRequests.length === 1)
-			notificationString = this.state.notifications.length + ' Notification';
+			notificationString = this.state.notifications.length + this.state.overrideRequests.length + ' Notification';
 
 		let bell = null;
 		if (this.state.notifications.length + this.state.overrideRequests.length > 0)
 			bell = <span className="oi oi-bell mr-2" style={{ top: 2 }} />;
 
 		return (
-			<div className="mt-2 mt-lg-0 ml-auto" ref={container => { this.container = container; }}>
+			<div className="mt-2 mt-lg-0" ref={container => { this.container = container; }}>
 				<ViewEventModal hideCreatedBy={true} hideGroups={true} ref={viewEventModal => { this.viewEventModal = viewEventModal; }} />
 				<ul className="nav nav-pills">
 					<li className="nav-item dropdown">

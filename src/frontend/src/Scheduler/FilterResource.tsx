@@ -13,11 +13,6 @@ interface Props {
 	min?: number;
 }
 
-// interface State {
-// 	min: number;
-// 	max: number;
-// }
-
 export class FilterResource extends React.Component<Props, {}> {
 	constructor(props: Props, state: {}) {
 		super(props, state);

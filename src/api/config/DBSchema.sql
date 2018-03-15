@@ -196,7 +196,7 @@ VALUES
 	('Clinicals', false),
 	('Beds', true),
 	('Audio/Video', false),
-	('Desks', false),
+	('Desks', true),
 	('Noel Simulator', false),
 	('ICU Simulator', false);
 
@@ -212,9 +212,9 @@ INSERT INTO RoomResourceRelation (LocationName, RoomName, ResourceName, Count)
 		('Glenwood', 'Second Floor', 'Clinicals', null),
 		('Nursing Building', 'Auditorium 107', 'Audio/Video', null),
 		('Nursing Building', 'Room 215', 'Noel Simulator', null),
-		('Nursing Building', 'Lab 218', 'Desks', null),
+		('Nursing Building', 'Lab 218', 'Desks', 30),
 		('Nursing Building', 'Lab 218', 'Beds', 10),
-		('Nursing Building', 'Lab 221', 'Desks', null),
+		('Nursing Building', 'Lab 221', 'Desks', 20),
 		('Nursing Building', 'Lab 221', 'Beds', 10),
 		('Nursing Building', 'Room 242', 'Audio/Video', null),
 		('Nursing Building', 'Room 243', 'ICU Simulator', null),

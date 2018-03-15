@@ -15,6 +15,7 @@ interface State {
 	sessionRetreived: boolean;
 	cwid?: number;
 	role?: string;
+	name?: string;
 	activeRoute: string;
 }
 
@@ -41,7 +42,13 @@ class App extends React.Component<{}, State> {
 		return (
 			<div className="App">
 				<Alert ref={alert => { this.alert = alert; }} />
-				<NavigationBar cwid={this.state.cwid} role={this.state.role} activeRoute={this.state.activeRoute} handleLogout={this.handleLogout} />
+				<NavigationBar
+					cwid={this.state.cwid}
+					role={this.state.role}
+					name={this.state.name}
+					activeRoute={this.state.activeRoute}
+					handleLogout={this.handleLogout}
+				/>
 				<Router>
 					<Switch>
 						{this.getRoutesAvailableToRole()}
@@ -55,8 +62,8 @@ class App extends React.Component<{}, State> {
 		request.get('/api/session').end((error: {}, res: any) => {
 			if (res && res.body) {
 				this.setState({ sessionRetreived: true });
-				if (res.body.cwid && res.body.role)
-					this.setState({ cwid: res.body.cwid, role: res.body.role });
+				if (res.body.cwid && res.body.role && res.body.firstName && res.body.lastName)
+					this.setState({ cwid: res.body.cwid, role: res.body.role, name: res.body.firstName + ' ' + res.body.lastName });
 			}
 		});
 	}
@@ -106,7 +113,7 @@ class App extends React.Component<{}, State> {
 					</Route>
 				), (
 					<Route key="/manageInstructors" path="/manageInstructors">
-						<ManageInstructors />
+						<ManageInstructors handleShowAlert={this.handleShowAlert} />
 					</Route>
 				)
 			);
