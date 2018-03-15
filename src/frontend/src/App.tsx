@@ -5,6 +5,7 @@ import { NavigationBar } from './Navigation/NavigationBar';
 import { Scheduler } from './Scheduler/Scheduler';
 import { ViewingCalendar } from './Home/ViewingCalendar';
 import { Administration } from './Administration/Administration';
+import { ManageInstructors } from './Administration/ManageInstructors';
 import { Alert } from './Generic/Alert';
 import { Loading } from './Generic/Loading';
 import { NotFound } from './Generic/NotFound';
@@ -99,9 +100,15 @@ class App extends React.Component<{}, State> {
 
 		if (this.state.role === 'administrator')
 			routes.push(
-				<Route key="/administration" path="/administration">
-					<Administration handleShowAlert={this.handleShowAlert} />
-				</Route>
+				(
+					<Route key="/administration" path="/administration">
+						<Administration handleShowAlert={this.handleShowAlert} />
+					</Route>
+				), (
+					<Route key="/manageInstructors" path="/manageInstructors">
+						<ManageInstructors />
+					</Route>
+				)
 			);
 
 		routes.push(

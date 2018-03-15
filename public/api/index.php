@@ -270,6 +270,40 @@ $app->get('/usergroups/{cwid}', function (Request $request, Response $response, 
 	return $response;	
 });
 
+$app->get('/users', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('Users Natural Join UserGroupRelation Natural Join Groups', $queryData['fields'], $queryData['where']);
+	$joinedUsers = json_decode(DBUtil::runQuery($queryString));
+	$userMap = [];
+	foreach ($joinedUsers as $key => $joinedUser) {
+		if (!isset($userMap[$joinedUser->CWID])) {
+			if(is_null($joinedUser->GroupName))
+				$groups = [];
+			else
+				$groups = [$joinedUser->GroupName];
+
+			$userMap[$joinedUser->CWID] = [
+				'CWID' => $joinedUser->CWID,
+				'FirstName' => $joinedUser->FirstName,
+				'LastName' => $joinedUser->LastName,
+				'UserRole' => $joinedUser->UserRole,
+				'GroupDescription' => $joinedUser->Description,
+				'Groups' => $groups
+			];
+		} else {
+			array_push($userMap[$joinedUser->CWID]['Groups'], $joinedUser->GroupName);
+		}
+	}
+	$users = [];
+	foreach ($userMap as $key => $value) {
+		array_push($users, $value);
+	}
+
+	$response->getBody()->write(json_encode($users));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
 // Group Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $app->get('/groups', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
