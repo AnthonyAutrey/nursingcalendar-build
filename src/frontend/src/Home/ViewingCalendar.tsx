@@ -33,7 +33,7 @@ export interface Event {
 export class ViewingCalendar extends React.Component<Props, State> {
 
 	private viewEventModal: ViewEventModal | null;
-	private collapseEvents: boolean = true;
+	private collapseEvents: boolean = false;
 
 	constructor(props: Props, state: State) {
 		super(props, state);

@@ -122,11 +122,15 @@ export class Scheduler extends React.Component<Props, State> {
 		let roomMap: Map<string, Room> = new Map<string, Room>();
 		rooms.forEach((room: any) => {
 			if (!roomMap.has(room.RoomName + room.LocationName)) {
+				let resources: {name: string, count: number}[] = [];
+				if (room.ResourceName && room.Count)
+					resources = [{ name: room.ResourceName, count: room.Count }];
+
 				let newRoom: Room = {
 					locationName: room.LocationName,
 					roomName: room.RoomName,
 					capacity: room.Capacity,
-					resources: [{ name: room.ResourceName, count: room.Count }]
+					resources: resources
 				};
 				roomMap.set(room.RoomName + room.LocationName, newRoom);
 			} else {

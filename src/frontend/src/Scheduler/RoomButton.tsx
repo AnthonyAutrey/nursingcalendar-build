@@ -31,6 +31,9 @@ export class RoomButton extends React.Component<Props, {}> {
 					return (resource.count + ' ' + resource.name);
 		});
 
+		if (this.props.room.resources.length < 1)
+			resourceStrings = ['none'];
+
 		let buttonStyle: CSSProperties = {
 			wordBreak: 'break-word',
 			whiteSpace: 'normal'
