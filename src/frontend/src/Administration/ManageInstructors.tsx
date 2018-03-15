@@ -21,12 +21,19 @@ export class ManageInstructors extends React.Component<{}, State> {
 	}
 
 	componentWillMount() {
-		// request.get('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-		// 	if (res && res.body)
-		// 		resolve(this.getEventIdsFromResponseBody(res.body));
-		// 	else
-		// 		reject();
-		// });
+		let queryData: {} = {
+			where: {
+				UserRole: 'instructor'
+			}
+		};
+
+		let queryDataString: string = JSON.stringify(queryData);
+		request.get('/api/users').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (res && res.body)
+				console.log(res.body);
+			else
+				alert('handle error!');
+		});
 	}
 
 	render() {

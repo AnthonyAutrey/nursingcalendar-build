@@ -280,18 +280,17 @@ $app->get('/users', function (Request $request, Response $response, array $args)
 			if(is_null($joinedUser->GroupName))
 				$groups = [];
 			else
-				$groups = [$joinedUser->GroupName];
+				$groups = ['Name'=>$joinedUser->GroupName, 'Description'=>$joinedUser->Description];
 
 			$userMap[$joinedUser->CWID] = [
 				'CWID' => $joinedUser->CWID,
 				'FirstName' => $joinedUser->FirstName,
 				'LastName' => $joinedUser->LastName,
 				'UserRole' => $joinedUser->UserRole,
-				'GroupDescription' => $joinedUser->Description,
 				'Groups' => $groups
 			];
 		} else {
-			array_push($userMap[$joinedUser->CWID]['Groups'], $joinedUser->GroupName);
+			array_push($userMap[$joinedUser->CWID]['Groups'], ['Name'=>$joinedUser->GroupName, 'Description'=>$joinedUser->Description]);
 		}
 	}
 	$users = [];
