@@ -98,10 +98,6 @@ export class ViewingCalendar extends React.Component<Props, State> {
 							this.currentDate = date;
 							this.currentView = 'agendaWeek';
 							this.forceUpdate();
-						} else if (this.currentView === 'agendaWeek') {
-							this.currentDate = date;
-							this.currentView = 'agendaDay';
-							this.forceUpdate();
 						}
 					}}
 					events={this.state.events}

@@ -19,7 +19,6 @@
 }
 
 .SchedulerCalendar .fc-basic-view,
-.ViewingCalendar .fc-basic-view,
-.ViewingCalendar .fc-widget-content {
+.ViewingCalendar .fc-basic-view {
 	cursor: pointer;
 }
