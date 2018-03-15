@@ -2,6 +2,7 @@ import * as React from 'react';
 import { UnownedEventModal } from '../Scheduler/UnownedEventModal';
 import { ViewEventModal } from './ViewEventModal';
 import { Loading } from '../Generic/Loading';
+import { ColorGenerator } from '../Utilities/Colors';
 const request = require('superagent');
 const FullCalendarReact = require('fullcalendar-reactwrapper');
 
@@ -26,6 +27,7 @@ export interface Event {
 	location: string;
 	room: string;
 	groups: string[];
+	color?: string;
 }
 
 export class ViewingCalendar extends React.Component<Props, State> {
@@ -177,7 +179,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	parseDBEvents(body: any): Event[] {
 		let parsedEvents: Event[] = [];
 		for (let event of body) {
-			// let color = '';
+			let color: string = ColorGenerator.getColor(event.Groups[0]);
 			// let borderColor = '';
 
 			let parsedEvent: any = {
@@ -189,8 +191,8 @@ export class ViewingCalendar extends React.Component<Props, State> {
 				ownerName: event.OwnerName,
 				groups: event.Groups,
 				location: event.LocationName,
-				room: event.RoomName
-				// color: color,
+				room: event.RoomName,
+				color: color
 				// borderColor: borderColor
 			};
 
