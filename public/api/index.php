@@ -440,6 +440,18 @@ $app->put('/overriderequests', function (Request $request, Response $response, a
 	return $response;
 });
 
+// Delete //
+$app->delete('/overriderequests/{id}/{location}/{room}', function (Request $request, Response $response, array $args) {
+	$id = $args['id'];
+	$location = $args['location'];
+	$room = $args['room'];
+	$deleteGroupsQuery = DBUtil::buildDeleteQuery('overrideRequests', ['EventID' => $id, 'LocationName' => $location, 'RoomName' => $room]);
+	$results = DBUtil::runCommand($deleteGroupsQuery);
+	$response->getBody()->write($results);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
 // LDAP ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $app->get('/classes', function (Request $request, Response $response, array $args) {
 	$classes = [

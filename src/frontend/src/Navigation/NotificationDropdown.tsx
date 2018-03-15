@@ -205,7 +205,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 					overrideRequestData={overrideRequest}
 					handleShowEvent={(event: Event) => this.handleShowEvent(event)}
 					handleGrant={() => alert('grant')}
-					handleDeny={() => alert('deny')}
+					handleDeny={this.handleOverrideRequestDeny}
 					isAdminRequest={false}
 				/>
 			);
@@ -295,6 +295,38 @@ export class NotificationDropdown extends React.Component<Props, State> {
 		});
 
 		return overrideRequests;
+	}
+
+	handleOverrideRequestDeny = (index: number, reply: string) => {
+		let overrideRequestToDeny: OverrideRequestData = this.state.overrideRequests[index];
+		let path: string = overrideRequestToDeny.event.id + '/' + overrideRequestToDeny.event.location + '/' + overrideRequestToDeny.event.room;
+		request.delete('/api/overriderequests/' + path).end((error: {}, res: any) => {
+			if (res && res.body) {
+				// TODO: send notification
+				this.sendOverrideMessage(overrideRequestToDeny, reply);
+				let overrideRequests = this.state.overrideRequests.slice(0);
+				overrideRequests.splice(index, 1);
+				this.setState({ overrideRequests: overrideRequests });
+			} else
+				alert('failed');
+			// TODO: handle this failed message
+		});
+	}
+
+	sendOverrideMessage = (overrideRequest: OverrideRequestData, reply: string) => {
+		let queryData = {
+			insertValues: {
+				'Title': 'Timeslot Request Denied.',
+				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title + '\' has been denied. Event owner\'s response: "' + reply + '"',
+				'ToCWID': overrideRequest.fromCWID
+			}
+		};
+		let queryDataString = JSON.stringify(queryData);
+		request.put('/api/notifications').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (!res || !res.body)
+				alert('sending denied override request notification failed! Handle this properly!');
+			// TODO: handle this error properly
+		});
 	}
 
 	handleShowEvent = (event: Event) => {

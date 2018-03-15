@@ -68,7 +68,7 @@ export class OverrideRequest extends React.Component<Props, State> {
 				</div>
 				<div className="d-flex">
 					<div className="w-100 mr-1">
-						<button onClick={() => this.props.handleDeny()} type="button" className="btn btn-danger btn-sm btn-block">Deny</button>
+						<button onClick={this.handleDeny} type="button" className="btn btn-danger btn-sm btn-block">Deny</button>
 					</div>
 					<div className="w-100 ml-1">
 						<button onClick={() => this.props.handleGrant()} type="button" className="btn btn-success btn-sm btn-block">Grant</button>
@@ -96,6 +96,13 @@ export class OverrideRequest extends React.Component<Props, State> {
 	handleChangeReply = (event: any) => {
 		if (event.target.value.length <= 300)
 			this.setState({ reply: event.target.value });
+	}
+
+	handleDeny = () => {
+		if (this.state.reply.length > 0)
+			this.props.handleDeny(this.props.index, this.state.reply);
+		else
+			alert('You must give a reply when denying a timeslot request!');
 	}
 }
 
