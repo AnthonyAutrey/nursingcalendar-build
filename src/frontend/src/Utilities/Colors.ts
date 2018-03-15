@@ -22,6 +22,9 @@ export class ColorGenerator {
 	}
 
 	public static getColor = (s: string): string => {
+		if (!s)
+			return '#800029';
+
 		let hash = ColorGenerator.getHash(s);
 		let index = hash % ColorGenerator.eventColors.length;
 
