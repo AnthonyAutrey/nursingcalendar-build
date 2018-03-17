@@ -72,18 +72,44 @@ class DBUtil {
 	private static function getInsertStrings($insertValues): array {
 		$insertColumnsString = '(';
 		$insertValuesString = '(';
+		$valueStringArray = [];
+		$arrayString = "";
+		$arrayUsed = false;
 
 		foreach ($insertValues as $column => $value) {
 			$insertColumnsString .= "$column, ";
+
 			if (is_string($value))
 				$insertValuesString .= "'$value', ";
+			else if (is_array($value)) {
+				$arrayUsed = true;
+				for ($i=0; $i < count($value); $i++) {
+					if (count($valueStringArray) < $i + 1)
+						array_push($valueStringArray, "");
+
+					if (is_string($value[$i]))
+						$valueStringArray[$i].= "'".$value[$i]."', ";
+					else
+						$valueStringArray[$i].= $value[$i].", ";
+				}
+			}
 			else
 				$insertValuesString .= "$value, ";
 		}
+
+		foreach ($valueStringArray as $valueString) { 
+			$valueString = substr($valueString, 0, -2);
+			$arrayString.= "(".$valueString."), ";
+		}
+
 		$insertColumnsString = substr($insertColumnsString, 0, -2) . ")" ;
 		$insertValuesString = substr($insertValuesString, 0, -2) . ")" ;
+		$arrayString = substr($arrayString, 0, -3) . ")" ;
 
-		return ['columns'=>$insertColumnsString, 'values'=>$insertValuesString];
+		if ($arrayUsed)
+			return ['columns'=>$insertColumnsString, 'values'=>$arrayString];
+		else
+			return ['columns'=>$insertColumnsString, 'values'=>$insertValuesString];
 	}
 
 	private static function getSetValuesString($setValues): String {

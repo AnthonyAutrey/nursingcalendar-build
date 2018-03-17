@@ -236,32 +236,57 @@ export class ManageInstructors extends React.Component<Props, State> {
 	// Persist Changes ////////////////////////////////////////////////////////////////////////////////////////////////////
 	handlePersistChanges = () => {
 		this.deleteInstructorGroups().then(() => {
-			let insertPromises: Promise<any>[] = [];
+
+			let cwids: string[] = [];
+			let groups: string[] = [];
 			this.state.instructors.forEach(instructor => {
 				instructor.groups.forEach(group => {
-					insertPromises.push(new Promise((resolve, reject) => {
-						let queryData = {
-							insertValues: {
-								'CWID': instructor.cwid,
-								'GroupName': group.name,
-							}
-						};
-						let queryDataString = JSON.stringify(queryData);
-						request.put('/api/usergroups').set('queryData', queryDataString).end((error: {}, res: any) => {
-							if (res && res.body)
-								resolve();
-							else
-								reject();
-						});
-					}));
+					cwids.push(instructor.cwid);
+					groups.push(group.name);
 				});
 			});
 
-			Promise.all(insertPromises).then(() => {
-				this.props.handleShowAlert('success', 'Sucessfully submitted changes!');
-			}).catch(() => {
-				this.props.handleShowAlert('error', 'Error submitting changes.');
+			let queryData = {
+				insertValues: {
+					'CWID': cwids,
+					'GroupName': groups,
+				}
+			};
+
+			let queryDataString = JSON.stringify(queryData);
+			request.put('/api/usergroups').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body)
+					this.props.handleShowAlert('success', 'Sucessfully submitted changes!');
+				else
+					this.props.handleShowAlert('error', 'Error submitting changes.');
 			});
+
+			// let insertPromises: Promise<any>[] = [];
+			// this.state.instructors.forEach(instructor => {
+			// 	instructor.groups.forEach(group => {
+			// 		insertPromises.push(new Promise((resolve, reject) => {
+			// 			let queryData = {
+			// 				insertValues: {
+			// 					'CWID': instructor.cwid,
+			// 					'GroupName': group.name,
+			// 				}
+			// 			};
+			// 			let queryDataString = JSON.stringify(queryData);
+			// 			request.put('/api/usergroups').set('queryData', queryDataString).end((error: {}, res: any) => {
+			// 				if (res && res.body)
+			// 					resolve();
+			// 				else
+			// 					reject();
+			// 			});
+			// 		}));
+			// 	});
+			// });
+
+			// Promise.all(insertPromises).then(() => {
+			// 	this.props.handleShowAlert('success', 'Sucessfully submitted changes!');
+			// }).catch(() => {
+			// 	this.props.handleShowAlert('error', 'Error submitting changes.');
+			// });
 
 		}).catch(() => {
 			this.props.handleShowAlert('error', 'Error submitting changes.');

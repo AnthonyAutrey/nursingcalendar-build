@@ -196,7 +196,9 @@ $app->put('/events', function (Request $request, Response $response, array $args
 	$queryData = getInsertQueryData($request);
 
 	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['EventID'])) {
+	if (!isset($queryData['insertValues']) ||
+		!isset($queryData['insertValues']['EventID']) ||
+		!insertQueryDataIsValid($queryData['insertValues'])) {
 		return $response->withStatus(400);
 	}
 
@@ -277,7 +279,10 @@ $app->put('/usergroups', function (Request $request, Response $response, array $
 	$queryData = getInsertQueryData($request);
 
 	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['CWID'])) {
+	if (!isset($queryData['insertValues']) || 
+		!isset($queryData['insertValues']['CWID']) ||
+		!isset($queryData['insertValues']['GroupName']) ||
+		!insertQueryDataIsValid($queryData['insertValues'])) {
 		return $response->withStatus(400);
 	}
 
@@ -351,7 +356,8 @@ $app->put('/notifications', function (Request $request, Response $response, arra
 	if (!isset($queryData['insertValues']) ||
 		!isset($queryData['insertValues']['ToCWID']) ||
 		!isset($queryData['insertValues']['Title']) ||
-		!isset($queryData['insertValues']['Message'])
+		!isset($queryData['insertValues']['Message']) ||
+		!insertQueryDataIsValid($queryData['insertValues'])
 		) {
 		return $response->withStatus(400);
 	}
@@ -429,7 +435,10 @@ $app->put('/overriderequests', function (Request $request, Response $response, a
 	$queryData = getInsertQueryData($request);
 
 	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['EventID'])) {
+	if (!isset($queryData['insertValues']) ||
+		!isset($queryData['insertValues']['EventID']) ||
+	 	!insertQueryDataIsValid($queryData['insertValues'])
+	) {
 		return $response->withStatus(400);
 	}
 
@@ -601,6 +610,29 @@ function sanitize($o) {
 			$o[$key] = sanitize($value);
 
 	return $o;
+}
+
+function insertQueryDataIsValid($insertValues) {
+	$valid = true;
+	$arrayLength = null;
+
+	foreach ($insertValues as $column => $value) {
+		if (is_array($value)) {
+			if (is_null($arrayLength))
+				$arrayLength = count($value);
+
+			if ($arrayLength != count($value))
+				$valid = false;
+		} else {
+			if (is_null($arrayLength))
+				$arrayLength = 0;
+
+			if ($arrayLength != 0)
+				$valid = false;
+		}
+	}
+
+	return $valid;
 }
 
 // Error Handling /////////////////////////////////////////////////////////////////////////////////////////////////////
