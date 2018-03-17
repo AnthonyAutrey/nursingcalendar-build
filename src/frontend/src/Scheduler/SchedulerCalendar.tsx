@@ -581,8 +581,10 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					eventsToUpdate.push(eventToUpdate);
 			});
 
+			let queryData: {}[] = [];
+
 			eventsToUpdate.forEach((event: Event) => {
-				let queryData = {
+				queryData.push({
 					groups: event.groups,
 					setValues: {
 						'Title': event.title,
@@ -591,15 +593,16 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 						'EndTime': event.end
 					},
 					where: { EventID: event.id, RoomName: this.props.room, LocationName: this.props.location }
-				};
-				let queryDataString = JSON.stringify(queryData);
-				request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-					if (!res || !res.body)
-						reject();
 				});
 			});
 
-			resolve();
+			let queryDataString = JSON.stringify(queryData);
+			request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body)
+					resolve();
+				else
+					reject();
+			});
 		});
 	}
 

@@ -124,7 +124,7 @@ CREATE TABLE EventGroupRelation
 	LocationName varchar(60) NOT NULL,
 	RoomName varchar(60) NOT NULL,
 	GroupName VARCHAR(60) NOT NULL,
-	PRIMARY KEY (EventID, GroupName),
+	PRIMARY KEY (EventID, LocationName, RoomName, GroupName),
 	FOREIGN KEY (EventID) REFERENCES Events(EventID),
 	FOREIGN KEY (LocationName) REFERENCES Events(LocationName),
 	FOREIGN KEY (RoomName) REFERENCES Events(RoomName),

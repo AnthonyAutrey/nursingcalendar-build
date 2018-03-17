@@ -163,28 +163,38 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 // Update //
 $app->post('/events', function (Request $request, Response $response, array $args) {
 	$results = [];
-	$queryData = getUpdateQueryData($request);
+	$queryDataArray = getUpdateQueryData($request);
 
-	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['setValues']) ||
+	if (array_key_exists("setValues",$queryDataArray) && array_key_exists("where",$queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		// return with 'bad request' response if request isn't correct
+		if (!isset($queryData['setValues']) ||
+		!isset($queryData['where']) ||
 		!isset($queryData['where']['EventID']) ||
-		!count($queryData['setValues']) > 0 ||
-		!isset($queryData['where'])
-		) {
-		return $response->withStatus(400);
+		!isset($queryData['where']['LocationName']) ||
+		!isset($queryData['where']['RoomName']) ||
+		!count($queryData['setValues']) > 0) {
+			return $response->withStatus(400);
+		}
+
+		$eventID = $queryData['where']['EventID'];
+		$location = $queryData['where']['LocationName'];
+		$room = $queryData['where']['RoomName'];
+
+		// delete all of the event's groups before resetting them
+		$deleteGroupsQuery = DBUtil::buildDeleteQuery('EventGroupRelation', $queryData['where']);
+		
+		if (isset($queryData['groups']) && !is_null($queryData['groups'])) {
+			$results['Delete Groups '.$eventID.', '.$location.', '.$room] = DBUtil::runCommand($deleteGroupsQuery);
+			$results['Insert Groups '.$eventID.', '.$location.', '.$room] = insertEventGroups($queryData['groups'], $eventID, $location, $room);
+		}
+	
+		$queryString = DBUtil::buildUpdateQuery('events', $queryData['setValues'], $queryData['where']);	
+		$results['Update Event '.$eventID.', '.$location.', '.$room] = DBUtil::runCommand($queryString);
 	}
 
-	// delete all of the event's groups before resetting them
-	$deleteGroupsQuery = DBUtil::buildDeleteQuery('EventGroupRelation', $queryData['where']);
-	$results['Delete Groups'] = DBUtil::runCommand($deleteGroupsQuery);
-
-	$eventID = $queryData['where']['EventID'];
-	$location = $queryData['where']['LocationName'];
-	$room = $queryData['where']['RoomName'];
-	$results['Insert Groups'] = insertEventGroups($request, $eventID, $location, $room);
-
-	$queryString = DBUtil::buildUpdateQuery('events', $queryData['setValues'], $queryData['where']);	
-	$results['Update Event'] = DBUtil::runCommand($queryString);
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -193,22 +203,34 @@ $app->post('/events', function (Request $request, Response $response, array $arg
 
 // Insert //
 $app->put('/events', function (Request $request, Response $response, array $args) {
-	$queryData = getInsertQueryData($request);
+	$queryDataArray = getInsertQueryData($request);
+	$results = [];
 
-	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['insertValues']) ||
-		!isset($queryData['insertValues']['EventID']) ||
-		!insertQueryDataIsValid($queryData['insertValues'])) {
-		return $response->withStatus(400);
+	if (array_key_exists("insertValues",$queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		// return with 'bad request' response if request isn't correct
+		if (!isset($queryData['insertValues']) ||
+			!isset($queryData['insertValues']['EventID']) ||
+			!isset($queryData['insertValues']['LocationName']) ||
+			!isset($queryData['insertValues']['RoomName']) ||
+			!insertQueryDataIsValid($queryData['insertValues'])) {
+			return $response->withStatus(400);
+		}
+	
+		$eventID = $queryData['insertValues']['EventID'];
+		$location = $queryData['insertValues']['LocationName'];
+		$room = $queryData['insertValues']['RoomName'];
+
+		$queryString = DBUtil::buildInsertQuery('events', $queryData['insertValues']);
+		$results['Insert Event '.', '.$eventID.', '.$location.', '.$room] = DBUtil::runCommand($queryString);
+
+		if (isset($queryData['groups']) && !is_null($queryData['groups'])) {
+			$results['Insert Groups '.', '.$eventID.', '.$location.', '.$room] = insertEventGroups($queryData['groups'], $eventID, $location, $room);
+		}
 	}
 
-	$queryString = DBUtil::buildInsertQuery('events', $queryData['insertValues']);
-	$results = ['Insert Event' => DBUtil::runCommand($queryString)];
-
-	$eventID = $queryData['insertValues']['EventID'];
-	$location = $queryData['insertValues']['LocationName'];
-	$room = $queryData['insertValues']['RoomName'];
-	$results['Insert Groups'] = insertEventGroups($request, $eventID, $location, $room);
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -276,18 +298,33 @@ $app->get('/usergroups/{cwid}', function (Request $request, Response $response, 
 
 // Create //
 $app->put('/usergroups', function (Request $request, Response $response, array $args) {
-	$queryData = getInsertQueryData($request);
+	$queryDataArray = getInsertQueryData($request);
+	$results = [];
 
-	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['insertValues']) || 
+	if (array_key_exists("insertValues",$queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		// return with 'bad request' response if request isn't correct
+		if (!isset($queryData['insertValues']) || 
 		!isset($queryData['insertValues']['CWID']) ||
 		!isset($queryData['insertValues']['GroupName']) ||
 		!insertQueryDataIsValid($queryData['insertValues'])) {
-		return $response->withStatus(400);
+			return $response->withStatus(400);
+		}
+
+		$cwid = $queryData['insertValues']['CWID'];
+		$group = $queryData['insertValues']['GroupName'];
+
+		if (is_array($cwid))
+			$cwid = json_encode($cwid);
+		if (is_array($group))
+			$group = json_encode($group);
+		
+		$queryString = DBUtil::buildInsertQuery('UserGroupRelation', $queryData['insertValues']);
+		$results['Insert User Group '.$cwid.', '.$group] = DBUtil::runCommand($queryString);
 	}
 
-	$queryString = DBUtil::buildInsertQuery('UserGroupRelation', $queryData['insertValues']);
-	$results = ['Insert User Group' => DBUtil::runCommand($queryString)];
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -350,20 +387,27 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 
 // Insert //
 $app->put('/notifications', function (Request $request, Response $response, array $args) {
-	$queryData = getInsertQueryData($request);
+	$queryDataArray = getInsertQueryData($request);
+	$results = [];
 
-	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['insertValues']) ||
-		!isset($queryData['insertValues']['ToCWID']) ||
-		!isset($queryData['insertValues']['Title']) ||
-		!isset($queryData['insertValues']['Message']) ||
-		!insertQueryDataIsValid($queryData['insertValues'])
-		) {
-		return $response->withStatus(400);
+	if (array_key_exists("insertValues",$queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		// return with 'bad request' response if request isn't correct
+		if (!isset($queryData['insertValues']) ||
+			!isset($queryData['insertValues']['ToCWID']) ||
+			!isset($queryData['insertValues']['Title']) ||
+			!isset($queryData['insertValues']['Message']) ||
+			!insertQueryDataIsValid($queryData['insertValues'])
+			) {
+			return $response->withStatus(400);
+		}
+	
+		$queryString = DBUtil::buildInsertQuery('notifications', $queryData['insertValues']);
+		array_push($results, DBUtil::runCommand($queryString));
 	}
 
-	$queryString = DBUtil::buildInsertQuery('notifications', $queryData['insertValues']);
-	$results = DBUtil::runCommand($queryString);
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -383,18 +427,24 @@ $app->get('/notifications/{cwid}', function (Request $request, Response $respons
 // Update //
 $app->post('/notifications', function (Request $request, Response $response, array $args) {
 	$results = [];
-	$queryData = getUpdateQueryData($request);
+	$queryDataArray = getUpdateQueryData($request);
 
-	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['setValues']) ||
-		!count($queryData['setValues']) > 0 ||
-		!isset($queryData['where'])
-		) {
-		return $response->withStatus(400);
+	if (array_key_exists("setValues",$queryDataArray) && array_key_exists("where",$queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		// return with 'bad request' response if request isn't correct
+		if (!isset($queryData['setValues']) ||
+			!count($queryData['setValues']) > 0 ||
+			!isset($queryData['where'])
+			) {
+			return $response->withStatus(400);
+		}
+	
+		$queryString = DBUtil::buildUpdateQuery('notifications', $queryData['setValues'], $queryData['where']);	
+		array_push($results, DBUtil::runCommand($queryString));
 	}
 
-	$queryString = DBUtil::buildUpdateQuery('notifications', $queryData['setValues'], $queryData['where']);	
-	$results = DBUtil::runCommand($queryString);
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -432,18 +482,25 @@ $app->get('/overriderequests/{id}', function (Request $request, Response $respon
 
 // Create //
 $app->put('/overriderequests', function (Request $request, Response $response, array $args) {
-	$queryData = getInsertQueryData($request);
+	$queryDataArray = getInsertQueryData($request);
+	$results = [];
 
-	// return with 'bad request' response if request isn't correct
-	if (!isset($queryData['insertValues']) ||
-		!isset($queryData['insertValues']['EventID']) ||
-	 	!insertQueryDataIsValid($queryData['insertValues'])
-	) {
-		return $response->withStatus(400);
+	if (array_key_exists("insertValues",$queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		// return with 'bad request' response if request isn't correct
+		if (!isset($queryData['insertValues']) ||
+			!isset($queryData['insertValues']['EventID']) ||
+			 !insertQueryDataIsValid($queryData['insertValues'])
+		) {
+			return $response->withStatus(400);
+		}
+	
+		$queryString = DBUtil::buildInsertQuery('overrideRequests', $queryData['insertValues']);
+		$results['Insert Override Request '.$queryData['insertValues']['EventID']] = DBUtil::runCommand($queryString);	
 	}
 
-	$queryString = DBUtil::buildInsertQuery('overrideRequests', $queryData['insertValues']);
-	$results = ['Insert Override Request' => DBUtil::runCommand($queryString)];
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
@@ -498,6 +555,7 @@ $app->get('/publishdates', function (Request $request, Response $response, array
 // Write //
 $app->put('/publishdates', function (Request $request, Response $response, array $args) {
 	$queryData = getInsertQueryData($request);
+
 	// return with 'bad request' response if request isn't correct
 	if (!isset($queryData['insertValues']) || !isset($queryData['insertValues']['Start']) || !isset($queryData['insertValues']['End'])) {
 		return $response->withStatus(400);
@@ -529,28 +587,77 @@ function getSelectQueryData(Request $request) : array {
 
 function getInsertQueryData(Request $request) : array {
 	$insertValues = null;
+	$groups = null;
 
 	if(count($request->getHeader('queryData')) > 0 and (!is_null($request->getHeader('queryData')[0])))
 		$queryData = json_decode($request->getHeader('queryData')[0]);
-	if (isset($queryData->insertValues))
-		$insertValues = $queryData->insertValues;
 
-	return sanitize(['insertValues'=>$insertValues]);
+	if(is_array($queryData)) {
+		$queryDataArray = [];
+		foreach ($queryData as $qd) {
+			if (isset($qd->insertValues)) {
+				$insertValues = $qd->insertValues;
+				if (isset($qd->groups)) {
+					$groups = $qd->groups;
+					array_push($queryDataArray, ['insertValues'=>$insertValues, 'groups'=>$groups]);
+				} else
+					array_push($queryDataArray, ['insertValues'=>$insertValues]);
+			}
+			else
+				array_push($queryDataArray, ['insertValues'=>null]);
+		}
+
+		return sanitize($queryDataArray);
+
+	} else {
+		if (isset($queryData->insertValues))
+			$insertValues = $queryData->insertValues;
+		if (isset($queryData->groups))
+			$groups = $queryData->groups;
+	
+		return sanitize(['insertValues'=>$insertValues, 'groups'=>$groups]);
+	}
 }
 
 function getUpdateQueryData(Request $request) : array {
 	$queryData = null;
 	$setValues = null;
 	$where = null;
+	$groups = null;
 
 	if(count($request->getHeader('queryData')) > 0 and (!is_null($request->getHeader('queryData')[0])))
 		$queryData = json_decode($request->getHeader('queryData')[0]);
-	if (isset($queryData->setValues))
-		$setValues = $queryData->setValues;
-	if (isset($queryData->where))
-		$where = $queryData->where;
 
-	return sanitize(['setValues'=>$setValues, 'where'=>$where]);
+	if (is_array($queryData)) {
+		$queryDataArray = [];
+		foreach ($queryData as $qd) {
+			if (isset($qd->setValues) && isset($qd->where)) {
+				$setValues = $qd->setValues;
+				$where = $qd->where;
+				if (isset($qd->groups)) {
+					$groups = $qd->groups;
+					array_push($queryDataArray, ['setValues'=>$setValues, 'where'=>$where, 'groups'=>$groups]);
+				} else
+					array_push($queryDataArray, ['setValues'=>$setValues, 'where'=>$where]);
+			}
+			else
+				array_push($queryDataArray, ['setValues'=>null, 'where'=>null]);
+
+		}
+
+		return sanitize($queryDataArray);
+
+	} else {
+
+		if (isset($queryData->setValues))
+			$setValues = $queryData->setValues;
+		if (isset($queryData->where))
+			$where = $queryData->where;
+		if (isset($queryData->groups))
+			$groups = json_decode($qd->groups);
+	
+		return sanitize(['setValues'=>$setValues, 'where'=>$where, 'groups'=>$groups]);
+	}
 }
 
 function getDeleteQueryData(Request $request) : array {
@@ -582,8 +689,8 @@ function getEventGroupsToInsert(Request $request) : array {
 	return sanitize($groups);
 }
 
-function insertEventGroups(Request $request, $eventID, $location, $room) : array {
-	$groupsToInsert = getEventGroupsToInsert($request);
+function insertEventGroups($groups, $eventID, $location, $room) : array {
+	$groupsToInsert = $groups;
 	$insertResults = [];
 	foreach ($groupsToInsert as $groupToInsert) {
 		$groupInsertValues = array();
