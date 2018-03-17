@@ -46,13 +46,17 @@ export class OverrideRequest extends React.Component<Props, State> {
 			</p>
 		);
 
+		let punctuation = '';
+		if (this.props.overrideRequestData.message.slice(this.props.overrideRequestData.message.length - 1) !== '.')
+			punctuation = '.';
+
 		let contents = (
 			<div>
 				{message}
 				<div className="d-flex form-group mb-0">
 					<label className="font-weight-bold mr-3">Message:</label>
 					<p className="mb-0">
-						{'"' + this.props.overrideRequestData.message + '"'}
+						{'"' + this.props.overrideRequestData.message + '"' + punctuation}
 					</p>
 				</div>
 				<hr />

@@ -196,7 +196,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 				groups: event.Groups,
 				location: event.LocationName,
 				room: event.RoomName,
-				color: color
+				color: color,
 				// borderColor: borderColor
 			};
 

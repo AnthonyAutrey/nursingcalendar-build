@@ -161,6 +161,14 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					slotEventOverlap={false}
 					allDaySlot={false}
 					eventOverlap={false}
+					eventRender={(event: any, element: any, view: any) => {
+						let starCount = 5;
+						let starHTML = '&nbsp;<span style="margin:1px">';
+						for (let i = 0; i < starCount; i++) {
+							starHTML += '<span class="oi oi-media-record" style="font-size:.6em;top:-1px"></span><span style="margin-left:1px"></span>';
+						}
+						element.find('.fc-time').append(starHTML + '</span>');
+					}}
 					eventLimit={true} // allow "more" link when too many events
 					eventClick={this.handleEventClick}
 					dayClick={(date: any) => {

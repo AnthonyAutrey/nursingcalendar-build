@@ -332,11 +332,21 @@ export class NotificationDropdown extends React.Component<Props, State> {
 	}
 
 	sendOverrideGrantMessage = (overrideRequest: OverrideRequestData, reply: string) => {
+		let punctuation = '';
+		if (reply.slice(reply.length - 1) !== '.')
+			punctuation = '.';
+
+		let responseString = '';
+		if (reply !== '')
+			responseString = '<<break>>Event owner\'s response: "' + reply + '"' + punctuation + '<<break>>';
+
 		let queryData = {
 			insertValues: {
 				'Title': 'Timeslot Request Granted.',
 				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title +
-					'\' has been granted. Event owner\'s response: "' + reply + '". The timeslot has been reserved for you and can now be modified.',
+					'\' has been granted. ' +
+					responseString +
+					'The timeslot has been reserved for you and can now be modified.',
 				'ToCWID': overrideRequest.fromCWID
 			}
 		};
@@ -351,6 +361,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 	handleOverrideRequestDeny = (index: number, reply: string) => {
 		let overrideRequestToDeny: OverrideRequestData = this.state.overrideRequests[index];
 		let path: string = overrideRequestToDeny.event.id + '/' + overrideRequestToDeny.event.location + '/' + overrideRequestToDeny.event.room;
+
 		request.delete('/api/overriderequests/' + path).end((error: {}, res: any) => {
 			if (res && res.body) {
 				// TODO: send notification
@@ -365,10 +376,15 @@ export class NotificationDropdown extends React.Component<Props, State> {
 	}
 
 	sendOverrideDenyMessage = (overrideRequest: OverrideRequestData, reply: string) => {
+		let punctuation = '';
+		if (reply.slice(reply.length - 1) !== '.')
+			punctuation = '.';
+
 		let queryData = {
 			insertValues: {
 				'Title': 'Timeslot Request Denied.',
-				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title + '\' has been denied. Event owner\'s response: "' + reply + '".',
+				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title + '\' has been denied.<<break>>' +
+					'Event owner\'s response: "' + reply + '"' + punctuation,
 				'ToCWID': overrideRequest.fromCWID
 			}
 		};
