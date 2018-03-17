@@ -1,4 +1,5 @@
 import * as React from 'react';
+import ReactDOM from 'react-dom';
 import { CSSProperties } from 'react';
 import { SchedulerCalendar } from './SchedulerCalendar';
 import { RoomFilter } from './RoomFilter';
@@ -36,10 +37,13 @@ export interface RoomFilters {
 
 export class Scheduler extends React.Component<Props, State> {
 	private schedulerCalendar: SchedulerCalendar | null;
+	private toolbar: any;
 	private roomComponentContainer: any;
 	private allRooms: Room[] = [];
 	private defaultToolbarMessage: string = 'Click and drag to schedule a new event.';
 	private lastSelectedRoom: Room;
+	private bottomSpacerHeight: number = 80;
+	private spacerHeightFound: boolean = false;
 
 	constructor(props: Props, state: State) {
 		super(props, state);
@@ -56,12 +60,24 @@ export class Scheduler extends React.Component<Props, State> {
 		this.props.handleActiveRouteChange('Scheduler');
 	}
 
+	componentDidUpdate() {
+		var node = ReactDOM.findDOMNode(this.toolbar);
+		if (node) {
+			let forceUpdate: boolean = Number(this.bottomSpacerHeight) !== Number(node.clientHeight + 5);
+			this.bottomSpacerHeight = node.clientHeight + 5;
+			this.spacerHeightFound = true;
+			if (forceUpdate)
+				this.forceUpdate();
+		}
+	}
+
 	render() {
 		if (!this.state.initialized)
 			return null;
 
+		alert(this.bottomSpacerHeight);
 		let bottomSpacerStyle: CSSProperties = {
-			height: 80
+			height: this.bottomSpacerHeight
 		};
 		let selectedRoom = this.state.rooms.indexOf(this.lastSelectedRoom);
 		let selectedRoomName = this.lastSelectedRoom.roomName;
@@ -94,6 +110,7 @@ export class Scheduler extends React.Component<Props, State> {
 					</div>
 				</div>
 				<Toolbar
+					ref={(toolbar) => { this.toolbar = toolbar; }}
 					status={this.state.toolbarStatus}
 					message={this.state.toolbarMessage}
 					handleSave={this.persistEventsToDB}
@@ -122,7 +139,7 @@ export class Scheduler extends React.Component<Props, State> {
 		let roomMap: Map<string, Room> = new Map<string, Room>();
 		rooms.forEach((room: any) => {
 			if (!roomMap.has(room.RoomName + room.LocationName)) {
-				let resources: {name: string, count: number}[] = [];
+				let resources: { name: string, count: number }[] = [];
 				if (room.ResourceName && room.Count)
 					resources = [{ name: room.ResourceName, count: room.Count }];
 
