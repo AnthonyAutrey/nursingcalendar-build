@@ -184,7 +184,6 @@ export class UnownedEventModal extends React.Component<Props, State> {
 							'RoomName': this.state.event.room,
 							'Message': this.state.requestMessage,
 							'Time': this.getCurrentDateTimeInSqlFormat(),
-							'Accepted': 'false',
 							'RequestorCWID': this.props.cwid
 						}
 					};

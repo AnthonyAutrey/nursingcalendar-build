@@ -75,7 +75,6 @@ export class Scheduler extends React.Component<Props, State> {
 		if (!this.state.initialized)
 			return null;
 
-		alert(this.bottomSpacerHeight);
 		let bottomSpacerStyle: CSSProperties = {
 			height: this.bottomSpacerHeight
 		};

@@ -9,6 +9,7 @@ const request = require('superagent');
 
 interface Props {
 	cwid: number;
+	role: string;
 }
 
 interface State {
@@ -25,13 +26,21 @@ interface NotificationData {
 	sendTime: Date;
 	hasBeenSeen: boolean;
 	fromCWID: number;
+	overrideRequestDeniedInfo?: {
+		eventID: number;
+		location: string;
+		room: string;
+	};
 }
 
 export interface OverrideRequestData {
 	event: Event;
 	message: string;
+	ownerResponse: string;
+	adminRequested: boolean;
 	sendTime: Date;
 	fromCWID: number;
+	ownerCWID: number;
 	fromName: string;
 }
 
@@ -52,8 +61,16 @@ export class NotificationDropdown extends React.Component<Props, State> {
 
 	componentWillMount() {
 		document.addEventListener('mousedown', this.handleClick, false);
-		this.getNotificationsFromDB();
-		this.getOverrideRequestsFromDB();
+		let getNotificationsAndOverrideRequestsPromises: Promise<any>[] = [];
+		getNotificationsAndOverrideRequestsPromises.push(this.getNotificationsFromDB());
+		getNotificationsAndOverrideRequestsPromises.push(this.getOverrideRequestsFromDB());
+
+		Promise.all(getNotificationsAndOverrideRequestsPromises).then(notificationData => {
+			this.setState({ notifications: notificationData[0], overrideRequests: notificationData[1], loading: false });
+		}).catch(() => {
+			alert('Error getting notification data, handle properly!');
+			// TODO: handle this properly!
+		});
 	}
 
 	componentWillUnMount() {
@@ -61,7 +78,6 @@ export class NotificationDropdown extends React.Component<Props, State> {
 	}
 
 	render() {
-
 		if (this.state.loading)
 			return (
 				<ul className="nav nav-pills mt-2 mt-lg-0 ml-1" ref={container => { this.container = container; }}>
@@ -138,13 +154,82 @@ export class NotificationDropdown extends React.Component<Props, State> {
 		this.setState({ open: !this.state.open });
 	}
 
-	getNotificationsFromDB = () => {
-		request.get('/api/notifications/' + this.props.cwid).end((error: {}, res: any) => {
-			if (res && res.body) {
-				let notifications = this.parseNotificationsFromDB(res.body);
-				this.setState({ notifications: notifications, loading: false });
-			}
+	getNotificationsFromDB = (): Promise<any> => {
+		return new Promise((resolveAll, rejectAll) => {
+			let getNotificationsPromises: Promise<any>[] = [];
+
+			getNotificationsPromises.push(new Promise((resolve, reject) => {
+				request.get('/api/notifications/' + this.props.cwid).end((error: {}, res: any) => {
+					if (res && res.body) {
+						let notifications = this.parseNotificationsFromDB(res.body);
+						resolve(notifications);
+					} else
+						reject();
+				});
+			}));
+
+			getNotificationsPromises.push(new Promise((resolve, reject) => {
+				let queryData = {
+					where: {
+						'RequestorCWID': this.props.cwid,
+						'Denied': 1,
+						'AdminRequested': 0
+					}
+				};
+
+				let queryDataString = JSON.stringify(queryData);
+				request.get('/api/overriderequests').set('queryData', queryDataString).end((error: {}, res: any) => {
+					if (res && res.body) {
+						let notifications = this.parseDeniedOverrideRequestsFromDB(res.body);
+						resolve(notifications);
+					} else
+						reject();
+				});
+			}));
+
+			Promise.all(getNotificationsPromises).then(results => {
+				let allNotifications: NotificationData[] = [];
+				results.forEach((result: any[]) => {
+					allNotifications = result.concat(allNotifications);
+				});
+				resolveAll(allNotifications);
+			}).catch(() => {
+				rejectAll();
+			});
+
 		});
+	}
+
+	parseDeniedOverrideRequestsFromDB = (dbOverrideRequests: any): NotificationData[] => {
+		let overrideRequests = this.parseOverriderRequestsFromDB(dbOverrideRequests);
+
+		let notifications = overrideRequests.map(overrideRequest => {
+			let ownerResponse = overrideRequest.ownerResponse;
+
+			let punctuation = '';
+			let ownerPunctuation = ownerResponse.slice(ownerResponse.length - 1);
+			if (ownerPunctuation !== '.' && ownerPunctuation !== '!' && ownerPunctuation !== '?')
+				punctuation = '.';
+
+			let notification: NotificationData = {
+				id: -1,
+				title: 'Timeslot Request Denied.',
+				message: 'Request for timeslot on event, \'' + overrideRequest.event.title + '\' has been denied by ' +
+					overrideRequest.event.ownerName + '.<<break>>' +
+					'Event owner\'s response: "' + ownerResponse + '"' + punctuation,
+				sendTime: new Date(),
+				hasBeenSeen: false,
+				fromCWID: -1,
+				overrideRequestDeniedInfo: {
+					eventID: overrideRequest.event.id,
+					location: overrideRequest.event.location,
+					room: overrideRequest.event.room,
+				}
+			};
+			return notification;
+		});
+
+		return notifications;
 	}
 
 	parseNotificationsFromDB = (dBnotifications: any): NotificationData[] => {
@@ -219,6 +304,7 @@ export class NotificationDropdown extends React.Component<Props, State> {
 					message={notification.message}
 					hasBeenSeen={notification.hasBeenSeen}
 					handleDeleteNotification={this.deleteNotification}
+					overrideRequestDeniedInfo={notification.overrideRequestDeniedInfo}
 				/>
 			);
 		});
@@ -237,19 +323,29 @@ export class NotificationDropdown extends React.Component<Props, State> {
 		);
 	}
 
-	deleteNotification = (index: number) => {
-		let deleteID: number = this.state.notifications[index].id;
-		request.delete('/api/notifications/' + deleteID).end((error: {}, res: any) => {
-			if (res && res.body) {
-				let notifications = this.state.notifications.slice(0);
-				notifications.splice(index, 1);
+	deleteNotification = (index: number, deniedNotification: boolean = false) => {
+		if (deniedNotification) {
+			let notifications = this.state.notifications.slice(0);
+			notifications.splice(index, 1);
 
-				if (notifications.length <= 0)
-					this.setState({ notifications: notifications, open: false });
-				else
-					this.setState({ notifications: notifications });
-			}
-		});
+			if (Number(notifications.length + this.state.overrideRequests.length) <= 0)
+				this.setState({ notifications: notifications, open: false });
+			else
+				this.setState({ notifications: notifications });
+		} else {
+			let deleteID: number = this.state.notifications[index].id;
+			request.delete('/api/notifications/' + deleteID).end((error: {}, res: any) => {
+				if (res && res.body) {
+					let notifications = this.state.notifications.slice(0);
+					notifications.splice(index, 1);
+
+					if (Number(notifications.length + this.state.overrideRequests.length) <= 0)
+						this.setState({ notifications: notifications, open: false });
+					else
+						this.setState({ notifications: notifications });
+				}
+			});
+		}
 	}
 
 	handleClick = (e: any) => {
@@ -261,18 +357,63 @@ export class NotificationDropdown extends React.Component<Props, State> {
 	}
 
 	// Override Requests ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-	getOverrideRequestsFromDB = () => {
-		request.get('/api/overriderequests/' + this.props.cwid).end((error: {}, res: any) => {
-			if (res && res.body) {
-				let overrideRequests: OverrideRequestData[] = this.parseOverriderRequestsFromDB(res.body);
-				this.setState({ overrideRequests: overrideRequests });
+	getOverrideRequestsFromDB = (): Promise<any> => {
+		return new Promise((resolveAll, rejectAll) => {
+			let getOverrideRequestsPromises: Promise<any>[] = [];
+
+			let queryData = {
+				where: { 'Denied': 0 }
+			};
+
+			let queryDataString = JSON.stringify(queryData);
+			getOverrideRequestsPromises.push(new Promise((resolve, reject) => {
+				request.get('/api/overriderequests/' + this.props.cwid).set('queryData', queryDataString).end((error: {}, res: any) => {
+					if (res && res.body) {
+						let overrideRequests: OverrideRequestData[] = this.parseOverriderRequestsFromDB(res.body);
+						resolve(overrideRequests);
+					} else
+						reject();
+				});
+			}));
+
+			if (this.props.role === 'administrator') {
+				getOverrideRequestsPromises.push(new Promise((resolve, reject) => {
+					let adminQueryData = {
+						where: {
+							'Denied': 1,
+							'AdminRequested': 1
+						}
+					};
+
+					let adminQueryDataString = JSON.stringify(adminQueryData);
+					request.get('/api/overriderequests').set('queryData', adminQueryDataString).end((error: {}, res: any) => {
+						if (res && res.body) {
+							let adminOverrideRequests: OverrideRequestData[] = this.parseOverriderRequestsFromDB(res.body);
+							resolve(adminOverrideRequests);
+						} else
+							reject();
+					});
+				}));
 			}
+
+			Promise.all(getOverrideRequestsPromises).then(overrideRequestResults => {
+				let allOverrideRequests: OverrideRequestData[] = [];
+				overrideRequestResults.forEach(result => {
+					allOverrideRequests = result.concat(allOverrideRequests);
+				});
+				resolveAll(allOverrideRequests);
+			}).catch(() => {
+				rejectAll();
+			});
 		});
 	}
 
 	parseOverriderRequestsFromDB = (dbOverrideRequests: any): OverrideRequestData[] => {
-		console.log(dbOverrideRequests);
 		let overrideRequests: OverrideRequestData[] = dbOverrideRequests.map((dbOverrideRequest: any) => {
+			let adminRequested = false;
+			if (Number(dbOverrideRequest.AdminRequested) === 1)
+				adminRequested = true;
+
 			let overrideRequest: OverrideRequestData = {
 				event: {
 					id: dbOverrideRequest.EventID,
@@ -280,14 +421,17 @@ export class NotificationDropdown extends React.Component<Props, State> {
 					description: dbOverrideRequest.Description,
 					start: dbOverrideRequest.StartTime,
 					end: dbOverrideRequest.EndTime,
-					ownerName: '<WHAT TO DO HERE?>',
+					ownerName: dbOverrideRequest.OwnerFirstName + ' ' + dbOverrideRequest.OwnerLastName,
 					location: dbOverrideRequest.LocationName,
 					room: dbOverrideRequest.RoomName,
 					groups: []
 				},
 				message: dbOverrideRequest.Message,
+				ownerResponse: dbOverrideRequest.OwnerResponse,
+				adminRequested: adminRequested,
 				sendTime: dbOverrideRequest.Time,
 				fromCWID: dbOverrideRequest.RequestorCWID,
+				ownerCWID: dbOverrideRequest.CWID,
 				fromName: dbOverrideRequest.RequestorFirstName + ' ' + dbOverrideRequest.RequestorLastName
 			};
 
@@ -318,36 +462,75 @@ export class NotificationDropdown extends React.Component<Props, State> {
 					'/' + overrideRequestToGrant.event.room;
 				request.delete('/api/overriderequests/' + path).end((err: {}, delRes: any) => {
 					if (delRes && delRes.body) {
-						this.sendOverrideGrantMessage(overrideRequestToGrant, reply);
+						this.sendOverrideGrantMessageToRequestor(overrideRequestToGrant, reply);
+						if (overrideRequestToGrant.adminRequested)
+							this.sendOverrideGrantMessageToOwner(overrideRequestToGrant, reply);
 						let overrideRequests = this.state.overrideRequests.slice(0);
 						overrideRequests.splice(index, 1);
-						this.setState({ overrideRequests: overrideRequests });
+
+						if (Number(this.state.notifications.length + overrideRequests.length) <= 0)
+							this.setState({ overrideRequests: overrideRequests, open: false });
+						else
+							this.setState({ overrideRequests: overrideRequests });
 					} else
 						alert('failed deleting override request. Handle properly!');
-					// TODO: handle this failed message
+					// TODO: handle this failed error properly
 				});
 			} else
 				alert('failed while granting override request. Handle properly!');
+			// TODO: handle this failed error properly
 		});
 	}
 
-	sendOverrideGrantMessage = (overrideRequest: OverrideRequestData, reply: string) => {
+	sendOverrideGrantMessageToRequestor = (overrideRequest: OverrideRequestData, reply: string) => {
 		let punctuation = '';
-		if (reply.slice(reply.length - 1) !== '.')
+		let replyPunctuation = reply.slice(reply.length - 1);
+		if (replyPunctuation !== '.' && replyPunctuation !== '!' && replyPunctuation !== '?')
 			punctuation = '.';
 
 		let responseString = '';
+		let responderString = '<<break>>Event owner\'s response: "';
+		if (overrideRequest.adminRequested)
+			responderString = '<<break>>Admin\'s response: "';
+
 		if (reply !== '')
-			responseString = '<<break>>Event owner\'s response: "' + reply + '"' + punctuation + '<<break>>';
+			responseString = responderString + reply + '"' + punctuation;
 
 		let queryData = {
 			insertValues: {
 				'Title': 'Timeslot Request Granted.',
 				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title +
-					'\' has been granted. ' +
-					responseString +
-					'The timeslot has been reserved for you and can now be modified.',
+					'\' has been granted. The timeslot has been reserved for you and can now be modified.' + responseString,
 				'ToCWID': overrideRequest.fromCWID
+			}
+		};
+		let queryDataString = JSON.stringify(queryData);
+		request.put('/api/notifications').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (!res || !res.body)
+				alert('sending denied override request notification failed! Handle this properly!');
+			// TODO: handle this error properly
+		});
+	}
+
+	sendOverrideGrantMessageToOwner = (overrideRequest: OverrideRequestData, adminResponse: string) => {
+		let punctuation = '';
+		let replyPunctuation = adminResponse.slice(adminResponse.length - 1);
+		if (replyPunctuation !== '.' && replyPunctuation !== '!' && replyPunctuation !== '?')
+			punctuation = '.';
+
+		let responseString = '';
+		if (adminResponse !== '')
+			responseString = '<<break>>Admin\'s response: "' + adminResponse + '"' + punctuation;
+
+		let message = 'You originally denied ' + overrideRequest.fromName + '\'s request for the timeslot of your event, \'' +
+			overrideRequest.event.title + '\'. An Admin has overridden your denial and reserved the event\'s timeslot for ' +
+			overrideRequest.fromName + '.' + responseString;
+
+		let queryData = {
+			insertValues: {
+				'Title': 'Timeslot Request Overridden by Admin.',
+				'Message': message,
+				'ToCWID': overrideRequest.ownerCWID
 			}
 		};
 		let queryDataString = JSON.stringify(queryData);
@@ -360,31 +543,73 @@ export class NotificationDropdown extends React.Component<Props, State> {
 
 	handleOverrideRequestDeny = (index: number, reply: string) => {
 		let overrideRequestToDeny: OverrideRequestData = this.state.overrideRequests[index];
-		let path: string = overrideRequestToDeny.event.id + '/' + overrideRequestToDeny.event.location + '/' + overrideRequestToDeny.event.room;
+		if (this.props.role === 'administrator') {
+			let path: string = overrideRequestToDeny.event.id + '/' + overrideRequestToDeny.event.location + '/' + overrideRequestToDeny.event.room;
 
-		request.delete('/api/overriderequests/' + path).end((error: {}, res: any) => {
-			if (res && res.body) {
-				// TODO: send notification
-				this.sendOverrideDenyMessage(overrideRequestToDeny, reply);
-				let overrideRequests = this.state.overrideRequests.slice(0);
-				overrideRequests.splice(index, 1);
-				this.setState({ overrideRequests: overrideRequests });
-			} else
-				alert('failed');
-			// TODO: handle this failed message
-		});
+			request.delete('/api/overriderequests/' + path).end((error: {}, res: any) => {
+				if (res && res.body) {
+					// TODO: send notification
+					this.sendAdminOverrideDenyMessage(overrideRequestToDeny, reply);
+					let overrideRequests = this.state.overrideRequests.slice(0);
+					overrideRequests.splice(index, 1);
+
+					if (Number(this.state.notifications.length + overrideRequests.length) <= 0)
+						this.setState({ overrideRequests: overrideRequests, open: false });
+					else
+						this.setState({ overrideRequests: overrideRequests });
+				} else
+					alert('failed');
+				// TODO: handle this failed message
+			});
+		} else if (this.props.role === 'instructor') {
+			let queryData = {
+				setValues: {
+					'Denied': 1,
+					'OwnerResponse': reply
+				},
+				where: {
+					EventID: overrideRequestToDeny.event.id,
+					RoomName: overrideRequestToDeny.event.room,
+					LocationName: overrideRequestToDeny.event.location
+				}
+			};
+
+			let queryDataString = JSON.stringify(queryData);
+			request.post('/api/overriderequests').set('queryData', queryDataString).end((error: {}, res: any) => {
+				if (res && res.body) {
+					let overrideRequests = this.state.overrideRequests.slice(0);
+					overrideRequests.splice(index, 1);
+
+					if (Number(this.state.notifications.length + overrideRequests.length) <= 0)
+						this.setState({ overrideRequests: overrideRequests, open: false });
+					else
+						this.setState({ overrideRequests: overrideRequests });
+				} else
+					alert('failed');
+				// TODO: handle this failed message
+			});
+		}
 	}
 
-	sendOverrideDenyMessage = (overrideRequest: OverrideRequestData, reply: string) => {
+	sendAdminOverrideDenyMessage = (overrideRequest: OverrideRequestData, reply: string) => {
 		let punctuation = '';
-		if (reply.slice(reply.length - 1) !== '.')
+		let replyPunctuation = reply.slice(reply.length - 1);
+		if (replyPunctuation !== '.' && replyPunctuation !== '!' && replyPunctuation !== '?')
 			punctuation = '.';
+
+		let title: string = 'Timeslot Request Denied.';
+		let message: string = 'Request for timeslot on event, \'' + overrideRequest.event.title + '\' has been denied by an admin.<<break>>' +
+			'Admin\'s response: "' + reply + '"' + punctuation;
+		if (overrideRequest.adminRequested) {
+			title = 'Timeslot Request Override Denied.';
+			message = 'Your request for an admin to override ' + overrideRequest.event.ownerName + '\'s denial of your timeslot request on event, \'' +
+				overrideRequest.event.title + '\' has been denied.<<break>>' + 'Admin\'s response: "' + reply + '"' + punctuation;
+		}
 
 		let queryData = {
 			insertValues: {
-				'Title': 'Timeslot Request Denied.',
-				'Message': 'Request for timeslot on event, \'' + overrideRequest.event.title + '\' has been denied.<<break>>' +
-					'Event owner\'s response: "' + reply + '"' + punctuation,
+				'Title': title,
+				'Message': message,
 				'ToCWID': overrideRequest.fromCWID
 			}
 		};

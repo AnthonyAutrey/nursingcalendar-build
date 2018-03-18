@@ -76,7 +76,7 @@ CREATE TABLE Notifications
 (
 	NotificationID INT NOT NULL AUTO_INCREMENT,
 	Title VARCHAR(60) NOT NULL,
-	Message VARCHAR(300) NOT NULL,
+	Message VARCHAR(600) NOT NULL,
 	SendTime DateTime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	HasBeenSeen Boolean NOT NULL DEFAULT 0,
 	FromCWID INT,	-- if NULL, notification is from system
@@ -93,17 +93,15 @@ CREATE TABLE OverrideRequests
 	RoomName varchar(60) NOT NULL,
 	Message VARCHAR(300) NOT NULL,
 	OwnerResponse VARCHAR(300),
-	AdminResponse VARCHAR(300),
 	Time DateTime NOT NULL,
-	Accepted Boolean NOT NULL,
+	Denied Boolean NOT NULL DEFAULT 0,
 	RequestorCWID INT NOT NULL,
-	ResolvingAdminCWID INT, -- if NULL, Admin has not yet resolved this
+	AdminRequested Boolean NOT NULL DEFAULT 0,
 	PRIMARY KEY (EventID, LocationName, RoomName),
 	FOREIGN KEY (EventID) REFERENCES Events(EventID),
 	FOREIGN KEY (LocationName) REFERENCES Events(LocationName),
 	FOREIGN KEY (RoomName) REFERENCES Events(RoomName),
-	FOREIGN KEY (RequestorCWID) REFERENCES Users(CWID),
-	FOREIGN KEY (ResolvingAdminCWID) REFERENCES Users(CWID)
+	FOREIGN KEY (RequestorCWID) REFERENCES Users(CWID)
 );
 
 CREATE TABLE RoomResourceRelation
@@ -311,11 +309,11 @@ VALUES
 
 INSERT INTO Events (EventID, LocationName, RoomName, Title, Description, StartTime, EndTime, CWID)
 VALUES
-	(0, 'Nursing Building', 'Lab 218', 'Medication Administration', '', '2018-03-13 08:00:00', '2018-03-13 09:00:00', 22222222),
-	(1, 'Nursing Building', 'Lab 218', 'Medication Alternate Routes', '', '2018-03-13 09:00:00', '2018-03-13 10:00:00', 22222222),
-	(2, 'Nursing Building', 'Lab 218', 'Sterile Dressing', '', '2018-03-13 10:00:00', '2018-03-13 12:00:00', 22222222),
-	(3, 'Nursing Building', 'Lab 218', 'Practice Lab Sessions', 'Bring Practice Clothes!', '2018-03-16 09:30:00', '2018-03-16 12:00:00', 22222222),
-	(4, 'Nursing Building', 'Lab 218', 'Blood Pressure', '', '2018-03-16 08:30:00', '2018-03-16 09:30:00', 22222222),
+	(0, 'Nursing Building', 'Lab 218', 'Medication Administration', '', '2018-03-13 08:00:00', '2018-03-13 09:00:00', 33333333),
+	(1, 'Nursing Building', 'Lab 218', 'Medication Alternate Routes', '', '2018-03-13 09:00:00', '2018-03-13 10:00:00', 33333333),
+	(2, 'Nursing Building', 'Lab 218', 'Sterile Dressing', '', '2018-03-13 10:00:00', '2018-03-13 12:00:00', 33333333),
+	(3, 'Nursing Building', 'Lab 218', 'Practice Lab Sessions', 'Bring Practice Clothes!', '2018-03-16 09:30:00', '2018-03-16 12:00:00', 33333333),
+	(4, 'Nursing Building', 'Lab 218', 'Blood Pressure', '', '2018-03-16 08:30:00', '2018-03-16 09:30:00', 33333333),
 	(5, 'Nursing Building', 'Lab 218', 'Fluid and Electrolytes', '', '2018-03-15 09:00:00', '2018-03-15 12:00:00', 22222222),
 	(6, 'Nursing Building', 'Lab 218', 'Vital Signs (TPR)', '', '2018-03-15 13:00:00', '2018-03-15 14:00:00', 22222222),
 	(7, 'Nursing Building', 'Lab 218', 'Blood Pressure', '', '2018-03-15 14:00:00', '2018-03-15 15:00:00', 22222222),
