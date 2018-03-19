@@ -22,6 +22,7 @@ interface State {
 	instructors: Instructor[];
 	groups: Group[];
 	selectedInstructorCWID: string;
+	loading: boolean;
 }
 
 export class ManageInstructors extends React.Component<Props, State> {
@@ -30,7 +31,8 @@ export class ManageInstructors extends React.Component<Props, State> {
 		this.state = {
 			instructors: [],
 			groups: [],
-			selectedInstructorCWID: ''
+			selectedInstructorCWID: '',
+			loading: true
 		};
 	}
 
@@ -40,6 +42,9 @@ export class ManageInstructors extends React.Component<Props, State> {
 	}
 
 	render() {
+		if (this.state.loading)
+			return null;
+
 		let instructorOptions = this.state.instructors.map(inst => {
 			return (<option key={uuid()} value={inst.cwid}>{inst.name}</option>);
 		});
@@ -136,7 +141,7 @@ export class ManageInstructors extends React.Component<Props, State> {
 		if (instructors[0])
 			cwid = instructors[0].cwid.toString();
 
-		this.setState({ instructors: instructors, selectedInstructorCWID: cwid });
+		this.setState({ instructors: instructors, selectedInstructorCWID: cwid, loading: false });
 	}
 
 	getGroupsFromDB = () => {

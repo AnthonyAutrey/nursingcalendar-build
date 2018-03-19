@@ -85,20 +85,25 @@ export class Administration extends React.Component<Props, State> {
 						</div>
 					</div>
 					<hr />
-					<form method="get" action="/logs" >
-						<button type="submit" className="btn btn-primary btn-block mb-1" >
-							View Logs
-					</button>
-					</form>
 					<form method="get" action="/manageRooms" >
 						<button type="submit" className="btn btn-primary btn-block mb-1" >
 							Manage Rooms
-					</button>
+						</button>
+					</form>
+					<form method="get" action="/manageGroups" >
+						<button type="submit" className="btn btn-primary btn-block mb-1" >
+							Manage Groups
+						</button>
 					</form>
 					<form method="get" action="/manageInstructors" >
 						<button type="submit" className="btn btn-primary btn-block mb-1" >
 							Manage Instructor Rights
-					</button>
+						</button>
+					</form>
+					<form method="get" action="/logs" >
+						<button type="submit" className="btn btn-primary btn-block mb-1" >
+							View Logs
+						</button>
 					</form>
 				</div>
 			</div>
@@ -145,10 +150,6 @@ export class Administration extends React.Component<Props, State> {
 				End: this.state.publishEndDate
 			}
 		};
-
-		console.log('inserting...........');
-		console.log('start: ' + this.state.publishStartDate);
-		console.log('emd: ' + this.state.publishEndDate);
 
 		let queryDataString = JSON.stringify(queryData);
 		request.put('/api/publishdates').set('queryData', queryDataString).end((error: {}, res: any) => {
