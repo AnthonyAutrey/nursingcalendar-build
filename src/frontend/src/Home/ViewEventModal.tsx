@@ -5,7 +5,6 @@ const request = require('superagent');
 const uuid = require('uuid/v4');
 
 interface Props {
-	hideCreatedBy?: boolean;
 	hideGroups?: boolean;
 }
 
@@ -80,13 +79,11 @@ export class ViewEventModal extends React.Component<Props, State> {
 								</div>
 							</div>
 							<hr />
-							{!this.props.hideCreatedBy && (
-								<div className="form-group text-left">
-									<label className="font-weight-bold">Created By:</label>
-									<br />
-									{this.state.event.ownerName}
-								</div>
-							)}
+							<div className="form-group text-left">
+								<label className="font-weight-bold">Created By:</label>
+								<br />
+								{this.state.event.ownerName}
+							</div>
 							<div className="form-group text-left">
 								<label className="font-weight-bold">Description:</label>
 								<br />
