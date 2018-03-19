@@ -70,12 +70,20 @@ export class ViewEventModal extends React.Component<Props, State> {
 							</button>
 						</div>
 						<div className="modal-body pb-0 mb-0">
-							<div className="d-flex align-items-end">
+							<div className="d-flex align-items-end mb-2">
 								<div className="font-weight-bold mb-0 mr-2">
 									Location:
 								</div>
 								<div className="mb-0">
 									{this.state.event.location + ', ' + this.state.event.room}
+								</div>
+							</div>
+							<div className="d-flex align-items-end">
+								<div className="font-weight-bold mb-0 mr-2">
+									Time:
+								</div>
+								<div className="mb-0">
+									{this.getTimeString()}
 								</div>
 							</div>
 							<hr />
@@ -120,6 +128,27 @@ export class ViewEventModal extends React.Component<Props, State> {
 	// Reset Everything ////////////////////////////////////////////////////////////////////////////////////////////////////
 	private resetState = () => {
 		this.setState({ event: null, show: false, showRequestForm: false, requestMessage: '' });
+	}
+
+	// Utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	private getTimeString = (): string => {
+		if (this.state.event) {
+			let options = {
+				year: 'numeric', month: 'short',
+				day: 'numeric', hour: 'numeric', minute: 'numeric'
+			};
+			let start = new Date(this.state.event.start);
+			let startString = start.toLocaleTimeString('en-us', options);
+
+			if (this.state.event.end) {
+				let end = new Date(this.state.event.end);
+				let endString = end.toLocaleTimeString('en-us', options);
+				return startString + ' - ' + endString;
+			}
+
+			return startString;
+		} else
+			return '';
 	}
 }
 
