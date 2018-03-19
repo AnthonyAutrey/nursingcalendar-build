@@ -101,7 +101,8 @@ $app->get('/events', function (Request $request, Response $response, array $args
 $app->get('/eventswithrelations', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
 	$queryString = DBUtil::buildSelectQuery(
-		'Events natural left outer join EventGroupRelation '.
+		'Events left outer join (select EventID as EventGroupID, GroupName, Semester from eventgrouprelation NATURAL join groups) groupJoin '.
+		'on groupJoin.EventGroupID = Events.EventID '.
 		'left outer join (SELECT EventID as OverrideID from overrideRequests) overrideJoin on EventID = OverrideID '.
 		'NATURAL join (select CWID, FirstName, LastName from Users) userJoin',
 		'*',
@@ -119,7 +120,7 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 			if(is_null($joinedEvent->GroupName))
 				$groups = [];
 			else
-				$groups = [$joinedEvent->GroupName];
+				$groups = [['GroupName'=>$joinedEvent->GroupName, 'Semester'=>$joinedEvent->Semester]];
 
 			if(is_null($joinedEvent->OverrideID))
 				$pendingOverride = false;
@@ -148,7 +149,7 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 				$joinedEvent->EventID.
 				$joinedEvent->LocationName.
 				$joinedEvent->RoomName
-			]['Groups'], $joinedEvent->GroupName);
+			]['Groups'], ['GroupName'=>$joinedEvent->GroupName, 'Semester'=>$joinedEvent->Semester]);
 		}
 	}
 	$events = [];

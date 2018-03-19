@@ -183,8 +183,11 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	parseDBEvents(body: any): Event[] {
 		let parsedEvents: Event[] = [];
 		for (let event of body) {
-			let color: string = ColorGenerator.getColor(event.Groups[0]);
-			// let borderColor = '';
+			let color: string = ColorGenerator.getColor(event.Groups[0].GroupName);
+
+			let groups: string[] = event.Groups.map((group: any) => {
+				return group.GroupName;
+			});
 
 			let parsedEvent: any = {
 				id: event.EventID,
@@ -193,11 +196,10 @@ export class ViewingCalendar extends React.Component<Props, State> {
 				start: event.StartTime,
 				end: event.EndTime,
 				ownerName: event.OwnerName,
-				groups: event.Groups,
+				groups: groups,
 				location: event.LocationName,
 				room: event.RoomName,
-				color: color,
-				// borderColor: borderColor
+				color: color
 			};
 
 			parsedEvents.push(parsedEvent);

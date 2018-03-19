@@ -53,6 +53,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	private editEventModal: EditEventModal | null;
 	private unownedEventModal: UnownedEventModal | null;
 	private eventCache: Map<number, Event>;
+	private groupSemesterMap: Map<string, number | null> = new Map<string, number | null>();
 
 	constructor(props: Props, state: State) {
 		super(props, state);
@@ -76,6 +77,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				let groups: string[] = [];
 				res.body.forEach((group: any) => {
 					groups.push(group.GroupName);
+					this.groupSemesterMap.set(group.GroupName, group.Semester);
 				});
 
 				this.setState({ groupOptionsFromAPI: groups });
@@ -162,12 +164,23 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					allDaySlot={false}
 					eventOverlap={false}
 					eventRender={(event: any, element: any, view: any) => {
-						let starCount = 5;
-						let starHTML = '&nbsp;<span style="margin:1px">';
-						for (let i = 0; i < starCount; i++) {
-							starHTML += '<span class="oi oi-media-record" style="font-size:.6em;top:-1px"></span><span style="margin-left:1px"></span>';
+						if (this.currentView === 'month')
+							return;
+
+						let groups = event.groups;
+						let semesterCount = 0;
+						let semesterFromMap: any = 0;
+						if (groups[0] && this.groupSemesterMap.has(groups[0])) {
+							semesterFromMap = this.groupSemesterMap.get(groups[0]);
+
+							if (semesterFromMap)
+								semesterCount = semesterFromMap;
+							let starHTML = '&nbsp;<span style="margin:1px">';
+							for (let i = 0; i < semesterCount; i++) {
+								starHTML += '<span class="oi oi-media-record" style="font-size:.6em;top:-1px"></span><span style="margin-left:1px"></span>';
+							}
+							element.find('.fc-time').append(starHTML + '</span>');
 						}
-						element.find('.fc-time').append(starHTML + '</span>');
 					}}
 					eventLimit={true} // allow "more" link when too many events
 					eventClick={this.handleEventClick}
@@ -339,6 +352,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			if (res && res.body) {
 				let events = this.parseDBEvents(res.body);
 				this.eventCache = this.parseDBEvents(res.body);
+
 				this.setState({ events: events, loading: false });
 			}
 		});
@@ -412,13 +426,17 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid) || this.props.role === 'administrator';
-			let color = ColorGenerator.getColor(event.Groups[0]);
+			let color = ColorGenerator.getColor(event.Groups[0].GroupName);
 			let borderColor = '';
 
 			if (!userOwnsEvent) {
 				borderColor = 'rgba(128,0,41,.4)';
 				color = 'rgba(128,0,41,.6)';
 			}
+
+			let groups: string[] = event.Groups.map((group: any) => {
+				return group.GroupName;
+			});
 
 			let parsedEvent: any = {
 				id: event.EventID,
@@ -430,7 +448,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				end: event.EndTime,
 				cwid: event.CWID,
 				ownerName: event.OwnerName,
-				groups: event.Groups,
+				groups: groups,
 				pendingOverride: event.PendingOverride,
 				color: color,
 				borderColor: borderColor,
@@ -448,7 +466,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			event1.cwid === event2.cwid &&
 			event1.description === event2.description &&
 			event1.end === event2.end &&
-			event1.groups === event2.groups &&
+			event1.groups.join() === event2.groups.join() &&
 			event1.id === event2.id &&
 			event1.ownerName === event2.ownerName &&
 			event1.pendingOverride === event2.pendingOverride &&

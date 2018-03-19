@@ -49,8 +49,8 @@ export class ViewEventModal extends React.Component<Props, State> {
 		if (this.state.event.description === '')
 			descriptionString = 'No description.';
 
-		let groupString: string[] = this.state.event.groups.map(event => {
-			return event + ', ';
+		let groupString: string[] = this.state.event.groups.map(group => {
+			return group + ', ';
 		});
 		if (this.state.event.groups.length > 0)
 			groupString[groupString.length - 1] = groupString[groupString.length - 1].slice(0, groupString[groupString.length - 1].length - 2) + '.';
@@ -134,14 +134,16 @@ export class ViewEventModal extends React.Component<Props, State> {
 	private getTimeString = (): string => {
 		if (this.state.event) {
 			let options = {
+				timeZone: 'America/Chicago',
 				year: 'numeric', month: 'short',
 				day: 'numeric', hour: 'numeric', minute: 'numeric'
 			};
-			let start = new Date(this.state.event.start);
+			let d = new Date(this.state.event.start);
+			let start = new Date(this.state.event.start + (60000 * d.getTimezoneOffset()));
 			let startString = start.toLocaleTimeString('en-us', options);
 
 			if (this.state.event.end) {
-				let end = new Date(this.state.event.end);
+				let end = new Date(this.state.event.end + (60000 * d.getTimezoneOffset()));
 				let endString = end.toLocaleTimeString('en-us', options);
 				return startString + ' - ' + endString;
 			}

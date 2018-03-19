@@ -235,6 +235,7 @@ export class Scheduler extends React.Component<Props, State> {
 
 		if (this.schedulerCalendar &&
 			this.schedulerCalendar.eventsHaveBeenModified() &&
+			Number(this.state.selectedRoom) !== Number(index) &&
 			!confirm('You have unsaved changes. Are you sure you want to leave this room?'))
 			shouldLeaveRoom = false;
 

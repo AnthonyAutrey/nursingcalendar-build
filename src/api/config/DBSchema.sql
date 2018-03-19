@@ -62,6 +62,7 @@ CREATE TABLE Groups
 (
 	GroupName VARCHAR(60) NOT NULL,
 	Description VARCHAR(300) NOT NULL,
+	Semester TINYINT,
 	PRIMARY KEY (GroupName)
 );
 
@@ -221,36 +222,36 @@ INSERT INTO RoomResourceRelation (LocationName, RoomName, ResourceName, Count)
 		('Nursing Building', 'Room 327', 'Beds', 3),
 		('Nursing Building', 'Room 338-339', 'Audio/Video', null);
 
-INSERT INTO Groups (GroupName, Description)
+INSERT INTO Groups (GroupName, Description, Semester)
 VALUES
-	('Semester 1', 'All Semester 1 Students'),
-	('Semester 2', 'All Semester 2 Students'),
-	('Semester 3', 'All Semester 3 Students'),
-	('Semester 4', 'All Semester 4 Students'),
-	('Semester 5', 'All Semester 5 Students'),
-	('Anatomy and Physiology', 'The body and diseases'),
-	('Gerontology', 'Aging processes and treatments'),
-	('Nursing Research', 'Researching techniques'),
-	('Med Surg Clinicals', 'Med Surg Clinicals'),
-	('Pediatrics Clinicals', 'Pediatrics Clinicals'),
-	('Maternity Clinicals', 'Maternity Clinicals'),
-	('Med Surg - Rotation 1', 'First clinical rotation group'),
-	('Med Surg - Rotation 2', 'Second clinical rotation group'),
-	('NURS 2004','Health Assessment'),
-	('NURS 2009','Fundamentals of Prof. Nursing Practice'),
-	('NURS 2011','Intro to Gerontological Nursing'),
-	('NURS 2013','Computing for Nurses'),
-	('NURS 3009','Adult Health Nursing I'),
-	('NURS 3010','Mental Health Nursing'),
-	('NURS 3011','Nursing Synthesis I'),
-	('NURS 3028','Adult Health Nursing II'),
-	('NURS 3029','Maternal Child Health Nursing'),
-	('NURS 3030','Nursing Synthesis II'),
-	('NURS 4000','Adult Health Nursing III'),
-	('NURS 4001','Nursing Research EBP'),
-	('NURS 4002','Nursing Synthesis III'),
-	('NURS 4066','Nursing Management'),
-	('NURS 4067','Public Health Nursing');
+	('Semester 1', 'All Semester 1 Students', 1),
+	('Semester 2', 'All Semester 2 Students', 2),
+	('Semester 3', 'All Semester 3 Students', 3),
+	('Semester 4', 'All Semester 4 Students', 4),
+	('Semester 5', 'All Semester 5 Students', 5),
+	('Anatomy and Physiology', 'The body and diseases', null),
+	('Gerontology', 'Aging processes and treatments', null),
+	('Nursing Research', 'Researching techniques', null),
+	('Med Surg Clinicals', 'Med Surg Clinicals', null),
+	('Pediatrics Clinicals', 'Pediatrics Clinicals', null),
+	('Maternity Clinicals', 'Maternity Clinicals', null),
+	('Med Surg - Rotation 1', 'First clinical rotation group', null),
+	('Med Surg - Rotation 2', 'Second clinical rotation group', null),
+	('NURS 2004','Health Assessment', null),
+	('NURS 2009','Fundamentals of Prof. Nursing Practice', null),
+	('NURS 2011','Intro to Gerontological Nursing', null),
+	('NURS 2013','Computing for Nurses', null),
+	('NURS 3009','Adult Health Nursing I', null),
+	('NURS 3010','Mental Health Nursing', null),
+	('NURS 3011','Nursing Synthesis I', null),
+	('NURS 3028','Adult Health Nursing II', null),
+	('NURS 3029','Maternal Child Health Nursing', null),
+	('NURS 3030','Nursing Synthesis II', null),
+	('NURS 4000','Adult Health Nursing III', null),
+	('NURS 4001','Nursing Research EBP', null),
+	('NURS 4002','Nursing Synthesis III', null),
+	('NURS 4066','Nursing Management', null),
+	('NURS 4067','Public Health Nursing', null);
 
 INSERT INTO UserGroupRelation (CWID, GroupName)
 VALUES

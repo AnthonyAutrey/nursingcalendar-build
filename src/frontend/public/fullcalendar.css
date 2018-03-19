@@ -1295,3 +1295,27 @@ be a descendant of the grid when it is being dragged.
 body {
 	height: 100vh;
 }
+
+/* .fc-event-time, .fc-event-title {
+	white-space: nowrap; 
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.fc-title {
+	white-space: nowrap; 
+	overflow: hidden;
+	text-overflow: ellipsis;
+} */
+
+.fc-day-grid-event > .fc-content {
+	white-space: nowrap;
+	overflow: hidden;	
+    text-overflow: ellipsis;
+    max-height:20px;
+}
+/* .fc-day-grid-event > .fc-content:hover {
+	white-space: normal;
+	overflow: visible;
+    max-height:none!important; 
+} */
