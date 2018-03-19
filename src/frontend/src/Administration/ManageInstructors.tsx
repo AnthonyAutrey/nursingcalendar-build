@@ -261,33 +261,6 @@ export class ManageInstructors extends React.Component<Props, State> {
 					this.props.handleShowAlert('error', 'Error submitting changes.');
 			});
 
-			// let insertPromises: Promise<any>[] = [];
-			// this.state.instructors.forEach(instructor => {
-			// 	instructor.groups.forEach(group => {
-			// 		insertPromises.push(new Promise((resolve, reject) => {
-			// 			let queryData = {
-			// 				insertValues: {
-			// 					'CWID': instructor.cwid,
-			// 					'GroupName': group.name,
-			// 				}
-			// 			};
-			// 			let queryDataString = JSON.stringify(queryData);
-			// 			request.put('/api/usergroups').set('queryData', queryDataString).end((error: {}, res: any) => {
-			// 				if (res && res.body)
-			// 					resolve();
-			// 				else
-			// 					reject();
-			// 			});
-			// 		}));
-			// 	});
-			// });
-
-			// Promise.all(insertPromises).then(() => {
-			// 	this.props.handleShowAlert('success', 'Sucessfully submitted changes!');
-			// }).catch(() => {
-			// 	this.props.handleShowAlert('error', 'Error submitting changes.');
-			// });
-
 		}).catch(() => {
 			this.props.handleShowAlert('error', 'Error submitting changes.');
 		});

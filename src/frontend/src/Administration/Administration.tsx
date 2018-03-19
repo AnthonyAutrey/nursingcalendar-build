@@ -127,17 +127,13 @@ export class Administration extends React.Component<Props, State> {
 	}
 
 	handlePublishStartDateChange = (e: any) => {
-		let date = new Date(e.target.value);
-		date.setDate(date.getDate() + 1);
-		let dateString = this.getDateString(date);
-		this.setState({ publishStartDate: dateString });
+		let date = e.target.value;
+		this.setState({ publishStartDate: date });
 	}
 
 	handlePublishEndDateChange = (e: any) => {
-		let date = new Date(e.target.value);
-		date.setDate(date.getDate() + 1);
-		let dateString = this.getDateString(date);
-		this.setState({ publishEndDate: dateString });
+		let date = e.target.value;
+		this.setState({ publishEndDate: date });
 	}
 
 	handleSubmitPublishPeriod = (e: any) => {
