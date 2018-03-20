@@ -440,7 +440,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid) || this.props.role === 'administrator';
-			let color = ColorGenerator.getColor(event.Groups[0].GroupName);
+			let color = '';
+			if (event.Groups[0])
+				color = ColorGenerator.getColor(event.Groups[0].GroupName);
 			let borderColor = '';
 
 			if (!userOwnsEvent) {
