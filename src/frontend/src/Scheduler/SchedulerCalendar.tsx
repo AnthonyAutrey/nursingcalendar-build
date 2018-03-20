@@ -164,23 +164,37 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					allDaySlot={false}
 					eventOverlap={false}
 					eventRender={(event: any, element: any, view: any) => {
-						if (this.currentView === 'month')
-							return;
-
 						let groups = event.groups;
 						let semesterCount = 0;
 						let semesterFromMap: any = 0;
-						if (groups[0] && this.groupSemesterMap.has(groups[0])) {
+						if (groups && groups[0] && this.groupSemesterMap.has(groups[0])) {
 							semesterFromMap = this.groupSemesterMap.get(groups[0]);
 
 							if (semesterFromMap)
 								semesterCount = semesterFromMap;
-							let starHTML = '&nbsp;<span style="margin:1px">';
-							for (let i = 0; i < semesterCount; i++) {
-								starHTML += '<span class="oi oi-media-record" style="font-size:.6em;top:-1px"></span><span style="margin-left:1px"></span>';
-							}
-							element.find('.fc-time').append(starHTML + '</span>');
 						}
+
+						let stripeColor = '(255, 255, 255, 0.1)';
+						if (this.currentView === 'month')
+							stripeColor = '(255, 255, 255, 0.2)';
+
+						let semesterCSSMap: {} = {
+							0: '',
+							1: 'repeating-linear-gradient(-45deg,transparent,transparent 64px,rgba' + stripeColor +
+								' 64px,rgba' + stripeColor + ' 66px)',
+							2: 'repeating-linear-gradient(-45deg,transparent,transparent 32px,rgba' + stripeColor +
+								' 32px,rgba' + stripeColor + ' 34px)',
+							3: 'repeating-linear-gradient(-45deg,transparent,transparent 16px,rgba' + stripeColor +
+								' 16px,rgba' + stripeColor + ' 18px)',
+							4: 'repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba' + stripeColor +
+								' 8px,rgba' + stripeColor + ' 10px)',
+							5: 'repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba' + stripeColor +
+								' 4px,rgba' + stripeColor + ' 6px)'
+						};
+						let bgCSS = semesterCSSMap[semesterCount];
+
+						element.css('background', bgCSS);
+						element.css('background-color', event.color);
 					}}
 					eventLimit={true} // allow "more" link when too many events
 					eventClick={this.handleEventClick}
