@@ -183,7 +183,9 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	parseDBEvents(body: any): Event[] {
 		let parsedEvents: Event[] = [];
 		for (let event of body) {
-			let color: string = ColorGenerator.getColor(event.Groups[0].GroupName);
+			let color = '';
+			if (event.Groups[0])
+				color = ColorGenerator.getColor(event.Groups[0].GroupName);
 
 			let groups: string[] = event.Groups.map((group: any) => {
 				return group.GroupName;
