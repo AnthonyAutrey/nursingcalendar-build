@@ -69,8 +69,15 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	componentWillMount() {
 		this.getStateFromDB();
 		let route = '/api/groups';
-		if (this.props.role === 'instructor')
+		if (this.props.role === 'instructor') {
 			route = '/api/usergroups/' + this.props.cwid;
+			this.populateGroupSemesterMap().then(() => {
+				this.forceUpdate();
+			}).catch(() => {
+				alert('Error getting data. Handle this properly!');
+				// TODO: Handle this properly
+			});
+		}
 
 		request.get(route).end((error: {}, res: any) => {
 			if (res && res.body) {
@@ -81,7 +88,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				});
 
 				this.setState({ groupOptionsFromAPI: groups });
-			}
+			} else
+				alert('Error getting data. Handle this properly!');
+			// TODO: Handle this properly
 		});
 	}
 
@@ -167,7 +176,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 						let groups = event.groups;
 						let semesterCount = 0;
 						let semesterFromMap: any = 0;
-						if (groups && groups[0] && this.groupSemesterMap.has(groups[0])) {
+						if (groups && groups.length === 1) {
 							semesterFromMap = this.groupSemesterMap.get(groups[0]);
 
 							if (semesterFromMap)
@@ -305,11 +314,15 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	handleEventModify = (eventID: number, title: string, description: string, groups: string[]) => {
 		let events = this.cloneStateEvents();
 		let eventToModify = events.get(eventID);
+		let color = '';
+		if (groups.length === 1)
+			color = ColorGenerator.getColor(groups[0]);
+
 		if (eventToModify) {
 			eventToModify.title = title;
 			eventToModify.description = description;
 			eventToModify.groups = groups;
-			eventToModify.color = ColorGenerator.getColor(groups[0]);
+			eventToModify.color = color;
 			events.set(eventID, eventToModify);
 			this.setState({ events: events });
 		}
@@ -441,7 +454,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid) || this.props.role === 'administrator';
 			let color = '';
-			if (event.Groups[0])
+			if (event.Groups.length === 1)
 				color = ColorGenerator.getColor(event.Groups[0].GroupName);
 			let borderColor = '';
 
@@ -559,7 +572,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				});
 
 				if (eventsIDsToDelete.length > 0) {
-					let queryData = {
+					let queryData: {} = {
 						where: {
 							EventID: eventsIDsToDelete,
 							CWID: Number(this.props.cwid),
@@ -567,6 +580,14 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 							LocationName: this.props.location
 						}
 					};
+					if (this.props.role === 'administrator')
+						queryData = {
+							where: {
+								EventID: eventsIDsToDelete,
+								RoomName: this.props.room,
+								LocationName: this.props.location
+							}
+						};
 					let queryDataString = JSON.stringify(queryData);
 					request.delete('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
 						if (res && res.body)
@@ -618,14 +639,16 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			let queryData: {}[] = [];
 
 			eventsToUpdate.forEach((event: Event) => {
+				let setValues: {} = {
+					'Title': event.title,
+					'Description': event.description,
+					'StartTime': event.start,
+					'EndTime': event.end
+				};
+
 				queryData.push({
 					groups: event.groups,
-					setValues: {
-						'Title': event.title,
-						'Description': event.description,
-						'StartTime': event.start,
-						'EndTime': event.end
-					},
+					setValues: setValues,
 					where: { EventID: event.id, RoomName: this.props.room, LocationName: this.props.location }
 				});
 			});
@@ -661,18 +684,20 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 			eventsToCreate.forEach((event) => {
 				persistNewEventsPromises.push(new Promise((resolve, reject) => {
+					let insertValues: {} = {
+						'CWID': this.props.cwid,
+						'EventID': event.id,
+						'LocationName': this.props.location,
+						'RoomName': this.props.room,
+						'Title': event.title,
+						'Description': event.description,
+						'StartTime': event.start,
+						'EndTime': event.end
+					};
+
 					let queryData = {
 						groups: event.groups,
-						insertValues: {
-							'CWID': this.props.cwid,
-							'EventID': event.id,
-							'LocationName': this.props.location,
-							'RoomName': this.props.room,
-							'Title': event.title,
-							'Description': event.description,
-							'StartTime': event.start,
-							'EndTime': event.end
-						}
+						insertValues: insertValues
 					};
 					let queryDataString = JSON.stringify(queryData);
 					request.put('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
@@ -695,6 +720,23 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			ids.push(event.EventID);
 
 		return ids;
+	}
+
+	// Groups ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	populateGroupSemesterMap = (): Promise<null> => {
+		return new Promise((resolve, reject) => {
+			request.get('/api/groups').end((error: {}, res: any) => {
+				if (res && res.body) {
+					let groups: string[] = [];
+					res.body.forEach((group: any) => {
+						groups.push(group.GroupName);
+						this.groupSemesterMap.set(group.GroupName, group.Semester);
+					});
+					resolve();
+				} else
+					reject();
+			});
+		});
 	}
 
 	// Store Calendar State /////////////////////////////////////////////////////////////////////////////////////////////////////////

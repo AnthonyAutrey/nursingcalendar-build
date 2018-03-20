@@ -99,9 +99,7 @@ CREATE TABLE OverrideRequests
 	RequestorCWID INT NOT NULL,
 	AdminRequested Boolean NOT NULL DEFAULT 0,
 	PRIMARY KEY (EventID, LocationName, RoomName),
-	FOREIGN KEY (EventID) REFERENCES Events(EventID),
-	FOREIGN KEY (LocationName) REFERENCES Events(LocationName),
-	FOREIGN KEY (RoomName) REFERENCES Events(RoomName),
+	FOREIGN KEY (EventID, LocationName, RoomName) REFERENCES Events(EventID, LocationName, RoomName),
 	FOREIGN KEY (RequestorCWID) REFERENCES Users(CWID)
 );
 
@@ -124,9 +122,7 @@ CREATE TABLE EventGroupRelation
 	RoomName varchar(60) NOT NULL,
 	GroupName VARCHAR(60) NOT NULL,
 	PRIMARY KEY (EventID, LocationName, RoomName, GroupName),
-	FOREIGN KEY (EventID) REFERENCES Events(EventID),
-	FOREIGN KEY (LocationName) REFERENCES Events(LocationName),
-	FOREIGN KEY (RoomName) REFERENCES Events(RoomName),
+	FOREIGN KEY (EventID, LocationName, RoomName) REFERENCES Events(EventID, LocationName, RoomName),
 	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName)
 );
 
@@ -229,29 +225,29 @@ VALUES
 	('Semester 3', 'All Semester 3 Students', 3),
 	('Semester 4', 'All Semester 4 Students', 4),
 	('Semester 5', 'All Semester 5 Students', 5),
-	('Anatomy and Physiology', 'The body and diseases', null),
-	('Gerontology', 'Aging processes and treatments', null),
-	('Nursing Research', 'Researching techniques', null),
-	('Med Surg Clinicals', 'Med Surg Clinicals', null),
-	('Pediatrics Clinicals', 'Pediatrics Clinicals', null),
+	('Anatomy and Physiology', 'The body and diseases', 1),
+	('Gerontology', 'Aging processes and treatments', 2),
+	('Nursing Research', 'Researching techniques', 3),
+	('Med Surg Clinicals', 'Med Surg Clinicals', 4),
+	('Pediatrics Clinicals', 'Pediatrics Clinicals', 5),
 	('Maternity Clinicals', 'Maternity Clinicals', null),
-	('Med Surg - Rotation 1', 'First clinical rotation group', null),
-	('Med Surg - Rotation 2', 'Second clinical rotation group', null),
-	('NURS 2004','Health Assessment', null),
-	('NURS 2009','Fundamentals of Prof. Nursing Practice', null),
-	('NURS 2011','Intro to Gerontological Nursing', null),
+	('Med Surg - Rotation 1', 'First clinical rotation group', 1),
+	('Med Surg - Rotation 2', 'Second clinical rotation group', 2),
+	('NURS 2004','Health Assessment', 3),
+	('NURS 2009','Fundamentals of Prof. Nursing Practice', 4),
+	('NURS 2011','Intro to Gerontological Nursing', 5),
 	('NURS 2013','Computing for Nurses', null),
-	('NURS 3009','Adult Health Nursing I', null),
-	('NURS 3010','Mental Health Nursing', null),
-	('NURS 3011','Nursing Synthesis I', null),
-	('NURS 3028','Adult Health Nursing II', null),
-	('NURS 3029','Maternal Child Health Nursing', null),
+	('NURS 3009','Adult Health Nursing I', 1),
+	('NURS 3010','Mental Health Nursing', 2),
+	('NURS 3011','Nursing Synthesis I', 3),
+	('NURS 3028','Adult Health Nursing II', 4),
+	('NURS 3029','Maternal Child Health Nursing', 5),
 	('NURS 3030','Nursing Synthesis II', null),
-	('NURS 4000','Adult Health Nursing III', null),
-	('NURS 4001','Nursing Research EBP', null),
-	('NURS 4002','Nursing Synthesis III', null),
-	('NURS 4066','Nursing Management', null),
-	('NURS 4067','Public Health Nursing', null);
+	('NURS 4000','Adult Health Nursing III', 1),
+	('NURS 4001','Nursing Research EBP', 2),
+	('NURS 4002','Nursing Synthesis III', 3),
+	('NURS 4066','Nursing Management', 4),
+	('NURS 4067','Public Health Nursing', 5);
 
 INSERT INTO UserGroupRelation (CWID, GroupName)
 VALUES

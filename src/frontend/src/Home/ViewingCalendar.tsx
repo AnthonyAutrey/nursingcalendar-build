@@ -38,6 +38,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	private currentView: String | null = null;
 	private currentDate: any | null = null;
 	private smallestTimeInterval: number = Number.MAX_SAFE_INTEGER;
+	private groupSemesterMap: Map<string, number | null> = new Map<string, number | null>();
 
 	constructor(props: Props, state: State) {
 		super(props, state);
@@ -46,7 +47,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	}
 
 	componentWillMount() {
-		this.getEventsFromDB();
+		this.getEventsAndGroupsFromDB();
 		this.props.handleActiveRouteChange('Home');
 	}
 
@@ -91,6 +92,39 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					slotEventOverlap={false}
 					allDaySlot={false}
 					eventOverlap={true}
+					eventRender={(event: any, element: any, view: any) => {
+						let groups = event.groups;
+						let semesterCount = 0;
+						let semesterFromMap: any = 0;
+						if (groups && groups.length === 1) {
+							semesterFromMap = this.groupSemesterMap.get(groups[0]);
+
+							if (semesterFromMap)
+								semesterCount = semesterFromMap;
+						}
+
+						let stripeColor = '(255, 255, 255, 0.1)';
+						if (this.currentView === 'month')
+							stripeColor = '(255, 255, 255, 0.2)';
+
+						let semesterCSSMap: {} = {
+							0: '',
+							1: 'repeating-linear-gradient(-45deg,transparent,transparent 64px,rgba' + stripeColor +
+								' 64px,rgba' + stripeColor + ' 66px)',
+							2: 'repeating-linear-gradient(-45deg,transparent,transparent 32px,rgba' + stripeColor +
+								' 32px,rgba' + stripeColor + ' 34px)',
+							3: 'repeating-linear-gradient(-45deg,transparent,transparent 16px,rgba' + stripeColor +
+								' 16px,rgba' + stripeColor + ' 18px)',
+							4: 'repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba' + stripeColor +
+								' 8px,rgba' + stripeColor + ' 10px)',
+							5: 'repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba' + stripeColor +
+								' 4px,rgba' + stripeColor + ' 6px)'
+						};
+						let bgCSS = semesterCSSMap[semesterCount];
+
+						element.css('background', bgCSS);
+						element.css('background-color', event.color);
+					}}
 					eventLimit={this.collapseEvents} // allow "more" link when too many events
 					eventClick={this.openViewEventModal}
 					dayClick={(date: any) => {
@@ -129,14 +163,23 @@ export class ViewingCalendar extends React.Component<Props, State> {
 		);
 	}
 
-	public getEventsFromDB(): void {
+	// Data Retreival /////////////////////////////////////////////////////////////////////////////////////////////////
+	public getEventsAndGroupsFromDB(): void {
 		if (this.props.role === 'student' || this.props.role === 'instructor')
 			this.getUserFilteredEvents();
 		else {
 			this.setState({ loading: true });
 			request.get('/api/eventswithrelations').end((error: {}, res: any) => {
-				if (res && res.body)
-					this.setState({ events: this.parseDBEvents(res.body), loading: false });
+				if (res && res.body) {
+					this.populateGroupSemesterMap().then(() => {
+						this.setState({ events: this.parseDBEvents(res.body), loading: false });
+					}).catch(() => {
+						alert('Error getting data!, Handle properly!');
+						// TODO: handle this properly
+					});
+				} else
+					alert('Error getting data!, Handle properly!');
+				// TODO: handle this properly
 			});
 
 		}
@@ -184,7 +227,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 		let parsedEvents: Event[] = [];
 		for (let event of body) {
 			let color = '';
-			if (event.Groups[0])
+			if (event.Groups.length === 1)
 				color = ColorGenerator.getColor(event.Groups[0].GroupName);
 
 			let groups: string[] = event.Groups.map((group: any) => {
@@ -210,6 +253,23 @@ export class ViewingCalendar extends React.Component<Props, State> {
 		return parsedEvents;
 	}
 
+	populateGroupSemesterMap = (): Promise<null> => {
+		return new Promise((resolve, reject) => {
+			request.get('/api/groups').end((error: {}, res: any) => {
+				if (res && res.body) {
+					let groups: string[] = [];
+					res.body.forEach((group: any) => {
+						groups.push(group.GroupName);
+						this.groupSemesterMap.set(group.GroupName, group.Semester);
+					});
+					resolve();
+				} else
+					reject();
+			});
+		});
+	}
+
+	// Modal ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	openViewEventModal = (event: Event) => {
 		if (this.viewEventModal)
 			this.viewEventModal.beginView(event);
