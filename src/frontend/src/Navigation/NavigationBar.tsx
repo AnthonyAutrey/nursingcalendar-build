@@ -42,7 +42,7 @@ export class NavigationBar extends React.Component<Props, {}> {
 		let navLinks: JSX.Element[] = this.getNavLinks();
 
 		return (
-			<nav className="navbar navbar-expand-md navbar-light bg-light border-bottom mb-3">
+			<nav className="navbar navbar-expand-md navbar-light bg-light border-bottom mb-3 d-print-none">
 				<button
 					className="navbar-toggler border-0"
 					type="button"

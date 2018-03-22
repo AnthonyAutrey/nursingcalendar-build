@@ -119,7 +119,7 @@ export class CreateEventModal extends React.Component<Props, State> {
 							</div>
 							<div className="form-group text-left mr-auto">
 								<div className="d-flex flex-wrap mb-2">
-									<label className="mr-auto">Relevant Groups:</label>
+									<label className="mr-auto">Groups:</label>
 									{addButton}
 								</div>
 								{groupSelectors}

@@ -1309,13 +1309,26 @@ body {
 } */
 
 .fc-day-grid-event > .fc-content {
-	white-space: nowrap;
-	overflow: hidden;	
-    text-overflow: ellipsis;
-    max-height:20px;
+	/* white-space: normal; */
+	/* overflow: hidden;	 */
+    /* text-overflow: ellipsis;  */
+	/* max-height:40px; */
+	/* text-shadow:
+	-1px -1px 0 #000,  
+	1px -1px 0 #000,
+	-1px 1px 0 #000,
+		2px 2px 0 #000; */
 }
 /* .fc-day-grid-event > .fc-content:hover {
 	white-space: normal;
-	overflow: visible;
+	overflow: hidden;
+	text-overflow: ellipsis;
     max-height:none!important; 
 } */
+/* 
+td.fc-event-container {
+	height: 1px;
+	padding-bottom: 4px;
+} */
+
+

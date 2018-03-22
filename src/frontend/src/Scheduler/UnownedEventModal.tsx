@@ -112,7 +112,7 @@ export class UnownedEventModal extends React.Component<Props, State> {
 								{descriptionString}
 							</div>
 							<div className="form-group text-left">
-								<label className="font-weight-bold">Relevant Groups:</label>
+								<label className="font-weight-bold">Groups:</label>
 								<br />
 								{groupString}
 							</div>

@@ -37,7 +37,7 @@ export class Toolbar extends React.Component<Props, {}> {
 		}
 
 		return (
-			<div style={backdropStyle}>
+			<div style={backdropStyle} className="d-print-none">
 				<div className="d-flex flex-no-wrap align-self-center">
 					<div className={className}>
 						<span className="justify-content-center align-self-center mr-5">

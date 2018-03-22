@@ -27,3 +27,26 @@ button.fc-roomLabel-button, button.fc-roomLabel-button:hover {
 	background: #bd955a;
 	color: #fff;
 }
+
+@page {
+	size: landscape;
+	margin: auto;
+}
+
+@media print {
+	.fc-day-grid-event > .fc-content {
+		/* // content.css('white-space', 'nowrap');
+		// content.css('overflow', 'hidden');
+		// content.css('text-overflow', 'ellipsis'); */
+		white-space: normal;
+		overflow: visible;
+		/* overflow: hidden;	 */
+		/* text-overflow: ellipsis;  */
+		max-height: none;
+		/* text-shadow:
+		-1px -1px 0 #000,  
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+			2px 2px 0 #000; */
+	}
+}

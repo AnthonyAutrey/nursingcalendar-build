@@ -187,6 +187,9 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 						if (this.currentView === 'month')
 							stripeColor = '(255, 255, 255, 0.2)';
 
+						element.find('.fc-content').css('text-shadow', '-1px -1px 0 ' + event.color +
+							', 1px -1px 0 ' + event.color + ', -1px 1px 0 ' + event.color + ', 1px 1px 0 ' + event.color);
+
 						let semesterCSSMap: {} = {
 							0: '',
 							1: 'repeating-linear-gradient(-45deg,transparent,transparent 64px,rgba' + stripeColor +
@@ -205,6 +208,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 						element.css('background', bgCSS);
 						element.css('background-color', event.color);
 					}}
+					displayEventEnd={this.currentView !== 'month'}
+					timeFormat={'h(:mm)t'} // uppercase H for 24-hour clock
 					eventLimit={true} // allow "more" link when too many events
 					eventClick={this.handleEventClick}
 					dayClick={(date: any) => {
@@ -453,7 +458,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let parsedEvents: Map<number, Event> = new Map();
 		for (let event of body) {
 			let userOwnsEvent: boolean = Number(event.CWID) === Number(this.props.cwid) || this.props.role === 'administrator';
-			let color = '';
+			let color = '#800029';
 			if (event.Groups.length === 1)
 				color = ColorGenerator.getColor(event.Groups[0].GroupName);
 			let borderColor = '';

@@ -69,6 +69,9 @@ CREATE TABLE Groups
 CREATE TABLE Preferences
 (
 	CWID INT NOT NULL,
+	CollapseEvents BOOLEAN NOT NULL DEFAULT 0,
+	EventSize INT NOT NULL DEFAULT 19,
+	EventDisplay ENUM('title', 'class', 'classAndRoom', 'titleAndRoom') NOT NULL DEFAULT 'title',
 	PRIMARY KEY (CWID),
 	FOREIGN KEY (CWID) REFERENCES Users(CWID)
 );

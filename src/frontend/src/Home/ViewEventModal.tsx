@@ -99,7 +99,7 @@ export class ViewEventModal extends React.Component<Props, State> {
 							</div>
 							{!this.props.hideGroups && (
 								<div className="form-group text-left">
-									<label className="font-weight-bold">Relevant Groups:</label>
+									<label className="font-weight-bold">Groups:</label>
 									<br />
 									{groupString}
 								</div>
