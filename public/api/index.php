@@ -276,6 +276,8 @@ $app->get('/resources', function (Request $request, Response $response, array $a
 });
 
 // User Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
 $app->get('/usergroups/{cwid}', function (Request $request, Response $response, array $args) {
 	$cwid = $args['cwid'];
 	$queryData = getSelectQueryData($request);
@@ -359,6 +361,23 @@ $app->get('/users', function (Request $request, Response $response, array $args)
 	}
 
 	$response->getBody()->write(json_encode($users));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+});
+
+// Preference Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/preferences/{CWID}', function (Request $request, Response $response, array $args) {
+	$cwid = $args['CWID'];
+	$queryData = getSelectQueryData($request);
+	if (isset($queryData['where']))
+		$queryData['where']['CWID'] = $cwid;
+	else
+		$queryData['where'] = ['CWID'=> $cwid]; 
+	$queryString = DBUtil::buildSelectQuery('preferences', $queryData['fields'], ['CWID'=> $cwid]);
+	$preferences = DBUtil::runQuery($queryString);
+	$response->getBody()->write($preferences);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
 });
