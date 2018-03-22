@@ -380,21 +380,14 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			', 1px -1px 0 ' + event.color + ', -1px 1px 0 ' + event.color + ', 1px 1px 0 ' + event.color);
 		let content = element.find('.fc-content');
 		if (!this.state.collapseEvents && this.currentView === 'month' && this.state.eventSize > 28) {
-			// element.css('min-height', this.state.eventSize + 'px');
 			element.css('height', this.state.eventSize + 'px');
-			// element.css('max-height', '100%');
 			content.css('white-space', 'normal');
 			element.css('overflow', 'hidden');
-		} else if (this.currentView === 'month') {
-			// content.css('white-space', 'nowrap');
-			// content.css('overflow', 'hidden');
-			// content.css('text-overflow', 'ellipsis');
 		}
 
 		let groupString = 'no class';
 		let title = element.find('.fc-title');
 		let time = element.find('.fc-time');
-		time.text(time.text().replace(' - ', '-'));
 		if (event.groups.length > 0)
 			groupString = event.groups.join(', ');
 
@@ -402,7 +395,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			title.text(groupString);
 
 		if (this.state.eventDisplay === 'classAndRoom' || this.state.eventDisplay === 'titleAndRoom')
-			time.text(time.text() + ', ' + event.room);
+			title.prepend('<strong> ' + event.room + ', </strong>');
 	}
 }
 
