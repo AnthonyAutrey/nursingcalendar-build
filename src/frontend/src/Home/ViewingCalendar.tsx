@@ -75,7 +75,6 @@ export class ViewingCalendar extends React.Component<Props, State> {
 							<button
 								className="btn btn-primary btn-sm"
 								onClick={() => this.setState((prevState) => ({ collapseEvents: !prevState.collapseEvents }))}
-								disabled={this.currentView !== 'month'}
 							>
 								{this.state.collapseEvents ? 'Don\'t Collapse' : 'Collapse'}
 							</button>
@@ -86,7 +85,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 								<button
 									className="btn btn-primary btn-sm mr-1"
 									onClick={this.handleEventSizeIncrease}
-									disabled={this.state.collapseEvents || this.currentView !== 'month'}
+									disabled={this.state.collapseEvents}
 								>
 									Larger &nbsp;
 									<span className="oi oi-caret-top" />
@@ -94,7 +93,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 								<button
 									className="btn btn-primary btn-sm"
 									onClick={this.handleEventSizeDecrease}
-									disabled={this.state.collapseEvents || this.currentView !== 'month'}
+									disabled={this.state.collapseEvents}
 								>
 									Smaller &nbsp;
 									<span className="oi oi-caret-bottom" />
