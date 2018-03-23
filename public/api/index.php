@@ -5,21 +5,34 @@ use \Psr\Http\Message\ResponseInterface as Response;
 
 require '../../src/api/dependencies/autoload.php';
 require '../../src/api/DBUtil.php';
+require '../../src/api/middleware/Authenticator.php';
 
 // Configuration //////////////////////////////////////////////////////////////////////////////////////////////////////////
 $config = [
     'settings' => [
-        'displayErrorDetails' => false,
+		'displayErrorDetails' => false,
 	],
 	'devEnvironment' => true
 ];
 
 $app = new \Slim\App($config);
 
+// Start Session /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+$app->add(function ($request, $response, $next) {
+	session_start();
+	return $next($request, $response);	
+});
+
+// Authentication Middleware /////////////////////////////////////////////////////////////////////////////////////////////
+
+$requireAnyRole = new Authenticator(['student', 'instructor', 'administrator']);
+$requireInstructorOrAdmin = new Authenticator(['instructor', 'administrator']);
+$requireAdmin = new Authenticator(['administrator']);
+
 // Authentication Routes //////////////////////////////////////////////////////////////////////////////////////////////////
 
 $app->post('/login', function (Request $request, Response $response, array $args) {
-	session_start();
 	$queryData = json_decode($request->getHeader('queryData')[0]);
 
 	if(!isset($queryData->cwid))
@@ -53,7 +66,6 @@ $app->post('/login', function (Request $request, Response $response, array $args
 });
 
 $app->get('/logout', function (Request $request, Response $response, array $args) {
-	session_start();
 	session_destroy();
 	
 	$response->getBody()->write("Successfully logged out.");
@@ -61,8 +73,6 @@ $app->get('/logout', function (Request $request, Response $response, array $args
 });
 
 $app->get('/session', function (Request $request, Response $response, array $args) {
-	session_start();
-
 	if (isset($_SESSION))
 		$session = json_encode($_SESSION);
 	else 
@@ -84,7 +94,7 @@ $app->get('/events', function (Request $request, Response $response, array $args
 	$response->getBody()->write($events);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Read With Group Relation //
 $app->get('/eventswithrelations', function (Request $request, Response $response, array $args) {
@@ -148,7 +158,7 @@ $app->get('/eventswithrelations', function (Request $request, Response $response
 	$response->getBody()->write(json_encode($events));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Update //
 $app->post('/events', function (Request $request, Response $response, array $args) {
@@ -189,7 +199,7 @@ $app->post('/events', function (Request $request, Response $response, array $arg
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
 
-});
+})->add($requireInstructorOrAdmin);
 
 // Insert //
 $app->put('/events', function (Request $request, Response $response, array $args) {
@@ -224,7 +234,7 @@ $app->put('/events', function (Request $request, Response $response, array $args
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
-});
+})->add($requireInstructorOrAdmin);
 
 // Delete //
 $app->delete('/events', function (Request $request, Response $response, array $args) {
@@ -237,7 +247,7 @@ $app->delete('/events', function (Request $request, Response $response, array $a
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireInstructorOrAdmin);
 
 // Room Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -249,7 +259,7 @@ $app->get('/rooms', function (Request $request, Response $response, array $args)
 	$response->getBody()->write($rooms);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Location Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -261,7 +271,7 @@ $app->get('/locations', function (Request $request, Response $response, array $a
 	$response->getBody()->write($locations);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Resource Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -273,7 +283,7 @@ $app->get('/resources', function (Request $request, Response $response, array $a
 	$response->getBody()->write($resources);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // User Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -286,7 +296,7 @@ $app->get('/usergroups/{cwid}', function (Request $request, Response $response, 
 	$response->getBody()->write($groups);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Create //
 $app->put('/usergroups', function (Request $request, Response $response, array $args) {
@@ -320,7 +330,7 @@ $app->put('/usergroups', function (Request $request, Response $response, array $
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
-});
+})->add($requireAnyRole);
 
 // Delete //
 $app->delete('/usergroups', function (Request $request, Response $response, array $args) {
@@ -330,7 +340,7 @@ $app->delete('/usergroups', function (Request $request, Response $response, arra
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 $app->get('/users', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
@@ -363,7 +373,7 @@ $app->get('/users', function (Request $request, Response $response, array $args)
 	$response->getBody()->write(json_encode($users));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Preference Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -380,7 +390,7 @@ $app->get('/preferences/{CWID}', function (Request $request, Response $response,
 	$response->getBody()->write($preferences);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Update //
 $app->post('/preferences/{CWID}', function (Request $request, Response $response, array $args) {
@@ -395,7 +405,7 @@ $app->post('/preferences/{CWID}', function (Request $request, Response $response
 	$response->getBody()->write($results);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Create //
 $app->put('/preferences', function (Request $request, Response $response, array $args) {
@@ -405,7 +415,7 @@ $app->put('/preferences', function (Request $request, Response $response, array 
 	$response->getBody()->write($results);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Group Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $app->get('/groups', function (Request $request, Response $response, array $args) {
@@ -415,7 +425,7 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 	$response->getBody()->write($groups);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Notification Routes //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -445,7 +455,7 @@ $app->put('/notifications', function (Request $request, Response $response, arra
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
-});
+})->add($requireAnyRole);
 
 // Read //
 $app->get('/notifications/{cwid}', function (Request $request, Response $response, array $args) {
@@ -456,7 +466,7 @@ $app->get('/notifications/{cwid}', function (Request $request, Response $respons
 	$response->getBody()->write($notifications);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Update //
 $app->post('/notifications', function (Request $request, Response $response, array $args) {
@@ -482,7 +492,7 @@ $app->post('/notifications', function (Request $request, Response $response, arr
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
-});
+})->add($requireAnyRole);
 
 // Delete //
 $app->delete('/notifications/{id}', function (Request $request, Response $response, array $args) {
@@ -492,7 +502,7 @@ $app->delete('/notifications/{id}', function (Request $request, Response $respon
 	$response->getBody()->write($results);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Override Request Routes //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -513,7 +523,7 @@ $app->get('/overriderequests/{id}', function (Request $request, Response $respon
 	$response->getBody()->write($overrideRequests);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireInstructorOrAdmin);
 
 $app->get('/overriderequests', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
@@ -525,7 +535,7 @@ $app->get('/overriderequests', function (Request $request, Response $response, a
 	$response->getBody()->write($overrideRequests);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireInstructorOrAdmin);
 
 // Create //
 $app->put('/overriderequests', function (Request $request, Response $response, array $args) {
@@ -551,7 +561,7 @@ $app->put('/overriderequests', function (Request $request, Response $response, a
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
-});
+})->add($requireInstructorOrAdmin);
 
 // Update //
 $app->post('/overriderequests', function (Request $request, Response $response, array $args) {
@@ -577,7 +587,7 @@ $app->post('/overriderequests', function (Request $request, Response $response, 
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
-});
+})->add($requireInstructorOrAdmin);
 
 // Delete //
 $app->delete('/overriderequests/{id}/{location}/{room}', function (Request $request, Response $response, array $args) {
@@ -589,7 +599,7 @@ $app->delete('/overriderequests/{id}/{location}/{room}', function (Request $requ
 	$response->getBody()->write($results);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-});
+})->add($requireInstructorOrAdmin);
 
 // LDAP ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $app->get('/classes', function (Request $request, Response $response, array $args) {
@@ -623,7 +633,7 @@ $app->get('/publishdates', function (Request $request, Response $response, array
 	$response->getBody()->write($publishDates);
 	$response = $response->withHeader('Content-type', 'application/json');	
 	return $response;	
-});
+})->add($requireAnyRole);
 
 // Write //
 $app->put('/publishdates', function (Request $request, Response $response, array $args) {
@@ -640,7 +650,7 @@ $app->put('/publishdates', function (Request $request, Response $response, array
 	fclose($fp);
 
 	return $response->withStatus(201);
-});
+})->add($requireAdmin);
 
 // Query Data Extraction ///////////////////////////////////////////////////////////////////////////////////////////////////
 function getSelectQueryData(Request $request) : array {
