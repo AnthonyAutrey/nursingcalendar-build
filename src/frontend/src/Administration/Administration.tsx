@@ -100,11 +100,6 @@ export class Administration extends React.Component<Props, State> {
 							Manage Instructor Rights
 						</button>
 					</form>
-					<form method="get" action="/manageStudents" >
-						<button type="submit" className="btn btn-primary btn-block mb-1" >
-							Manage Student Classes
-						</button>
-					</form>
 					<form method="get" action="/logs" >
 						<button type="submit" className="btn btn-primary btn-block mb-1" >
 							View Logs

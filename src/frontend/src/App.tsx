@@ -104,10 +104,6 @@ class App extends React.Component<{}, State> {
 					<Route key="/schedule" path="/schedule" >
 						<Scheduler handleActiveRouteChange={this.handleActiveRouteChange} cwid={this.state.cwid || 0} role={this.state.role || ''} />
 					</Route>
-				), (
-					<Route key="/manageStudents" path="/manageStudents">
-						<ManageUsers handleShowAlert={this.handleShowAlert} userRole="student" />
-					</Route>
 				)
 			);
 
