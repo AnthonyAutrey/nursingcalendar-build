@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { InstructorGroupsSelector } from './InstructorGroupsSelector';
+import { UserGroupsSelector } from './UserGroupsSelector';
 const uuid = require('uuid/v4');
 const request = require('superagent');
 
@@ -8,7 +8,7 @@ export interface Group {
 	description: string;
 }
 
-export interface Instructor {
+export interface User {
 	cwid: string;
 	name: string;
 	groups: Group[];
@@ -16,28 +16,29 @@ export interface Instructor {
 
 interface Props {
 	handleShowAlert: Function;
+	userRole: 'student' | 'instructor';
 }
 
 interface State {
-	instructors: Instructor[];
+	users: User[];
 	groups: Group[];
-	selectedInstructorCWID: string;
+	selectedUserCWID: string;
 	loading: boolean;
 }
 
-export class ManageInstructors extends React.Component<Props, State> {
+export class ManageUsers extends React.Component<Props, State> {
 	constructor(props: Props, state: State) {
 		super(props, state);
 		this.state = {
-			instructors: [],
+			users: [],
 			groups: [],
-			selectedInstructorCWID: '',
+			selectedUserCWID: '',
 			loading: true
 		};
 	}
 
 	componentWillMount() {
-		this.getInstructorsFromDB();
+		this.getUsersFromDB();
 		this.getGroupsFromDB();
 	}
 
@@ -45,45 +46,49 @@ export class ManageInstructors extends React.Component<Props, State> {
 		if (this.state.loading)
 			return null;
 
-		let instructorOptions = this.state.instructors.map(inst => {
+		let userOptions = this.state.users.map(inst => {
 			return (<option key={uuid()} value={inst.cwid}>{inst.name}</option>);
 		});
 
-		let selectedInstructor = this.getSelectedInstructor();
+		let selectedUser = this.getSelectedUser();
 
-		let instructorGroupsSelector = null;
-		if (selectedInstructor)
-			instructorGroupsSelector = (
-				<InstructorGroupsSelector
-					instructor={selectedInstructor}
+		let userGroupsSelector = null;
+		if (selectedUser)
+			userGroupsSelector = (
+				<UserGroupsSelector
+					user={selectedUser}
 					allPossibleGroups={this.state.groups}
 					handleChangeGroups={this.handleChangeGroups}
 					handleAddGroup={this.handleAddGroup}
 					handleDeleteGroup={this.handleDeleteGroup}
+					userRole={this.props.userRole}
 				/>
 			);
+
+		let titeText = this.props.userRole === 'instructor' ? 'Manage Instructor Rights' : 'Manage Student Classes';
+		let labelText = this.props.userRole === 'instructor' ? 'Instructor:' : 'Student:';
 
 		return (
 			<div className="col-lg-6 offset-lg-3">
 				<hr />
 				<div className="w-100 px-5">
 					<div className="card-body">
-						<h4 className="card-title">Manage Instructor Rights</h4>
+						<h4 className="card-title">{titeText}</h4>
 						<hr />
 						<div className="form-group row">
-							<label className="col-lg-4 col-form-label text-left">Instructor:</label>
+							<label className="col-lg-4 col-form-label text-left">{labelText}</label>
 							<div className="col-lg-8">
 								<select
 									className="form-control"
-									value={this.state.selectedInstructorCWID}
-									onChange={this.handleSelectedInstructorChange}
+									value={this.state.selectedUserCWID}
+									onChange={this.handleSelectedUserChange}
 								>
-									{instructorOptions}
+									{userOptions}
 								</select>
 							</div>
 						</div>
 						<hr />
-						{instructorGroupsSelector}
+						{userGroupsSelector}
 						<hr />
 						<div className="row">
 							<button tabIndex={3} className="btn btn-primary btn-block mx-2 mt-2" onClick={() => this.handlePersistChanges()}>
@@ -98,26 +103,26 @@ export class ManageInstructors extends React.Component<Props, State> {
 	}
 
 	// Data Retrieval ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	getInstructorsFromDB = () => {
+	getUsersFromDB = () => {
 		let queryData: {} = {
 			where: {
-				UserRole: 'instructor'
+				UserRole: this.props.userRole
 			}
 		};
 
 		let queryDataString: string = JSON.stringify(queryData);
 		request.get('/api/users').set('queryData', queryDataString).end((error: {}, res: any) => {
 			if (res && res.body)
-				this.parseInstructors(res.body);
+				this.parseUsers(res.body);
 			else
-				this.props.handleShowAlert('error', 'Error getting instructor data.');
+				this.props.handleShowAlert('error', 'Error getting user data.');
 		});
 	}
 
-	parseInstructors = (dBinstructors: any[]) => {
-		let instructors: Instructor[] = [];
+	parseUsers = (dBusers: any[]) => {
+		let users: User[] = [];
 
-		dBinstructors.forEach(dBinst => {
+		dBusers.forEach(dBinst => {
 			let groups: Group[] = [];
 			let dBGroups = Object.keys(dBinst.Groups);
 			dBGroups.forEach((dBGroupKey: any) => {
@@ -129,19 +134,19 @@ export class ManageInstructors extends React.Component<Props, State> {
 				groups.push(group);
 			});
 
-			let instructor: Instructor = {
+			let user: User = {
 				cwid: dBinst.CWID,
 				name: dBinst.FirstName + ' ' + dBinst.LastName,
 				groups: groups
 			};
-			instructors.push(instructor);
+			users.push(user);
 		});
 
 		let cwid = '';
-		if (instructors[0])
-			cwid = instructors[0].cwid.toString();
+		if (users[0])
+			cwid = users[0].cwid.toString();
 
-		this.setState({ instructors: instructors, selectedInstructorCWID: cwid, loading: false });
+		this.setState({ users: users, selectedUserCWID: cwid, loading: false });
 	}
 
 	getGroupsFromDB = () => {
@@ -167,11 +172,11 @@ export class ManageInstructors extends React.Component<Props, State> {
 	}
 
 	// Handle Selections //////////////////////////////////////////////////////////////////////////////////////////////////////
-	handleSelectedInstructorChange = (event: any) => {
+	handleSelectedUserChange = (event: any) => {
 		event.preventDefault();
-		let instructorCWID = event.target.value;
+		let userCWID = event.target.value;
 
-		this.setState({ selectedInstructorCWID: instructorCWID });
+		this.setState({ selectedUserCWID: userCWID });
 	}
 
 	handleChangeGroups = (event: any, index: number) => {
@@ -179,22 +184,22 @@ export class ManageInstructors extends React.Component<Props, State> {
 		let selectedGroup = this.state.groups.find(group => {
 			return groupName === group.name;
 		});
-		let instructor = this.getSelectedInstructor();
-		let instructors = this.state.instructors;
-		if (instructor && selectedGroup) {
-			instructor.groups[index] = selectedGroup;
-			instructors[this.getSelectedInstructorIndex()] = instructor;
-			this.setState({ instructors: instructors });
+		let user = this.getSelectedUser();
+		let users = this.state.users;
+		if (user && selectedGroup) {
+			user.groups[index] = selectedGroup;
+			users[this.getSelectedUserIndex()] = user;
+			this.setState({ users: users });
 		}
 	}
 
 	handleAddGroup = () => {
-		let instructor = this.getSelectedInstructor();
-		let instructors = this.state.instructors;
+		let user = this.getSelectedUser();
+		let users = this.state.users;
 		let unselectedGroups = this.state.groups.filter(group => {
 			let selected = true;
-			if (instructor)
-				instructor.groups.forEach(selectedGroup => {
+			if (user)
+				user.groups.forEach(selectedGroup => {
 					if (selectedGroup.name === group.name)
 						selected = false;
 				});
@@ -202,51 +207,51 @@ export class ManageInstructors extends React.Component<Props, State> {
 			return selected;
 		});
 
-		if (instructor && unselectedGroups.length > 0) {
-			instructor.groups.push(unselectedGroups[0]);
-			instructors[this.getSelectedInstructorIndex()] = instructor;
-			this.setState({ instructors: instructors });
+		if (user && unselectedGroups.length > 0) {
+			user.groups.push(unselectedGroups[0]);
+			users[this.getSelectedUserIndex()] = user;
+			this.setState({ users: users });
 		}
 	}
 
 	handleDeleteGroup = (index: number) => {
-		let instructor = this.getSelectedInstructor();
-		let instructors = this.state.instructors;
-		if (instructor) {
-			instructor.groups.splice(index, 1);
-			instructors[this.getSelectedInstructorIndex()] = instructor;
-			this.setState({ instructors: instructors });
+		let user = this.getSelectedUser();
+		let users = this.state.users;
+		if (user) {
+			user.groups.splice(index, 1);
+			users[this.getSelectedUserIndex()] = user;
+			this.setState({ users: users });
 		}
 	}
 
-	getSelectedInstructor = () => {
-		let selectedInstructor: Instructor | undefined = this.state.instructors.find(inst => {
-			return inst.cwid.toString() === this.state.selectedInstructorCWID;
+	getSelectedUser = () => {
+		let selectedUser: User | undefined = this.state.users.find(inst => {
+			return inst.cwid.toString() === this.state.selectedUserCWID;
 		});
 
-		return selectedInstructor;
+		return selectedUser;
 	}
 
-	getSelectedInstructorIndex = () => {
-		let selectedInstructor: Instructor | undefined = this.state.instructors.find(inst => {
-			return inst.cwid === this.state.selectedInstructorCWID;
+	getSelectedUserIndex = () => {
+		let selectedUser: User | undefined = this.state.users.find(inst => {
+			return inst.cwid === this.state.selectedUserCWID;
 		});
 
-		if (selectedInstructor)
-			return this.state.instructors.indexOf(selectedInstructor);
+		if (selectedUser)
+			return this.state.users.indexOf(selectedUser);
 		else
 			return -1;
 	}
 
 	// Persist Changes ////////////////////////////////////////////////////////////////////////////////////////////////////
 	handlePersistChanges = () => {
-		this.deleteInstructorGroups().then(() => {
+		this.deleteUserGroups().then(() => {
 
 			let cwids: string[] = [];
 			let groups: string[] = [];
-			this.state.instructors.forEach(instructor => {
-				instructor.groups.forEach(group => {
-					cwids.push(instructor.cwid);
+			this.state.users.forEach(user => {
+				user.groups.forEach(group => {
+					cwids.push(user.cwid);
 					groups.push(group.name);
 				});
 			});
@@ -271,9 +276,9 @@ export class ManageInstructors extends React.Component<Props, State> {
 		});
 	}
 
-	deleteInstructorGroups = (): Promise<any> => {
-		let cwids = this.state.instructors.map(instructor => {
-			return instructor.cwid;
+	deleteUserGroups = (): Promise<any> => {
+		let cwids = this.state.users.map(user => {
+			return user.cwid;
 		});
 
 		let queryData: {} = {
@@ -295,4 +300,4 @@ export class ManageInstructors extends React.Component<Props, State> {
 	}
 }
 
-export default ManageInstructors;
+export default ManageUsers;

@@ -5,7 +5,7 @@ import { NavigationBar } from './Navigation/NavigationBar';
 import { Scheduler } from './Scheduler/Scheduler';
 import { ViewingCalendar } from './Home/ViewingCalendar';
 import { Administration } from './Administration/Administration';
-import { ManageInstructors } from './Administration/ManageInstructors';
+import { ManageUsers } from './Administration/ManageUsers';
 import { Alert } from './Generic/Alert';
 import { Loading } from './Generic/Loading';
 import { NotFound } from './Generic/NotFound';
@@ -100,9 +100,15 @@ class App extends React.Component<{}, State> {
 
 		if (this.state.role === 'instructor' || this.state.role === 'administrator')
 			routes.push(
-				<Route key="/schedule" path="/schedule" >
-					<Scheduler handleActiveRouteChange={this.handleActiveRouteChange} cwid={this.state.cwid || 0} role={this.state.role || ''} />
-				</Route>
+				(
+					<Route key="/schedule" path="/schedule" >
+						<Scheduler handleActiveRouteChange={this.handleActiveRouteChange} cwid={this.state.cwid || 0} role={this.state.role || ''} />
+					</Route>
+				), (
+					<Route key="/manageStudents" path="/manageStudents">
+						<ManageUsers handleShowAlert={this.handleShowAlert} userRole="student" />
+					</Route>
+				)
 			);
 
 		if (this.state.role === 'administrator')
@@ -113,7 +119,7 @@ class App extends React.Component<{}, State> {
 					</Route>
 				), (
 					<Route key="/manageInstructors" path="/manageInstructors">
-						<ManageInstructors handleShowAlert={this.handleShowAlert} />
+						<ManageUsers handleShowAlert={this.handleShowAlert} userRole="instructor" />
 					</Route>
 				)
 			);

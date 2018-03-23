@@ -75,15 +75,16 @@ export class NavigationBar extends React.Component<Props, {}> {
 	// Navigation Links /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	getNavLinks = (): JSX.Element[] => {
 		let navLinks: JSX.Element[] = [];
-		navLinks.push(
-			<li key={uuid()} className={this.manageClassesClassName}>
-				<a className="nav-link" href="/classes"	>
-					<span className=" oi oi-clipboard" />
-					&nbsp;
-			Manage Classes
-		</a>
-			</li>
-		);
+		if (this.props.role === 'instructor')
+			navLinks.push(
+				<li key={uuid()} className={this.manageClassesClassName}>
+					<a className="nav-link" href="/manageStudents"	>
+						<span className=" oi oi-clipboard" />
+						&nbsp;
+						Manage Students
+					</a>
+				</li>
+			);
 
 		if (this.props.role === 'instructor' || this.props.role === 'administrator')
 			navLinks.unshift(
@@ -91,8 +92,8 @@ export class NavigationBar extends React.Component<Props, {}> {
 					<a className="nav-link" href="/schedule">
 						<span className=" oi oi-pencil" />
 						&nbsp;
-				Schedule Events
-			</a>
+						Schedule Events
+					</a>
 				</li>
 			);
 

@@ -1,22 +1,19 @@
 import * as React from 'react';
-import { Instructor, Group } from './ManageInstructors';
-import { InstructorGroup } from './InstructorGroup';
+import { User, Group } from './ManageUsers';
+import { UserGroup } from './UserGroup';
 const uuid = require('uuid/v4');
 
 interface Props {
-	instructor: Instructor;
+	user: User;
 	allPossibleGroups: Group[];
 	handleChangeGroups: Function;
 	handleAddGroup: Function;
 	handleDeleteGroup: Function;
+	userRole: 'student' | 'instructor';
 }
 
-interface State {
-
-}
-
-export class InstructorGroupsSelector extends React.Component<Props, State> {
-	constructor(props: Props, state: State) {
+export class UserGroupsSelector extends React.Component<Props, {}> {
+	constructor(props: Props, state: {}) {
 		super(props, state);
 	}
 
@@ -24,7 +21,7 @@ export class InstructorGroupsSelector extends React.Component<Props, State> {
 
 		let unselectedGroups = this.props.allPossibleGroups.filter(group => {
 			let unselected = true;
-			this.props.instructor.groups.forEach(selectedGroup => {
+			this.props.user.groups.forEach(selectedGroup => {
 				if (selectedGroup.name === group.name)
 					unselected = false;
 			});
@@ -33,7 +30,7 @@ export class InstructorGroupsSelector extends React.Component<Props, State> {
 
 		let selectedGroups: Group[] = [];
 
-		let selectors = this.props.instructor.groups.map((group, index) => {
+		let selectors = this.props.user.groups.map((group, index) => {
 			let groupOptions = unselectedGroups.map(g => {
 				return g.name;
 			});
@@ -45,7 +42,7 @@ export class InstructorGroupsSelector extends React.Component<Props, State> {
 			});
 
 			return (
-				<InstructorGroup
+				<UserGroup
 					key={uuid()}
 					index={index}
 					groups={groupOptions}
@@ -57,7 +54,7 @@ export class InstructorGroupsSelector extends React.Component<Props, State> {
 		});
 
 		let addButton = null;
-		if (this.props.instructor.groups.length < this.props.allPossibleGroups.length)
+		if (this.props.user.groups.length < this.props.allPossibleGroups.length)
 			addButton = (
 				<span className="addButton btn btn-primary cursor-p float-right" onClick={() => this.props.handleAddGroup()}>
 					Add Group &nbsp;&nbsp;
@@ -65,9 +62,11 @@ export class InstructorGroupsSelector extends React.Component<Props, State> {
 				</span>
 			);
 
+		let labelText = this.props.userRole === 'instructor' ? 'Schedulable Groups:' : 'Viewable Groups:';
+
 		return (
 			<div className="form-group row">
-				<label className="col-lg-4 col-form-label text-left">Schedulable Groups:</label>
+				<label className="col-lg-4 col-form-label text-left">{labelText}</label>
 				<div className="col-lg-8">
 					{selectors}
 					{addButton}
@@ -77,4 +76,4 @@ export class InstructorGroupsSelector extends React.Component<Props, State> {
 	}
 }
 
-export default InstructorGroupsSelector;
+export default UserGroupsSelector;

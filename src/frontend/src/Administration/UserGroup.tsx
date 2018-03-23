@@ -9,7 +9,7 @@ interface Props {
 	handleDelete: Function;
 }
 
-export class InstructorGroup extends React.Component<Props, {}> {
+export class UserGroup extends React.Component<Props, {}> {
 	constructor(props: Props, state: {}) {
 		super(props, state);
 	}
@@ -35,4 +35,4 @@ export class InstructorGroup extends React.Component<Props, {}> {
 	}
 }
 
-export default InstructorGroup;
+export default UserGroup;
