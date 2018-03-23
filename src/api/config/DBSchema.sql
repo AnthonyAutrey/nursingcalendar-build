@@ -186,8 +186,7 @@ VALUES
 	('Room 327', 10, 'Nursing Building'),
 	('Room 338-339', 73, 'Nursing Building'),
 	('Room 340', 54, 'Nursing Building'),
-	('Room 343A', 1, 'Nursing Building')
-	;
+	('Room 343A', 1, 'Nursing Building');
 
 INSERT INTO Resources (ResourceName, IsEnumerable)
 VALUES

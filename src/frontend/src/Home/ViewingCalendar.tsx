@@ -58,6 +58,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	componentWillMount() {
 		this.getEventsAndGroupsFromDB();
 		this.props.handleActiveRouteChange('Home');
+		this.getPreferencesFromDB();
 	}
 
 	render() {
@@ -74,7 +75,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 							<label className="form-label mr-2">Collapse Events:</label>
 							<button
 								className="btn btn-primary btn-sm"
-								onClick={() => this.setState((prevState) => ({ collapseEvents: !prevState.collapseEvents }))}
+								onClick={this.handleCollapseChange}
 							>
 								{this.state.collapseEvents ? 'Don\'t Collapse' : 'Collapse'}
 							</button>
@@ -328,22 +329,112 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	}
 
 	// Preferences /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	getPreferencesFromDB = () => {
+		let queryData: {} = {
+			where: {
+				CWID: this.props.cwid
+			}
+		};
+		let queryDataString: string = JSON.stringify(queryData);
+		request.get('/api/preferences/' + this.props.cwid).set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (res && res.body)
+				if (res.body.length > 0)
+					this.setState({
+						collapseEvents: res.body[0].CollapseEvents,
+						eventDisplay: res.body[0].EventDisplay,
+						eventSize: res.body[0].EventSize
+					});
+				else {
+					// Didn't find preferences in DB for user, so create a default one
+					let putQueryData = JSON.stringify({
+						insertValues: {
+							CWID: this.props.cwid
+						}
+					});
+					request.put('/api/preferences').set('queryData', putQueryData).end((putError: {}, putRes: any) => {
+						if (!putRes || !putRes.body)
+							alert('Error Submitting, handle this!');
+						// TODO: handle this error properly
+					});
+				}
+			else
+				alert('Error getting prefs data, handle this!');
+			// TODO: handle this error properly
+		});
+	}
+
 	handleEventSizeIncrease = () => {
 		if (this.state.eventSize < 19 * 15)
-			this.setState(prevState => ({ eventSize: prevState.eventSize + 19 }));
+			this.setState(prevState => ({ eventSize: prevState.eventSize + 19 }), () => {
+				this.persistEventSize(this.state.eventSize);
+			});
 	}
 
 	handleEventSizeDecrease = () => {
 		if (this.state.eventSize > 19)
-			this.setState(prevState => ({ eventSize: prevState.eventSize - 19 }));
+			this.setState(prevState => ({ eventSize: prevState.eventSize - 19 }), () => {
+				this.persistEventSize(this.state.eventSize);
+			});
+	}
+
+	persistEventSize = (size: Number) => {
+		let queryData = JSON.stringify({
+			setValues: {
+				EventSize: size
+			}
+		});
+
+		request.post('/api/preferences/' + this.props.cwid).set('queryData', queryData).end((putError: {}, res: any) => {
+			if (!res || !res.body)
+				alert('Error Submitting, handle this!');
+			// TODO: handle this error properly
+		});
 	}
 
 	handleDisplayChange = (event: any) => {
 		let value = event.target.value;
 		if (value === 'class' || value === 'title' || value === 'classAndRoom' || value === 'titleAndRoom')
-			this.setState({ eventDisplay: value });
+			this.setState({ eventDisplay: value }, () => {
+				this.persistDisplayChange(value);
+			});
 	}
 
+	persistDisplayChange = (displayValue: string) => {
+		let queryData = JSON.stringify({
+			setValues: {
+				EventDisplay: displayValue
+			}
+		});
+
+		request.post('/api/preferences/' + this.props.cwid).set('queryData', queryData).end((putError: {}, res: any) => {
+			if (!res || !res.body)
+				alert('Error Submitting, handle this!');
+			// TODO: handle this error properly
+		});
+	}
+
+	handleCollapseChange = () => {
+		this.setState((prevState) => ({ collapseEvents: !prevState.collapseEvents }), () => {
+			this.persistCollapseChange(this.state.collapseEvents);
+		});
+	}
+
+	persistCollapseChange = (collapseEvents: boolean) => {
+		let collapseValue = 0;
+		if (collapseEvents)
+			collapseValue = 1;
+		let queryData = JSON.stringify({
+			setValues: {
+				CollapseEvents: collapseValue
+			}
+		});
+
+		request.post('/api/preferences/' + this.props.cwid).set('queryData', queryData).end((putError: {}, res: any) => {
+			if (!res || !res.body)
+				alert('Error Submitting, handle this!');
+			// TODO: handle this error properly
+		});
+	}
 	// Event Rendering ////////////////////////////////////////////////////////////////////////////////////////////////
 	renderEvent = (event: any, element: any, view: any) => {
 		let groups = event.groups;
