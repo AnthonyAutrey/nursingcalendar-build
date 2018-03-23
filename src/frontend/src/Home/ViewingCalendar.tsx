@@ -340,7 +340,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			if (res && res.body)
 				if (res.body.length > 0)
 					this.setState({
-						collapseEvents: res.body[0].CollapseEvents,
+						collapseEvents: res.body[0].CollapseEvents === 1 ? true : false,
 						eventDisplay: res.body[0].EventDisplay,
 						eventSize: res.body[0].EventSize
 					});
@@ -470,7 +470,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 		element.find('.fc-content').css('text-shadow', '-1px -1px 0 ' + event.color +
 			', 1px -1px 0 ' + event.color + ', -1px 1px 0 ' + event.color + ', 1px 1px 0 ' + event.color);
 		let content = element.find('.fc-content');
-		if (!this.state.collapseEvents && this.currentView === 'month' && this.state.eventSize > 28) {
+		if (!this.state.collapseEvents && this.currentView === 'month' && this.state.eventSize > 19) {
 			element.css('height', this.state.eventSize + 'px');
 			content.css('white-space', 'normal');
 			element.css('overflow', 'hidden');
