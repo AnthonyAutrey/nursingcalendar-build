@@ -63,10 +63,14 @@ export class NotificationDropdown extends React.Component<Props, State> {
 		document.addEventListener('mousedown', this.handleClick, false);
 		let getNotificationsAndOverrideRequestsPromises: Promise<any>[] = [];
 		getNotificationsAndOverrideRequestsPromises.push(this.getNotificationsFromDB());
-		getNotificationsAndOverrideRequestsPromises.push(this.getOverrideRequestsFromDB());
+		if (this.props.role === 'instructor' || this.props.role === 'administrator')
+			getNotificationsAndOverrideRequestsPromises.push(this.getOverrideRequestsFromDB());
 
 		Promise.all(getNotificationsAndOverrideRequestsPromises).then(notificationData => {
-			this.setState({ notifications: notificationData[0], overrideRequests: notificationData[1], loading: false });
+			if (notificationData.length > 1)
+				this.setState({ notifications: notificationData[0], overrideRequests: notificationData[1], loading: false });
+			else
+				this.setState({ notifications: notificationData[0], loading: false });
 		}).catch(() => {
 			alert('Error getting notification data, handle properly!');
 			// TODO: handle this properly!
@@ -168,24 +172,25 @@ export class NotificationDropdown extends React.Component<Props, State> {
 				});
 			}));
 
-			getNotificationsPromises.push(new Promise((resolve, reject) => {
-				let queryData = {
-					where: {
-						'RequestorCWID': this.props.cwid,
-						'Denied': 1,
-						'AdminRequested': 0
-					}
-				};
+			if (this.props.role === 'instructor' || this.props.role === 'administrator')
+				getNotificationsPromises.push(new Promise((resolve, reject) => {
+					let queryData = {
+						where: {
+							'RequestorCWID': this.props.cwid,
+							'Denied': 1,
+							'AdminRequested': 0
+						}
+					};
 
-				let queryDataString = JSON.stringify(queryData);
-				request.get('/api/overriderequests').set('queryData', queryDataString).end((error: {}, res: any) => {
-					if (res && res.body) {
-						let notifications = this.parseDeniedOverrideRequestsFromDB(res.body);
-						resolve(notifications);
-					} else
-						reject();
-				});
-			}));
+					let queryDataString = JSON.stringify(queryData);
+					request.get('/api/overriderequests').set('queryData', queryDataString).end((error: {}, res: any) => {
+						if (res && res.body) {
+							let notifications = this.parseDeniedOverrideRequestsFromDB(res.body);
+							resolve(notifications);
+						} else
+							reject();
+					});
+				}));
 
 			Promise.all(getNotificationsPromises).then(results => {
 				let allNotifications: NotificationData[] = [];

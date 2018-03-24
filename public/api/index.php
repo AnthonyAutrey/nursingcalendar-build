@@ -418,6 +418,7 @@ $app->put('/preferences', function (Request $request, Response $response, array 
 })->add($requireAnyRole);
 
 // Group Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 $app->get('/groups', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
 	$queryString = DBUtil::buildSelectQuery('groups', $queryData['fields'], $queryData['where']);
@@ -426,6 +427,37 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
 })->add($requireAnyRole);
+
+// Log Routes ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Read //
+$app->get('/logs', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('logs', $queryData['fields'], $queryData['where']);
+	$logs = DBUtil::runQuery($queryString);
+	$response->getBody()->write($logs);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+})->add($requireAnyRole);
+
+// Create //
+$app->put('/logs', function (Request $request, Response $response, array $args) {
+	$queryDataArray = getInsertQueryData($request);
+	$results = [];
+
+	if (array_key_exists("insertValues",$queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		$queryString = DBUtil::buildInsertQuery('logs', $queryData['insertValues']);
+		array_push($results, DBUtil::runCommand($queryString));
+	}
+
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+})->add($requireAnyRole);
+
 
 // Notification Routes //////////////////////////////////////////////////////////////////////////////////////////////////////
 

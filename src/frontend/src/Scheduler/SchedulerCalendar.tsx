@@ -36,12 +36,17 @@ export interface Event {
 	title: string;
 	description: string;
 	start: string;
-	end?: string;
+	end: string;
 	cwid: number;
 	ownerName: string;
 	groups: string[];
 	pendingOverride: boolean;
 	color?: string;
+}
+
+interface Log {
+	message: string;
+	details: string;
 }
 
 export class SchedulerCalendar extends React.Component<Props, State> {
@@ -595,9 +600,10 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 						};
 					let queryDataString = JSON.stringify(queryData);
 					request.delete('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-						if (res && res.body)
+						if (res && res.body) {
+							this.logEventDeletions(eventsIDsToDelete);
 							resolveOuter();
-						else
+						} else
 							rejectOuter();
 					});
 				} else
@@ -660,9 +666,10 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 
 			let queryDataString = JSON.stringify(queryData);
 			request.post('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-				if (res && res.body)
+				if (res && res.body) {
+					this.logEventUpdates(eventsToUpdate);
 					resolve();
-				else
+				} else
 					reject();
 			});
 		});
@@ -706,9 +713,10 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					};
 					let queryDataString = JSON.stringify(queryData);
 					request.put('/api/events').set('queryData', queryDataString).end((error: {}, res: any) => {
-						if (res && res.body)
+						if (res && res.body) {
+							this.logEventCreations([event]);
 							resolve();
-						else
+						} else
 							reject();
 					});
 				}));
@@ -767,6 +775,85 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			eventsHaveBeenModified = true;
 
 		return eventsHaveBeenModified;
+	}
+
+	// Logging ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	logEventCreations = (createdEvents: Event[]) => {
+		let logMessages: Log[] = [];
+
+		createdEvents.forEach(event => {
+			logMessages.push({
+				message: 'Event Created',
+				details: 'Event Details: ' + this.getEventValuesString(event)
+			});
+		});
+
+		this.persistLogs(logMessages);
+	}
+	logEventUpdates = (updatedEvents: Event[]) => {
+		let logs: Log[] = [];
+
+		updatedEvents.forEach(event => {
+			let originalEvent = this.eventCache.get(event.id);
+			let newEvent = this.state.events.get(event.id);
+			if (originalEvent && newEvent && !this.eventsAreEqual(originalEvent, newEvent))
+				logs.push({
+					message: 'Event Modified',
+					details: 'Original Values: ' + this.getEventValuesString(originalEvent) +
+						', New Values: ' + this.getEventValuesString(newEvent)
+				});
+		});
+
+		this.persistLogs(logs);
+	}
+
+	logEventDeletions = (deletedEventIDs: number[]) => {
+		let logs: Log[] = [];
+
+		let deletedEvents: Event[] = [];
+		deletedEventIDs.forEach(id => {
+			let event = this.eventCache.get(id);
+			if (event)
+				deletedEvents.push(event);
+		});
+
+		deletedEvents.forEach(event => {
+			logs.push({
+				message: 'Event Deleted',
+				details: 'Event Details: ' + this.getEventValuesString(event)
+			});
+		});
+
+		this.persistLogs(logs);
+	}
+
+	getEventValuesString = (event: Event): string => {
+		let eventValuesString = 'title: ' + event.title +
+			', description: ' + event.description +
+			', location: ' + event.location +
+			', room: ' + event.room +
+			', groups: [' + event.groups.join(', ') + ']' +
+			', start: ' + event.start.toLocaleString().substr(0, 19) +
+			', end: ' + event.end.toLocaleString().substr(0, 19);
+
+		return eventValuesString;
+	}
+
+	persistLogs = (logs: Log[]) => {
+		console.log(logs);
+		let queryData: {}[] = [];
+		logs.forEach(log => {
+			queryData.push({
+				insertValues: {
+					CWID: this.props.cwid,
+					Message: log.message,
+					Details: log.details
+				}
+			});
+		});
+
+		let queryDataString = JSON.stringify(queryData);
+		request.put('/api/logs').set('queryData', queryDataString).end();
 	}
 }
 
