@@ -840,7 +840,6 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	}
 
 	persistLogs = (logs: Log[]) => {
-		console.log(logs);
 		let queryData: {}[] = [];
 		logs.forEach(log => {
 			queryData.push({

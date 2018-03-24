@@ -15,10 +15,13 @@ interface Props {
 interface State {
 	events: Event[];
 	loading: boolean;
-	showPreferences: boolean;
+	menu: 'none' | 'preferences' | 'filters';
 	eventSize: number;
 	collapseEvents: boolean;
 	eventDisplay: 'title' | 'class' | 'classAndRoom' | 'titleAndRoom';
+	titleFilter: string;
+	groupFilter: string;
+	ownerFilter: string;
 }
 
 export interface Event {
@@ -48,10 +51,13 @@ export class ViewingCalendar extends React.Component<Props, State> {
 		this.state = {
 			events: [],
 			loading: false,
-			showPreferences: false,
+			menu: 'none',
 			eventSize: 19,
 			collapseEvents: false,
-			eventDisplay: 'title'
+			eventDisplay: 'title',
+			titleFilter: '',
+			ownerFilter: '',
+			groupFilter: ''
 		};
 	}
 
@@ -67,72 +73,34 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			loading = <Loading />;
 
 		let preferences = null;
-		if (this.state.showPreferences)
-			preferences = (
-				<div className="container-fluid d-print-none">
-					<div className="d-flex">
-						<div className="form-inline mr-3 mt-1">
-							<label className="form-label mr-2">Collapse Events:</label>
-							<button
-								className="btn btn-primary btn-sm"
-								onClick={this.handleCollapseChange}
-							>
-								{this.state.collapseEvents ? 'Don\'t Collapse' : 'Collapse'}
-							</button>
-						</div>
-						<div className="form-inline mr-3 mt-1">
-							<label className="form-label mr-2">Event Size:</label>
-							<div className="d-inline-block">
-								<button
-									className="btn btn-primary btn-sm mr-1"
-									onClick={this.handleEventSizeIncrease}
-									disabled={this.state.collapseEvents}
-								>
-									Larger &nbsp;
-									<span className="oi oi-caret-top" />
-								</button>
-								<button
-									className="btn btn-primary btn-sm"
-									onClick={this.handleEventSizeDecrease}
-									disabled={this.state.collapseEvents}
-								>
-									Smaller &nbsp;
-									<span className="oi oi-caret-bottom" />
-								</button>
-							</div>
-						</div>
-						<div className="form-inline mr-3 mt-1">
-							<label className="form-label mr-2">Display:</label>
-							<select
-								className="form-control form-control-sm form-control-inline"
-								onChange={this.handleDisplayChange}
-								value={this.state.eventDisplay}
-							>
-								<option value="title">Event Title</option>
-								<option value="titleAndRoom">Room - Event Title</option>
-								<option value="class">Class Name</option>
-								<option value="classAndRoom">Room - Class Name</option>
-							</select>
-						</div>
-						{/* <button className="btn btn-primary ml-auto">Save Preferences</button> */}
-					</div>
-					<hr />
-				</div>
-			);
+		if (this.state.menu === 'preferences')
+			preferences = this.getPreferencesElement();
+		let filters = null;
+		if (this.state.menu === 'filters')
+			filters = this.getFiltersElement();
 
 		return (
 			<div className="ViewingCalendar">
 				{loading}
 				{preferences}
+				{filters}
 				<ViewEventModal ref={viewEventModal => { this.viewEventModal = viewEventModal; }} />
 				<FullCalendarReact
 					id="calendar"
 					customButtons={{
 						preferences: {
-							text: !this.state.showPreferences ? 'Preferences' : 'Hide Preferences',
+							text: this.state.menu !== 'preferences' ? 'Preferences' : 'Hide Preferences',
 							click: () => {
 								this.setState((prevState) => ({
-									showPreferences: !prevState.showPreferences
+									menu: prevState.menu === 'preferences' ? 'none' : 'preferences'
+								}));
+							}
+						},
+						filters: {
+							text: this.state.menu !== 'filters' ? 'Filters' : 'Hide Filters',
+							click: () => {
+								this.setState((prevState) => ({
+									menu: prevState.menu === 'filters' ? 'none' : 'filters'
 								}));
 							}
 						},
@@ -146,7 +114,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					displayEventEnd={this.currentView !== 'month' || (this.state.eventSize >= 38 && !this.state.collapseEvents)}
 					timeFormat={'h(:mm)t'} // uppercase H for 24-hour clock
 					header={{
-						left: 'prev,next today preferences',
+						left: 'prev,next today preferences filters',
 						center: 'title',
 						right: 'print month,agendaWeek,agendaDay'
 					}}
@@ -223,7 +191,6 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					alert('Error getting data!, Handle properly!');
 				// TODO: handle this properly
 			});
-
 		}
 	}
 
@@ -259,6 +226,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			});
 
 		}).catch(() => {
+			alert('error, couldn\'t get events!');
 			// TODO: Handle Failure
 		});
 
@@ -435,6 +403,95 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			// TODO: handle this error properly
 		});
 	}
+
+	getPreferencesElement = (): JSX.Element => {
+		return (
+			<div className="container-fluid d-print-none">
+				<div className="d-flex">
+					<div className="form-inline mr-3 mt-1">
+						<label className="form-label mr-2">Collapse Events:</label>
+						<button
+							className="btn btn-primary btn-sm"
+							onClick={this.handleCollapseChange}
+						>
+							{this.state.collapseEvents ? 'Don\'t Collapse' : 'Collapse'}
+						</button>
+					</div>
+					<div className="form-inline mr-3 mt-1">
+						<label className="form-label mr-2">Event Size:</label>
+						<div className="d-inline-block">
+							<button
+								className="btn btn-primary btn-sm mr-1"
+								onClick={this.handleEventSizeIncrease}
+								disabled={this.state.collapseEvents}
+							>
+								Larger &nbsp;
+								<span className="oi oi-caret-top" />
+							</button>
+							<button
+								className="btn btn-primary btn-sm"
+								onClick={this.handleEventSizeDecrease}
+								disabled={this.state.collapseEvents}
+							>
+								Smaller &nbsp;
+								<span className="oi oi-caret-bottom" />
+							</button>
+						</div>
+					</div>
+					<div className="form-inline mr-3 mt-1">
+						<label className="form-label mr-2">Display:</label>
+						<select
+							className="form-control form-control-sm form-control-inline"
+							onChange={this.handleDisplayChange}
+							value={this.state.eventDisplay}
+						>
+							<option value="title">Event Title</option>
+							<option value="titleAndRoom">Room - Event Title</option>
+							<option value="class">Class Name</option>
+							<option value="classAndRoom">Room - Class Name</option>
+						</select>
+					</div>
+				</div>
+				<hr />
+			</div>
+		);
+	}
+
+	// Filters ////////////////////////////////////////////////////////////////////////////////////////////////////////
+	handleChangeTitleFilter = (event: any) => {
+		this.setState({ titleFilter: event.target.value });
+	}
+
+	handleChangeOwnerFilter = (event: any) => {
+		this.setState({ ownerFilter: event.target.value });
+	}
+
+	handleChangeGroupFilter = (event: any) => {
+		this.setState({ groupFilter: event.target.value });
+	}
+
+	getFiltersElement = () => {
+		return (
+			<div className="container-fluid d-print-none">
+				<div className="d-flex">
+					<div className="form-inline mr-3 mt-1">
+						<label className="form-label mr-2">Title:</label>
+						<input className="form-control" type="text" value={this.state.titleFilter} onChange={this.handleChangeTitleFilter} />
+					</div>
+					<div className="form-inline mr-3 mt-1">
+						<label className="form-label mr-2">Owner:</label>
+						<input className="form-control" type="text" value={this.state.ownerFilter} onChange={this.handleChangeOwnerFilter} />
+					</div>
+					<div className="form-inline mr-3 mt-1">
+						<label className="form-label mr-2">Groups:</label>
+						<input className="form-control" type="text" value={this.state.groupFilter} onChange={this.handleChangeGroupFilter} />
+					</div>
+				</div>
+				<hr />
+			</div>
+		);
+	}
+
 	// Event Rendering ////////////////////////////////////////////////////////////////////////////////////////////////
 	renderEvent = (event: any, element: any, view: any) => {
 		let groups = event.groups;
@@ -487,6 +544,24 @@ export class ViewingCalendar extends React.Component<Props, State> {
 
 		if (this.state.eventDisplay === 'classAndRoom' || this.state.eventDisplay === 'titleAndRoom')
 			title.prepend('<strong> ' + event.room + ', </strong>');
+
+		// Filter events
+		let passedTitleFilter = event.title.toLowerCase().includes(this.state.titleFilter.toLowerCase().trim());
+		let passedOwnerFilter = event.ownerName.toLowerCase().includes(this.state.ownerFilter.toLowerCase().trim());
+		let passedGroupFilter = event.groups.join(' ').toLowerCase().includes(this.state.groupFilter.toLowerCase().trim());
+		// let passedTitleFilter = false;
+		// this.state.titleFilter.split(/(,|;|\s)/).forEach(filterFragment => {
+
+		// 	if (filterFragment.trim() !== '' && event.title.toLowerCase().includes(filterFragment.toLowerCase())) {
+		// 		passedTitleFilter = true;
+		// 		console.log('[' + filterFragment + ']');
+		// 		console.log(event.title);
+		// 		console.log('...');
+
+		// 	}
+		// });
+		if (!passedTitleFilter || !passedOwnerFilter || !passedGroupFilter)
+			element.css('display', 'none');
 	}
 }
 
