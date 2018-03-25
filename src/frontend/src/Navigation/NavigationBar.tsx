@@ -43,6 +43,11 @@ export class NavigationBar extends React.Component<Props, {}> {
 
 		return (
 			<nav className="navbar navbar-expand-md navbar-light bg-light border-bottom mb-3 d-print-none">
+				<a className="navbar-brand text-primary garamond mr-4 ml-2 d-md-none" href="/">
+					<h3 style={headerStyle}>
+						ULM Nursing Schedule
+					</h3>
+				</a>
 				<button
 					className="navbar-toggler border-0"
 					type="button"
@@ -55,8 +60,8 @@ export class NavigationBar extends React.Component<Props, {}> {
 					<span className="bg-light text-dark oi oi-menu" />
 				</button>
 				<div className="collapse navbar-collapse" id="navbar">
-					<a className="navbar-brand text-primary garamond mr-4 ml-2" href="/">
-						<h1 style={headerStyle} >
+					<a className="navbar-brand text-primary garamond mr-4 ml-2 d-none d-md-block" href="/">
+						<h1 style={headerStyle}>
 							ULM Nursing Schedule
 						</h1>
 					</a>

@@ -69,7 +69,7 @@ export class ManageUsers extends React.Component<Props, State> {
 		let labelText = this.props.userRole === 'instructor' ? 'Instructor:' : 'Student:';
 
 		return (
-			<div className="col-lg-6 offset-lg-3">
+			<div>
 				<hr />
 				<div className="w-100 px-5">
 					<div className="card-body">

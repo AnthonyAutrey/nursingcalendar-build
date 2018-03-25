@@ -6,6 +6,7 @@ import { Scheduler } from './Scheduler/Scheduler';
 import { ViewingCalendar } from './Home/ViewingCalendar';
 import { Administration } from './Administration/Administration';
 import { ManageUsers } from './Administration/ManageUsers';
+import { Archive } from './Administration/Archive';
 import { Alert } from './Generic/Alert';
 import { Loading } from './Generic/Loading';
 import { NotFound } from './Generic/NotFound';
@@ -112,10 +113,6 @@ class App extends React.Component<{}, State> {
 				(
 					<Route key="/administration" path="/administration">
 						<Administration handleShowAlert={this.handleShowAlert} />
-					</Route>
-				), (
-					<Route key="/manageInstructors" path="/manageInstructors">
-						<ManageUsers handleShowAlert={this.handleShowAlert} userRole="instructor" />
 					</Route>
 				)
 			);

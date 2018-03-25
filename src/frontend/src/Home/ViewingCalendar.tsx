@@ -22,6 +22,9 @@ interface State {
 	titleFilter: string;
 	groupFilter: string;
 	ownerFilter: string;
+	roomFilter: string;
+	locationFilter: string;
+	showFilterHelp: boolean;
 }
 
 export interface Event {
@@ -57,7 +60,10 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			eventDisplay: 'title',
 			titleFilter: '',
 			ownerFilter: '',
-			groupFilter: ''
+			groupFilter: '',
+			roomFilter: '',
+			locationFilter: '',
+			showFilterHelp: false
 		};
 	}
 
@@ -114,7 +120,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					displayEventEnd={this.currentView !== 'month' || (this.state.eventSize >= 38 && !this.state.collapseEvents)}
 					timeFormat={'h(:mm)t'} // uppercase H for 24-hour clock
 					header={{
-						left: 'prev,next today preferences filters',
+						left: 'prev,next today filters preferences',
 						center: 'title',
 						right: 'print month,agendaWeek,agendaDay'
 					}}
@@ -470,21 +476,96 @@ export class ViewingCalendar extends React.Component<Props, State> {
 		this.setState({ groupFilter: event.target.value });
 	}
 
+	handleChangeRoomFilter = (event: any) => {
+		this.setState({ roomFilter: event.target.value });
+	}
+
+	handleChangeLocationFilter = (event: any) => {
+		this.setState({ locationFilter: event.target.value });
+	}
+
+	handleClearFilters = () => {
+		this.setState({ titleFilter: '', ownerFilter: '', groupFilter: '', roomFilter: '', locationFilter: '' });
+	}
+
 	getFiltersElement = () => {
 		return (
 			<div className="container-fluid d-print-none">
-				<div className="d-flex">
-					<div className="form-inline mr-3 mt-1">
-						<label className="form-label mr-2">Title:</label>
-						<input className="form-control" type="text" value={this.state.titleFilter} onChange={this.handleChangeTitleFilter} />
+				{this.state.showFilterHelp &&
+					(
+						<div className="mb-3">
+							<strong>
+								Enter values to match events you want to see in the calendar.
+							</strong>
+							<br />
+							For groups and rooms, you may enter multiple values separated by spaces or commas.
+							<br />
+							Groups will match only if the event has every group listed. Rooms will match for any of the rooms listed.
+						</div>
+					)
+				}
+				<div className="row">
+					<div className="form-inline col-lg-2 my-1">
+						<label className="form-label col-sm-2 col-lg-4 pl-0">Title:</label>
+						<input
+							className="form-control form-control-sm col-sm-10 col-lg-8"
+							type="text"
+							value={this.state.titleFilter}
+							onChange={this.handleChangeTitleFilter}
+						/>
 					</div>
-					<div className="form-inline mr-3 mt-1">
-						<label className="form-label mr-2">Owner:</label>
-						<input className="form-control" type="text" value={this.state.ownerFilter} onChange={this.handleChangeOwnerFilter} />
+					<div className="form-inline col-lg-2 my-1">
+						<label className="form-label col-sm-2 col-lg-4 pl-0">Creator:</label>
+						<input
+							className="form-control form-control-sm col-sm-10 col-lg-8"
+							type="text"
+							value={this.state.ownerFilter}
+							onChange={this.handleChangeOwnerFilter}
+						/>
 					</div>
-					<div className="form-inline mr-3 mt-1">
-						<label className="form-label mr-2">Groups:</label>
-						<input className="form-control" type="text" value={this.state.groupFilter} onChange={this.handleChangeGroupFilter} />
+					<div className="form-inline col-lg-2 my-1">
+						<label className="form-label col-sm-2 col-lg-4 pl-0">Groups:</label>
+						<input
+							className="form-control form-control-sm col-sm-10 col-lg-8"
+							type="text"
+							value={this.state.groupFilter}
+							onChange={this.handleChangeGroupFilter}
+						/>
+					</div>
+					<div className="form-inline col-lg-2 my-1">
+						<label className="form-label col-sm-2 col-lg-4 pl-0">Location:</label>
+						<input
+							className="form-control form-control-sm col-sm-10 col-lg-8"
+							type="text"
+							value={this.state.locationFilter}
+							onChange={this.handleChangeLocationFilter}
+						/>
+					</div>
+					<div className="form-inline col-lg-2 my-1">
+						<label className="form-label col-sm-2 col-lg-4 pl-0">Rooms:</label>
+						<input
+							className="form-control form-control-sm col-sm-10 col-lg-8"
+							type="text"
+							value={this.state.roomFilter}
+							onChange={this.handleChangeRoomFilter}
+						/>
+					</div>
+					<div className="form-inline col-lg-2">
+						<div className="d-flex ml-auto my-1">
+							<button
+								className="btn btn-primary btn-sm mr-3"
+								onClick={this.handleClearFilters}
+							>
+								<span className="oi oi-delete" style={{ top: '2px' }} />
+								&nbsp; Clear Filters
+							</button>
+							<button
+								className="btn btn-primary btn-sm"
+								onClick={() => this.setState({ showFilterHelp: !this.state.showFilterHelp })}
+							>
+								{!this.state.showFilterHelp ? 'Show Help' : 'Hide Help'}
+							</button>
+						</div>
 					</div>
 				</div>
 				<hr />
@@ -548,19 +629,27 @@ export class ViewingCalendar extends React.Component<Props, State> {
 		// Filter events
 		let passedTitleFilter = event.title.toLowerCase().includes(this.state.titleFilter.toLowerCase().trim());
 		let passedOwnerFilter = event.ownerName.toLowerCase().includes(this.state.ownerFilter.toLowerCase().trim());
-		let passedGroupFilter = event.groups.join(' ').toLowerCase().includes(this.state.groupFilter.toLowerCase().trim());
-		// let passedTitleFilter = false;
-		// this.state.titleFilter.split(/(,|;|\s)/).forEach(filterFragment => {
-
-		// 	if (filterFragment.trim() !== '' && event.title.toLowerCase().includes(filterFragment.toLowerCase())) {
-		// 		passedTitleFilter = true;
-		// 		console.log('[' + filterFragment + ']');
-		// 		console.log(event.title);
-		// 		console.log('...');
-
-		// 	}
-		// });
-		if (!passedTitleFilter || !passedOwnerFilter || !passedGroupFilter)
+		let passedLocationFilter = event.location.toLowerCase().includes(this.state.locationFilter.toLowerCase().trim());
+		let passedGroupFilter = true;
+		this.state.groupFilter.split(/(,|;|\s)/).forEach(filterFragment => {
+			if (filterFragment !== ',' && filterFragment !== ';' && !event.groups.join(' ').toLowerCase().includes(filterFragment.toLowerCase())) {
+				passedGroupFilter = false;
+			}
+		});
+		let passedRoomFilter = false;
+		this.state.roomFilter.split(/(,|;|\s)/).forEach(filterFragment => {
+			if (filterFragment !== ',' &&
+				filterFragment !== ';' &&
+				filterFragment.trim() !== '' &&
+				event.room.toLowerCase().includes(filterFragment.toLowerCase())) {
+				passedRoomFilter = true;
+			}
+		});
+		if (!(passedTitleFilter &&
+			passedOwnerFilter &&
+			passedGroupFilter &&
+			passedLocationFilter &&
+			(passedRoomFilter || this.state.roomFilter === '')))
 			element.css('display', 'none');
 	}
 }
