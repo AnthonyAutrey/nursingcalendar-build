@@ -433,7 +433,7 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 // Read //
 $app->get('/logs', function (Request $request, Response $response, array $args) {
 	$queryData = getSelectQueryData($request);
-	$queryString = DBUtil::buildSelectQuery('logs', $queryData['fields'], $queryData['where']);
+	$queryString = DBUtil::buildSelectQuery('logs NATURAL JOIN Users', $queryData['fields'], $queryData['where']);
 	$logs = DBUtil::runQuery($queryString);
 	$response->getBody()->write($logs);
 	$response = $response->withHeader('Content-type', 'application/json');
