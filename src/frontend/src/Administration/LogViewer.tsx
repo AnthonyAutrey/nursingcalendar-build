@@ -13,6 +13,8 @@ interface Props {
 interface State {
 	loading: boolean;
 	logs: Log[];
+	showDeleteLogs: boolean;
+	deleteDate: string;
 }
 
 export interface Log {
@@ -28,7 +30,9 @@ export class LogViewer extends React.Component<Props, State> {
 
 		this.state = {
 			loading: false,
-			logs: []
+			logs: [],
+			showDeleteLogs: false,
+			deleteDate: this.getDateString(new Date),
 		};
 	}
 
@@ -50,6 +54,30 @@ export class LogViewer extends React.Component<Props, State> {
 			return <EventLog key={uuid()} log={stateLog} />;
 		});
 
+		let deleteLogs = null;
+		if (this.state.showDeleteLogs)
+			deleteLogs = (
+				<div>
+					<h5 className="mt-3">
+						Clear logs up to:
+					</h5>
+					<div className="form-group row">
+						<div className="col-form-label col-md-3">Date:</div>
+						<div className="col-md-9">
+							<input
+								className="form-control"
+								value={this.state.deleteDate}
+								onChange={this.handleDeleteDateChange}
+								type="date"
+							/>
+						</div>
+					</div>
+					<button className="btn btn-primary">
+						Clear Logs
+					</button>
+				</div>
+			);
+
 		return (
 			<div>
 				{loading}
@@ -59,12 +87,25 @@ export class LogViewer extends React.Component<Props, State> {
 						<h4 className="card-title">Event Logs</h4>
 						<hr />
 						{logs}
+						<hr />
+						<button onClick={() => this.setState({ showDeleteLogs: !this.state.showDeleteLogs })} className="btn btn-primary btn-block ">
+							Delete logs
+						</button>
+						{deleteLogs}
 					</div>
 				</div>
 				<hr />
 			</div>
 		);
 	}
+
+	// Delete logs ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	handleDeleteDateChange = (event: any) => {
+		this.setState({ deleteDate: event.target.value });
+	}
+
+	// Parsing logs //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	parseLogs = (body: any[]) => {
 		let parsedLogs: Log[] = [];

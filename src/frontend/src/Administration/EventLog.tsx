@@ -44,7 +44,7 @@ export class EventLog extends React.Component<Props, State> {
 					{this.props.log.message}
 				</div>
 				<div className="col-sm-3 text-center">
-					{this.props.log.time}
+					{this.formatDate(this.props.log.time)}
 				</div>
 				<div className="col-sm-2">
 					<button onClick={() => this.setState({ showDetails: !this.state.showDetails })} className="btn btn-primary btn-sm float-right">
@@ -54,6 +54,11 @@ export class EventLog extends React.Component<Props, State> {
 				{details}
 			</div>
 		);
+	}
+	// Get string of data and parse the data to display into specific format\
+	formatDate = (dateString: string) => {
+		let date = new Date(dateString);
+		return date.toLocaleDateString() + ' ' + dateString.substr(11);
 	}
 }
 export default EventLog;
