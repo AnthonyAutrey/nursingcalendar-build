@@ -263,17 +263,6 @@ $app->get('/rooms', function (Request $request, Response $response, array $args)
 
 // Location Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Read //
-$app->get('/locations', function (Request $request, Response $response, array $args) {
-	$queryData = getSelectQueryData($request);
-	$queryString = DBUtil::buildSelectQuery('locations', $queryData['fields'], $queryData['where']);
-	$locations = DBUtil::runQuery($queryString);
-	$response->getBody()->write($locations);
-	$response = $response->withHeader('Content-type', 'application/json');
-	return $response;	
-})->add($requireAnyRole);
-
-
 // Create //
 $app->put('/locations', function (Request $request, Response $response, array $args) {
 	$queryDataArray = getInsertQueryData($request);
@@ -292,6 +281,15 @@ $app->put('/locations', function (Request $request, Response $response, array $a
 	return $response;
 })->add($requireAdmin);
 
+// Read //
+$app->get('/locations', function (Request $request, Response $response, array $args) {
+	$queryData = getSelectQueryData($request);
+	$queryString = DBUtil::buildSelectQuery('locations', $queryData['fields'], $queryData['where']);
+	$locations = DBUtil::runQuery($queryString);
+	$response->getBody()->write($locations);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+})->add($requireAnyRole);
 
 // Update //
 $app->post('/locations', function (Request $request, Response $response, array $args) {
@@ -317,9 +315,37 @@ $app->post('/locations', function (Request $request, Response $response, array $
 	$response->getBody()->write(json_encode($results));
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
-})->add($requireInstructorOrAdmin);
+})->add($requireAdmin);
+
+// Delete //
+$app->delete('/locations', function (Request $request, Response $response, array $args) {
+	$queryData = getDeleteQueryData($request);
+	$deleteLocationsQuery = DBUtil::buildDeleteQuery('locations', $queryData['where']);
+	$results = DBUtil::runCommand($deleteLocationsQuery);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+})->add($requireAnyRole);
 
 // Resource Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Create //
+$app->put('/resources', function (Request $request, Response $response, array $args) {
+	$queryDataArray = getInsertQueryData($request);
+	$results = [];
+
+	if (array_key_exists("insertValues", $queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		$queryData = getInsertQueryData($request);
+		$queryString = DBUtil::buildInsertQuery('resources', $queryData['insertValues']);
+		$results[$queryData['insertValues']] = DBUtil::runCommand($queryString);
+	}
+	$response->getBody()->write($results);
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+})->add($requireAdmin);
 
 // Read //
 $app->get('/resources', function (Request $request, Response $response, array $args) {
@@ -330,6 +356,42 @@ $app->get('/resources', function (Request $request, Response $response, array $a
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
 })->add($requireAnyRole);
+
+// Update //
+$app->post('/resources', function (Request $request, Response $response, array $args) {
+	$results = [];
+	$queryDataArray = getUpdateQueryData($request);
+
+	if (array_key_exists("setValues",$queryDataArray) && array_key_exists("where",$queryDataArray))
+		$queryDataArray = [$queryDataArray];
+
+	foreach ($queryDataArray as $queryData) {
+		// return with 'bad request' response if request isn't correct
+		if (!isset($queryData['setValues']) ||
+			!count($queryData['setValues']) > 0 ||
+			!isset($queryData['where'])
+			) {
+			return $response->withStatus(400);
+		}
+	
+		$queryString = DBUtil::buildUpdateQuery('resources', $queryData['setValues'], $queryData['where']);	
+		array_push($results, DBUtil::runCommand($queryString));
+	}
+
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+})->add($requireAdmin);
+
+// Delete //
+$app->delete('/resources', function (Request $request, Response $response, array $args) {
+	$queryData = getDeleteQueryData($request);
+	$deleteQuery = DBUtil::buildDeleteQuery('resources', $queryData['where']);
+	$results = DBUtil::runCommand($deleteQuery);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;
+})->add($requireAdmin);
 
 // User Routes /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
