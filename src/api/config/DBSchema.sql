@@ -146,7 +146,19 @@ CREATE TABLE UserGroupRelation
 	GroupName VARCHAR(60) NOT NULL,
 	PRIMARY KEY (CWID, GroupName),
 	FOREIGN KEY (CWID) REFERENCES Users(CWID),
-	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName)
+	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName),
+);
+
+CREATE TABLE RecurrringEventRelation
+(
+	RecurringID CHAR(36) NOT NULL,
+	EventID INT NOT NULL,
+	LocationName varchar(60) NOT NULL,
+	RoomName varchar(60) NOT NULL,
+	RecurringType ENUM('daily', 'weekly', 'monthly') NOT NULL,
+	WeeklyDays VARCHAR(7), -- use single character identifiers: (MTWRFSU)
+	PRIMARY KEY (RecurringID, EventID, LocationName, RoomName),
+	FOREIGN KEY (EventID, LocationName, RoomName) REFERENCES Events(EventID, LocationName, RoomName)
 );
 
 /*----------------------------------------------

@@ -41,6 +41,7 @@ export interface Event {
 	ownerName: string;
 	groups: string[];
 	pendingOverride: boolean;
+	recurringID?: string;
 	color?: string;
 }
 
