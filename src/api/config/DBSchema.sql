@@ -62,7 +62,6 @@ CREATE TABLE Groups
 (
 	GroupName VARCHAR(60) NOT NULL,
 	Description VARCHAR(300) NOT NULL,
-	Semester TINYINT,
 	PRIMARY KEY (GroupName)
 );
 
@@ -146,7 +145,7 @@ CREATE TABLE UserGroupRelation
 	GroupName VARCHAR(60) NOT NULL,
 	PRIMARY KEY (CWID, GroupName),
 	FOREIGN KEY (CWID) REFERENCES Users(CWID),
-	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName),
+	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName)
 );
 
 CREATE TABLE RecurrringEventRelation
@@ -159,6 +158,14 @@ CREATE TABLE RecurrringEventRelation
 	WeeklyDays VARCHAR(7), -- use single character identifiers: (MTWRFSU)
 	PRIMARY KEY (RecurringID, EventID, LocationName, RoomName),
 	FOREIGN KEY (EventID, LocationName, RoomName) REFERENCES Events(EventID, LocationName, RoomName)
+);
+
+CREATE TABLE GroupCRNs
+(
+	GroupName VARCHAR(60) NOT NULL,
+	CRN CHAR(5) NOT NULL,
+	PRIMARY KEY (GroupName, CRN),
+	FOREIGN KEY (GroupName) REFERENCES Groups(GroupName)	
 );
 
 /*----------------------------------------------
@@ -243,36 +250,75 @@ INSERT INTO RoomResourceRelation (LocationName, RoomName, ResourceName, Count)
 		('Nursing Building', 'Room 327', 'Beds', 3),
 		('Nursing Building', 'Room 338-339', 'Audio/Video', null);
 
-INSERT INTO Groups (GroupName, Description, Semester)
+INSERT INTO Groups (GroupName, Description)
 VALUES
-	('Semester 1', 'All Semester 1 Students', 1),
-	('Semester 2', 'All Semester 2 Students', 2),
-	('Semester 3', 'All Semester 3 Students', 3),
-	('Semester 4', 'All Semester 4 Students', 4),
-	('Semester 5', 'All Semester 5 Students', 5),
-	('Anatomy and Physiology', 'The body and diseases', 1),
-	('Gerontology', 'Aging processes and treatments', 2),
-	('Nursing Research', 'Researching techniques', 3),
-	('Med Surg Clinicals', 'Med Surg Clinicals', 4),
-	('Pediatrics Clinicals', 'Pediatrics Clinicals', 5),
-	('Maternity Clinicals', 'Maternity Clinicals', null),
-	('Med Surg - Rotation 1', 'First clinical rotation group', 1),
-	('Med Surg - Rotation 2', 'Second clinical rotation group', 2),
-	('NURS 2004','Health Assessment', 3),
-	('NURS 2009','Fundamentals of Prof. Nursing Practice', 4),
-	('NURS 2011','Intro to Gerontological Nursing', 5),
-	('NURS 2013','Computing for Nurses', null),
-	('NURS 3009','Adult Health Nursing I', 1),
-	('NURS 3010','Mental Health Nursing', 2),
-	('NURS 3011','Nursing Synthesis I', 3),
-	('NURS 3028','Adult Health Nursing II', 4),
-	('NURS 3029','Maternal Child Health Nursing', 5),
-	('NURS 3030','Nursing Synthesis II', null),
-	('NURS 4000','Adult Health Nursing III', 1),
-	('NURS 4001','Nursing Research EBP', 2),
-	('NURS 4002','Nursing Synthesis III', 3),
-	('NURS 4066','Nursing Management', 4),
-	('NURS 4067','Public Health Nursing', 5);
+	('Semester 1', 'All Semester 1 Students'),
+	('Semester 2', 'All Semester 2 Students'),
+	('Semester 3', 'All Semester 3 Students'),
+	('Semester 4', 'All Semester 4 Students'),
+	('Semester 5', 'All Semester 5 Students'),
+	('Anatomy and Physiology', 'The body and diseases'),
+	('Gerontology', 'Aging processes and treatments'),
+	('Nursing Research', 'Researching techniques'),
+	('Med Surg Clinicals', 'Med Surg Clinicals'),
+	('Pediatrics Clinicals', 'Pediatrics Clinicals'),
+	('Maternity Clinicals', 'Maternity Clinicals'),
+	('Med Surg - Rotation 1', 'First clinical rotation group'),
+	('Med Surg - Rotation 2', 'Second clinical rotation group'),
+	('NURS 2004','Health Assessment'),
+	('NURS 2009','Fundamentals of Prof. Nursing Practice'),
+	('NURS 2011','Intro to Gerontological Nursing'),
+	('NURS 2013','Computing for Nurses'),
+	('NURS 3009','Adult Health Nursing I'),
+	('NURS 3010','Mental Health Nursing'),
+	('NURS 3011','Nursing Synthesis I'),
+	('NURS 3028','Adult Health Nursing II'),
+	('NURS 3029','Maternal Child Health Nursing'),
+	('NURS 3030','Nursing Synthesis II'),
+	('NURS 4000','Adult Health Nursing III'),
+	('NURS 4001','Nursing Research EBP'),
+	('NURS 4002','Nursing Synthesis III'),
+	('NURS 4066','Nursing Management'),
+	('NURS 4067','Public Health Nursing');
+
+INSERT INTO GroupCRNs (GroupName, CRN)
+VALUES
+	('Semester 1', '00000'),
+	('Semester 1', '10000'),
+	('Semester 1', '20000'),
+	('Semester 2', '30000'),
+	('Semester 3', '40000'),
+	('Semester 3', '50000'),
+	('Semester 3', '60000'),
+	('Semester 4', '70000'),
+	('Semester 4', '80000'),
+	('Semester 4', '90000'),
+	('Semester 5', '10000'),
+	('Semester 5', '11000'),
+	('Semester 5', '12000'),
+	('Anatomy and Physiology', '00000'),
+	('Gerontology', '10000'),
+	('Nursing Research', '20000'),
+	('Med Surg Clinicals', '30000'),
+	('Pediatrics Clinicals', '40000'),
+	('Maternity Clinicals', '50000'),
+	('Med Surg - Rotation 1', '60000'),
+	('Med Surg - Rotation 2', '70000'),
+	('NURS 2004','80000'),
+	('NURS 2009','90000'),
+	('NURS 2011','10000'),
+	('NURS 2013','11000'),
+	('NURS 3009','12000'),
+	('NURS 3010','13000'),
+	('NURS 3011','14000'),
+	('NURS 3028','15000'),
+	('NURS 3029','16000'),
+	('NURS 3030','17000'),
+	('NURS 4000','18000'),
+	('NURS 4001','19000'),
+	('NURS 4002','20000'),
+	('NURS 4066','21000'),
+	('NURS 4067','22000');
 
 INSERT INTO UserGroupRelation (CWID, GroupName)
 VALUES

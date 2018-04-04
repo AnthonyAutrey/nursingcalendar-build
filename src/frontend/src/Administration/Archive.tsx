@@ -76,7 +76,7 @@ export class Archive extends React.Component<Props, State> {
 							<div className="row">
 								<button tabIndex={3} type="submit" className="btn btn-primary btn-block mx-2 mt-2">
 									Delete and Archive
-							</button>
+								</button>
 							</div>
 						</form>
 					</div>
