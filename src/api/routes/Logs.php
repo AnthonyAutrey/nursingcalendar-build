@@ -33,3 +33,13 @@ $app->get('/logs', function (Request $request, Response $response, array $args) 
 	return $response;	
 })->add($requireAnyRole);
 
+// Delete //
+$app->delete('/logs', function (Request $request, Response $response, array $args) {
+	$queryData = getDeleteQueryData($request);
+	$deleteQuery = DBUtil::buildDeleteQuery('logs', $queryData['where']);
+	$results = DBUtil::runCommand($deleteQuery);
+	$response->getBody()->write(json_encode($results));
+	$response = $response->withHeader('Content-type', 'application/json');
+	return $response;	
+})->add($requireAdmin);
+
