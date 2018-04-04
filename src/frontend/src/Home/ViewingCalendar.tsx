@@ -614,7 +614,7 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			element.css('overflow', 'hidden');
 		}
 
-		let groupString = 'no class';
+		let groupString = '(none)';
 		let title = element.find('.fc-title');
 		let time = element.find('.fc-time');
 		if (event.groups.length > 0)
