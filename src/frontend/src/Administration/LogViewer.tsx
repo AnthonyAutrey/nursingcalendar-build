@@ -18,6 +18,7 @@ interface State {
 }
 
 export interface Log {
+	logID: number;
 	name: string;
 	message: string;
 	time: string;
@@ -50,6 +51,11 @@ export class LogViewer extends React.Component<Props, State> {
 		if (this.state.loading)
 			loading = <Loading />;
 
+		let noLogsMessage = null;
+
+		if (this.state.logs.length < 1)
+			noLogsMessage = <div> No logs to display. </div>;
+
 		let logs = this.state.logs.map(stateLog => {
 			return <EventLog key={uuid()} log={stateLog} />;
 		});
@@ -72,7 +78,7 @@ export class LogViewer extends React.Component<Props, State> {
 							/>
 						</div>
 					</div>
-					<button className="btn btn-primary">
+					<button onClick={() => this.clearLogs()} className="btn btn-primary btn-block">
 						Clear Logs
 					</button>
 				</div>
@@ -86,11 +92,15 @@ export class LogViewer extends React.Component<Props, State> {
 					<div className="card-body">
 						<h4 className="card-title">Event Logs</h4>
 						<hr />
+						{noLogsMessage}
 						{logs}
 						<hr />
-						<button onClick={() => this.setState({ showDeleteLogs: !this.state.showDeleteLogs })} className="btn btn-primary btn-block ">
-							Delete logs
-						</button>
+						{
+							this.state.logs.length > 0 &&
+							<button onClick={() => this.setState({ showDeleteLogs: !this.state.showDeleteLogs })} className="btn btn-primary btn-block ">
+								Delete logs
+							</button>
+						}
 						{deleteLogs}
 					</div>
 				</div>
@@ -112,6 +122,7 @@ export class LogViewer extends React.Component<Props, State> {
 
 		body.forEach(bodyLog => {
 			let parsedLog: Log = {
+				logID: bodyLog.LogID,
 				name: bodyLog.FirstName + ' ' + bodyLog.LastName,
 				message: bodyLog.Message,
 				time: bodyLog.Time,
@@ -119,6 +130,15 @@ export class LogViewer extends React.Component<Props, State> {
 			};
 			parsedLogs.push(parsedLog);
 		});
+
+		parsedLogs.sort((a, b) => {
+			let aDate = new Date(a.time);
+			let bDate = new Date(b.time);
+			if (aDate < bDate) return 1;
+			if (aDate > bDate) return -	1;
+			return 0;
+		});
+
 		this.setState({ logs: parsedLogs });
 	}
 
@@ -128,6 +148,42 @@ export class LogViewer extends React.Component<Props, State> {
 		let dateString = date.getFullYear() + '-' + (month) + '-' + (day);
 
 		return dateString;
+	}
+
+	clearLogs = () => {
+		let logsToDelete: Log[] = this.state.logs.filter(stateLog => {
+			let deleteDate = new Date(this.state.deleteDate);
+			deleteDate.setHours(23, 59, 59, 999);
+			deleteDate.setMinutes(deleteDate.getMinutes() - deleteDate.getTimezoneOffset());
+			deleteDate.setDate(deleteDate.getDate() + 1);
+			console.log(deleteDate.toISOString());
+
+			return new Date(stateLog.time) <= deleteDate;
+		});
+
+		let deleteLogIDs: number[] = logsToDelete.map(deleteLog => {
+			return deleteLog.logID;
+		});
+
+		console.log(deleteLogIDs);
+
+		let queryData = {
+			where: { LogID: deleteLogIDs }
+		};
+
+		let queryDataString = JSON.stringify(queryData);
+
+		request.delete('/api/logs').set('queryData', queryDataString).end((error: {}, res: any) => {
+			if (res && res.body) {
+				let logsToKeep = this.state.logs.filter(filteredLog => {
+					return !deleteLogIDs.includes(filteredLog.logID);
+				});
+				this.setState({ logs: logsToKeep });
+
+				this.props.handleShowAlert('success', 'Successfully cleared logs!');
+			} else
+				this.props.handleShowAlert('error', 'Error getting log data.');
+		});
 	}
 }
 export default LogViewer;
