@@ -12,5 +12,7 @@ $app->get('/groups', function (Request $request, Response $response, array $args
 	$groups = DBUtil::runQuery($queryString);
 	$response->getBody()->write($groups);
 	$response = $response->withHeader('Content-type', 'application/json');
-	return $response;	
+	return $response;
+
+	// Get CRNS!
 })->add($requireAnyRole);

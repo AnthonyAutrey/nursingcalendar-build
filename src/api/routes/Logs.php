@@ -31,5 +31,5 @@ $app->get('/logs', function (Request $request, Response $response, array $args) 
 	$response->getBody()->write($logs);
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;	
-})->add($requireAnyRole);
+})->add($requireAdmin);
 
