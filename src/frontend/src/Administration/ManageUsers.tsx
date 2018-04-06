@@ -154,7 +154,7 @@ export class ManageUsers extends React.Component<Props, State> {
 			if (res && res.body)
 				this.parseGroups(res.body);
 			else
-				this.props.handleShowAlert('error', 'Error getting class data.');
+				this.props.handleShowAlert('error', 'Error getting group data.');
 		});
 	}
 

@@ -77,13 +77,14 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let route = '/api/groups';
 		if (this.props.role === 'instructor') {
 			route = '/api/usergroups/' + this.props.cwid;
-			this.populateGroupSemesterMap().then(() => {
-				this.forceUpdate();
-			}).catch(() => {
-				alert('Error getting data. Handle this properly!');
-				// TODO: Handle this properly
-			});
 		}
+
+		this.populateGroupSemesterMap().then(() => {
+			this.forceUpdate();
+		}).catch(() => {
+			alert('Error getting data. Handle this properly!');
+			// TODO: Handle this properly
+		});
 
 		request.get(route).end((error: {}, res: any) => {
 			if (res && res.body) {
@@ -180,13 +181,13 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 					eventOverlap={false}
 					eventRender={(event: any, element: any, view: any) => {
 						let groups = event.groups;
-						let semesterCount = 0;
-						let semesterFromMap: any = 0;
+						let semester = 'none';
+						let semesterFromMap: any = 'none';
 						if (groups && groups.length === 1) {
 							semesterFromMap = this.groupSemesterMap.get(groups[0]);
 
 							if (semesterFromMap)
-								semesterCount = semesterFromMap;
+								semester = semesterFromMap;
 						}
 
 						let stripeColor = '(255, 255, 255, 0.1)';
@@ -197,19 +198,19 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 							', 1px -1px 0 ' + event.color + ', -1px 1px 0 ' + event.color + ', 1px 1px 0 ' + event.color);
 
 						let semesterCSSMap: {} = {
-							0: '',
-							1: 'repeating-linear-gradient(-45deg,transparent,transparent 64px,rgba' + stripeColor +
+							'none': '',
+							'Semester 1': 'repeating-linear-gradient(-45deg,transparent,transparent 64px,rgba' + stripeColor +
 								' 64px,rgba' + stripeColor + ' 66px)',
-							2: 'repeating-linear-gradient(-45deg,transparent,transparent 32px,rgba' + stripeColor +
+							'Semester 2': 'repeating-linear-gradient(-45deg,transparent,transparent 32px,rgba' + stripeColor +
 								' 32px,rgba' + stripeColor + ' 34px)',
-							3: 'repeating-linear-gradient(-45deg,transparent,transparent 16px,rgba' + stripeColor +
+							'Semester 3': 'repeating-linear-gradient(-45deg,transparent,transparent 16px,rgba' + stripeColor +
 								' 16px,rgba' + stripeColor + ' 18px)',
-							4: 'repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba' + stripeColor +
+							'Semester 4': 'repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba' + stripeColor +
 								' 8px,rgba' + stripeColor + ' 10px)',
-							5: 'repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba' + stripeColor +
+							'Semester 5': 'repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba' + stripeColor +
 								' 4px,rgba' + stripeColor + ' 6px)'
 						};
-						let bgCSS = semesterCSSMap[semesterCount];
+						let bgCSS = semesterCSSMap[semester];
 
 						element.css('background', bgCSS);
 						element.css('background-color', event.color);
@@ -739,12 +740,10 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	// Groups ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	populateGroupSemesterMap = (): Promise<null> => {
 		return new Promise((resolve, reject) => {
-			request.get('/api/groups').end((error: {}, res: any) => {
+			request.get('/api/semestergroups').end((error: {}, res: any) => {
 				if (res && res.body) {
-					let groups: string[] = [];
-					res.body.forEach((group: any) => {
-						groups.push(group.GroupName);
-						this.groupSemesterMap.set(group.GroupName, group.Semester);
+					res.body.forEach((result: any) => {
+						this.groupSemesterMap.set(result.GroupName, result.Semester);
 					});
 					resolve();
 				} else

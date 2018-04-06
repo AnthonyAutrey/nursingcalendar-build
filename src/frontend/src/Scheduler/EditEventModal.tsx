@@ -136,7 +136,7 @@ export class EditEventModal extends React.Component<Props, State> {
 											<span className=" oi oi-trash" />
 											<span>&nbsp;&nbsp;</span>
 											Delete
-									</button>
+										</button>
 									</div>
 									<div className="d-block d-sm-none mr-0">
 										<button tabIndex={3} type="button" className="btn btn-primary" onClick={this.save}>Save</button>

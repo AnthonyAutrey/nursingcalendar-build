@@ -34,7 +34,12 @@ function getInsertQueryData(Request $request) : array {
 				if (isset($qd->groups)) {
 					$groups = $qd->groups;
 					array_push($queryDataArray, ['insertValues'=>$insertValues, 'groups'=>$groups]);
-				} else
+				} 
+				else if (isset($qd->CRNs)) {
+					$CRNs = $qd->CRNs;
+					array_push($queryDataArray, ['insertValues'=>$insertValues, 'CRNs'=>$CRNs]);
+				}
+				else
 					array_push($queryDataArray, ['insertValues'=>$insertValues]);
 			}
 			else
@@ -71,7 +76,12 @@ function getUpdateQueryData(Request $request) : array {
 				if (isset($qd->groups)) {
 					$groups = $qd->groups;
 					array_push($queryDataArray, ['setValues'=>$setValues, 'where'=>$where, 'groups'=>$groups]);
-				} else
+				} 
+				else if (isset($qd->CRNs)) {
+					$CRNs = $qd->CRNs;
+					array_push($queryDataArray, ['setValues'=>$setValues, 'where'=>$where, 'CRNs'=>$CRNs]);
+				}
+				else
 					array_push($queryDataArray, ['setValues'=>$setValues, 'where'=>$where]);
 			}
 			else

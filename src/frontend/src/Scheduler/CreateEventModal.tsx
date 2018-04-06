@@ -122,7 +122,11 @@ export class CreateEventModal extends React.Component<Props, State> {
 									<label className="mr-auto">Groups:</label>
 									{addButton}
 								</div>
-								{groupSelectors}
+								{
+									this.props.groupOptionsFromAPI.length > 0 ?
+										groupSelectors :
+										'No schedulable groups assigned, please see an admin.'
+								}
 							</div>
 						</div>
 						<div className="modal-footer">
