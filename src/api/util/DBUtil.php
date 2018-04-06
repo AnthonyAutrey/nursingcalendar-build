@@ -106,7 +106,7 @@ class DBUtil {
 		$insertValuesString = substr($insertValuesString, 0, -2) . ")" ;
 		$arrayString = substr($arrayString, 0, -3) . ")" ;
 
-		if ($arrayUsed)
+		if ($arrayUsed == true)
 			return ['columns'=>$insertColumnsString, 'values'=>$arrayString];
 		else
 			return ['columns'=>$insertColumnsString, 'values'=>$insertValuesString];

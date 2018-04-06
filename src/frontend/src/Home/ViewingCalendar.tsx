@@ -152,28 +152,16 @@ export class ViewingCalendar extends React.Component<Props, State> {
 					}}
 					events={this.state.events}
 					eventTextColor="white"
-					// eventDrop={(event: Event, delta: Duration) => this.editEvent(event, delta)}
-					// eventResize={(event: Event, delta: Duration) => this.editEvent(event, delta)}
 					height={700}
-					// height={(view: any, x: any) => {
-					// 	if (x === 'month')
-					// 		return 700;
-
-					// 	return 'auto';
-					// }}
-					// aspectRatio={1}
-					// selectMinDistance={10}
 					snapDuration={'00:15:00'}
 					slotDuration={'00:30:00'}
 					scrollTime={'6:00:00'}
 					minTime={'06:00:00'}
 					maxTime={'30:00:00'}
-					// selectable={true}
 					selectOverlap={false}
 					selectHelper={true}
 					viewRender={(view: any) => this.cacheViewAndDate(view)}
 					firstDay={1}
-				// select={this.handleCalendarSelect}
 				/>
 			</div>
 		);
@@ -182,7 +170,12 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	// Data Retreival /////////////////////////////////////////////////////////////////////////////////////////////////
 	public getEventsAndGroupsFromDB(): void {
 		if (this.props.role === 'student' || this.props.role === 'instructor')
-			this.getUserFilteredEvents();
+			this.populateGroupSemesterMap().then(() => {
+				this.getUserFilteredEvents();
+			}).catch(() => {
+				alert('Error getting data!, Handle properly!');
+				// TODO: handle this properly
+			});
 		else {
 			this.setState({ loading: true });
 			request.get('/api/eventswithrelations').end((error: {}, res: any) => {
@@ -271,12 +264,10 @@ export class ViewingCalendar extends React.Component<Props, State> {
 
 	populateGroupSemesterMap = (): Promise<null> => {
 		return new Promise((resolve, reject) => {
-			request.get('/api/groups').end((error: {}, res: any) => {
+			request.get('/api/semestergroups').end((error: {}, res: any) => {
 				if (res && res.body) {
-					let groups: string[] = [];
-					res.body.forEach((group: any) => {
-						groups.push(group.GroupName);
-						this.groupSemesterMap.set(group.GroupName, group.Semester);
+					res.body.forEach((result: any) => {
+						this.groupSemesterMap.set(result.GroupName, result.Semester);
 					});
 					resolve();
 				} else
@@ -576,12 +567,12 @@ export class ViewingCalendar extends React.Component<Props, State> {
 	// Event Rendering ////////////////////////////////////////////////////////////////////////////////////////////////
 	renderEvent = (event: any, element: any, view: any) => {
 		let groups = event.groups;
-		let semesterCount = 0;
+		let semester = 'none';
 		let semesterFromMap: any = 0;
 		if (groups && groups.length === 1) {
 			semesterFromMap = this.groupSemesterMap.get(groups[0]);
 			if (semesterFromMap)
-				semesterCount = semesterFromMap;
+				semester = semesterFromMap;
 		}
 
 		let stripeColor = '(255, 255, 255, 0.1)';
@@ -589,19 +580,19 @@ export class ViewingCalendar extends React.Component<Props, State> {
 			stripeColor = '(255, 255, 255, 0.2)';
 
 		let semesterCSSMap: {} = {
-			0: '',
-			1: 'repeating-linear-gradient(-45deg,transparent,transparent 64px,rgba' + stripeColor +
+			'none': '',
+			'Semester 1': 'repeating-linear-gradient(-45deg,transparent,transparent 64px,rgba' + stripeColor +
 				' 64px,rgba' + stripeColor + ' 66px)',
-			2: 'repeating-linear-gradient(-45deg,transparent,transparent 32px,rgba' + stripeColor +
+			'Semester 2': 'repeating-linear-gradient(-45deg,transparent,transparent 32px,rgba' + stripeColor +
 				' 32px,rgba' + stripeColor + ' 34px)',
-			3: 'repeating-linear-gradient(-45deg,transparent,transparent 16px,rgba' + stripeColor +
+			'Semester 3': 'repeating-linear-gradient(-45deg,transparent,transparent 16px,rgba' + stripeColor +
 				' 16px,rgba' + stripeColor + ' 18px)',
-			4: 'repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba' + stripeColor +
+			'Semester 4': 'repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba' + stripeColor +
 				' 8px,rgba' + stripeColor + ' 10px)',
-			5: 'repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba' + stripeColor +
+			'Semester 5': 'repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba' + stripeColor +
 				' 4px,rgba' + stripeColor + ' 6px)'
 		};
-		let bgCSS = semesterCSSMap[semesterCount];
+		let bgCSS = semesterCSSMap[semester];
 
 		element.css('background', bgCSS);
 		element.css('background-color', event.color);
