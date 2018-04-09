@@ -150,7 +150,7 @@ CREATE TABLE UserGroupRelation
 
 CREATE TABLE RecurrringEventRelation
 (
-	RecurringID CHAR(36) NOT NULL, --uuid
+	RecurringID CHAR(36) NOT NULL, -- uuid
 	EventID INT NOT NULL,
 	LocationName varchar(60) NOT NULL,
 	RoomName varchar(60) NOT NULL,
