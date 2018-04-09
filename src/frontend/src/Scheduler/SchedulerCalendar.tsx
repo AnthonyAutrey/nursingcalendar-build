@@ -6,6 +6,7 @@ import { EditEventModal } from './EditEventModal';
 import { UnownedEventModal } from './UnownedEventModal';
 import { Loading } from '../Generic/Loading';
 import { ColorGenerator } from '../Utilities/Colors';
+import { RecurringEventInfo, RecurringEvents } from '../Utilities/RecurringEvents';
 
 import { Duration, Moment } from 'moment';
 import * as moment from 'moment';
@@ -41,7 +42,7 @@ export interface Event {
 	ownerName: string;
 	groups: string[];
 	pendingOverride: boolean;
-	recurringID?: string;
+	recurringInfo?: RecurringEventInfo;
 	color?: string;
 }
 
@@ -57,6 +58,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 	private currentDate: any | null = null;
 	private smallestTimeInterval: number = Number.MAX_SAFE_INTEGER;
 	private editEventModal: EditEventModal | null;
+	private createEventModal: CreateEventModal | null;
 	private unownedEventModal: UnownedEventModal | null;
 	private eventCache: Map<number, Event>;
 	private groupSemesterMap: Map<string, number | null> = new Map<string, number | null>();
@@ -127,6 +129,7 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			<div className="SchedulerCalendar">
 				{loading}
 				<CreateEventModal
+					ref={createEventModal => { this.createEventModal = createEventModal; }}
 					show={this.state.showCreateModal}
 					groupOptionsFromAPI={this.state.groupOptionsFromAPI}
 					creationHandler={this.handleEventCreation}
@@ -284,10 +287,15 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			pendingOverride: false
 		});
 
+		if (this.createEventModal) {
+			this.createEventModal.setEventStart(start);
+			this.createEventModal.setEventEnd(end);
+		}
+
 		this.setState({ events: events, showCreateModal: true });
 	}
 
-	handleEventCreation = (title: string, description: string, groups: string[]) => {
+	handleEventCreation = (title: string, description: string, groups: string[], recurringInfo: RecurringEventInfo | undefined) => {
 		let events: Map<number, Event> = this.cloneStateEvents();
 		let index = this.getNextEventIndex();
 		let placeholder = events.get(Number.MAX_SAFE_INTEGER);
@@ -304,12 +312,173 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 				ownerName: '',
 				groups: groups,
 				pendingOverride: false,
+				recurringInfo: recurringInfo,
 				color: ColorGenerator.getColor(groups[0])
 			});
 			events.delete(Number.MAX_SAFE_INTEGER);
 		}
 
+		// TODO: handle creation of recurring events using recurring event info
+		// add recurring info for api to recurring events
+		// do conflict checks before making it work
+		let recurringEvents: Event[] = [];
+		if (recurringInfo && placeholder)
+			recurringEvents = this.getRecurringEvents(title, description, groups, placeholder.start, placeholder.end, recurringInfo);
+
+		let filteredEventsAndConflicts = this.getFilteredEventsAndConflicts(recurringEvents);
+		let conflictingEvents = filteredEventsAndConflicts.conflictingEvents;
+		let filteredRecurringEvents = filteredEventsAndConflicts.filteredEvents;
+		if (conflictingEvents.length > 0) {
+			let confirmMessage = 'Some recurring events couldn\'t be added due to conflicts with the following events: ';
+			conflictingEvents.forEach(event => {
+				confirmMessage += '\n\n' + event.title + '\n      start: ' + moment(event.start).toLocaleString() +
+					'\n      end: ' + moment(event.end).toLocaleString();
+			});
+			if (!confirm(confirmMessage + '\n\nDo you want to continue?'))
+				return;
+		}
+
+		console.log(conflictingEvents);
+		filteredRecurringEvents.forEach(event => {
+			index++;
+			event.id = index;
+			events.set(index, event);
+		});
+
+		console.log(events);
 		this.setState({ events: events }, () => this.closeEventCreationModal());
+	}
+
+	getDailyRecurringEvents(
+		title: string,
+		description: string,
+		groups: string[],
+		beginDateString: string,
+		endDateString: string,
+		recurringInfo: RecurringEventInfo): Event[] {
+
+		let recurringEvents: Event[] = [];
+		let beginDate = moment(beginDateString).utc(true);
+		let endDate = moment(endDateString).utc(true);
+		let iterateDate = beginDate.clone().add(1, 'days');
+		let repeatEndDate = recurringInfo.endDate.clone().add(1, 'days');
+
+		while (iterateDate.isBefore(repeatEndDate)) {
+			let start = iterateDate.clone().set({ hour: beginDate.hour(), minute: beginDate.minute() }).toISOString();
+			let end = iterateDate.clone().set({ hour: endDate.hour(), minute: endDate.minute() }).toISOString();
+
+			recurringEvents.push({
+				id: -1,
+				location: this.props.location,
+				room: this.props.room,
+				title: title,
+				description: description,
+				start: start,
+				end: end,
+				cwid: this.props.cwid,
+				ownerName: '',
+				groups: groups,
+				pendingOverride: false,
+				color: ColorGenerator.getColor(groups[0])
+			});
+
+			iterateDate.add(1, 'days');
+			// recurringIndex++;
+		}
+
+		return recurringEvents;
+	}
+
+	getRecurringEvents(
+		title: string,
+		description: string,
+		groups: string[],
+		beginDateString: string,
+		endDateString: string,
+		recurringInfo: RecurringEventInfo): Event[] {
+
+		let recurringEvents: Event[] = [];
+		let beginDate = moment(beginDateString).utc(true);
+		let endDate = moment(endDateString).utc(true);
+		let iterateDate = beginDate.clone().add(1, 'days');
+		let repeatEndDate = recurringInfo.endDate.clone().add(1, 'days');
+
+		while (iterateDate.isBefore(repeatEndDate)) {
+			let start = iterateDate.clone().set({ hour: beginDate.hour(), minute: beginDate.minute() }).toISOString();
+			let end = iterateDate.clone().set({ hour: endDate.hour(), minute: endDate.minute() }).toISOString();
+
+			if (this.createEventModal && (
+				(recurringInfo.type === 'monthly' &&
+					RecurringEvents.getWeekDayCount(iterateDate) + RecurringEvents.getDayOfWeekChar(iterateDate) === recurringInfo.monthlyDay) ||
+				(recurringInfo.type === 'weekly' && recurringInfo.weeklyDays &&
+					recurringInfo.weeklyDays.includes(RecurringEvents.getDayOfWeekChar(iterateDate))) ||
+				recurringInfo.type === 'daily'))
+				recurringEvents.push({
+					id: -1,
+					location: this.props.location,
+					room: this.props.room,
+					title: title,
+					description: description,
+					start: start,
+					end: end,
+					cwid: this.props.cwid,
+					ownerName: '',
+					groups: groups,
+					pendingOverride: false,
+					recurringInfo: recurringInfo,
+					color: ColorGenerator.getColor(groups[0])
+				});
+
+			iterateDate.add(1, 'days');
+			// recurringIndex++;
+		}
+
+		return recurringEvents;
+	}
+
+	getFilteredEventsAndConflicts = (events: Event[]): { filteredEvents: Event[], conflictingEvents: Event[] } => {
+		let conflictingEvents: Event[] = [];
+
+		let filteredEvents = events.filter(recurringEvent => {
+			console.log('recurringEvent................................');
+			console.log(recurringEvent);
+
+			if (recurringEvent.start.substr(recurringEvent.start.length - 1, 1) !== 'Z')
+				recurringEvent.start += '.000Z';
+			if (recurringEvent.end.substr(recurringEvent.end.length - 1, 1) !== 'Z')
+				recurringEvent.end += '.000Z';
+
+			let recurringEventStart = moment(recurringEvent.start);
+			let recurringEventEnd = moment(recurringEvent.end);
+			console.log(recurringEvent.start);
+			console.log(recurringEventStart.toISOString());
+			console.log(recurringEvent.end);
+			console.log(recurringEventEnd.toISOString());
+			console.log('..............................................');
+			let noConflicts = true;
+			this.getStateEventsAsArray().forEach((stateEvent: Event) => {
+				if (stateEvent.start.substr(stateEvent.start.length - 1, 1) !== 'Z')
+					stateEvent.start += '.000Z';
+				if (stateEvent.end.substr(stateEvent.end.length - 1, 1) !== 'Z')
+					stateEvent.end += '.000Z';
+				console.log('stateEvent');
+				console.log(stateEvent);
+				console.log(stateEvent.start);
+				console.log(moment(stateEvent.start).utc().toISOString());
+				console.log(stateEvent.end);
+				console.log(moment(stateEvent.end).utc().toISOString());
+				if (recurringEventStart.isBefore(moment(stateEvent.end).utc()) &&
+					recurringEventEnd.isAfter(moment(stateEvent.start).utc())) {
+					console.log('CONFLICT CONFLICT CONFLICT');
+					conflictingEvents.push(stateEvent);
+					noConflicts = false;
+				}
+			});
+
+			return noConflicts;
+		});
+
+		return { filteredEvents: filteredEvents, conflictingEvents: conflictingEvents };
 	}
 
 	closeEventCreationModal = () => {
@@ -350,14 +519,14 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 		let events = this.cloneStateEvents();
 		let clickedEvent: Event | undefined = events.get(event.id);
 		if (clickedEvent && Number(clickedEvent.cwid) === Number(this.props.cwid) || clickedEvent && this.props.role === 'administrator')
-			this.openEditEventModal(clickedEvent.id, clickedEvent.title, clickedEvent.description, clickedEvent.groups);
+			this.openEditEventModal(clickedEvent.id, clickedEvent.title, clickedEvent.description, clickedEvent.groups, clickedEvent.recurringInfo);
 		else if (clickedEvent)
 			this.openUnownedEventModal(clickedEvent);
 	}
 
-	openEditEventModal = (eventID: number, title: string, description: string, groups: string[]) => {
+	openEditEventModal = (eventID: number, title: string, description: string, groups: string[], recurringInfo?: RecurringEventInfo) => {
 		if (this.editEventModal)
-			this.editEventModal.beginEdit(eventID, title, description, groups);
+			this.editEventModal.beginEdit(eventID, title, description, groups, recurringInfo);
 	}
 
 	openUnownedEventModal = (event: Event) => {
@@ -423,7 +592,8 @@ export class SchedulerCalendar extends React.Component<Props, State> {
 			title: event.title,
 			editable: event.editable,
 			color: event.color,
-			borderColor: event.borderColor
+			borderColor: event.borderColor,
+			recurringInfo: event.recurringInfo
 		};
 	}
 

@@ -150,12 +150,17 @@ CREATE TABLE UserGroupRelation
 
 CREATE TABLE RecurrringEventRelation
 (
-	RecurringID CHAR(36) NOT NULL,
+	RecurringID CHAR(36) NOT NULL, --uuid
 	EventID INT NOT NULL,
 	LocationName varchar(60) NOT NULL,
 	RoomName varchar(60) NOT NULL,
 	RecurringType ENUM('daily', 'weekly', 'monthly') NOT NULL,
-	WeeklyDays VARCHAR(7), -- use single character identifiers: (MTWRFSU)
+	MonthlyWeekday CHAR(2),
+		-- 1 for first, 2 for second, 3 for third, 4 for fourth, 5 for last,
+		-- character represents day of week for recurrence (mtwrfsu),
+		-- example: '2f' for every second friday, '5u' for every last sunday
+		-- if doesn't recur monthly, then NULL
+	WeeklyDays VARCHAR(7), -- use single character identifiers: (mtwrfsu), if doesn't recur weekly, then NULL
 	PRIMARY KEY (RecurringID, EventID, LocationName, RoomName),
 	FOREIGN KEY (EventID, LocationName, RoomName) REFERENCES Events(EventID, LocationName, RoomName)
 );
