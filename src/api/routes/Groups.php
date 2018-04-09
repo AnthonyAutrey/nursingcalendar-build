@@ -81,7 +81,7 @@ $app->get('/semestergroups', function (Request $request, Response $response, arr
 	$response = $response->withHeader('Content-type', 'application/json');
 	return $response;
 
-})->add($requireInstructorOrAdmin);
+})->add($requireAnyRole);
 
 
 // Update //
