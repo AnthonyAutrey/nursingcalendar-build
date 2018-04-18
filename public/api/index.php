@@ -13,7 +13,7 @@ require '../../src/api/middleware/Authenticator.php';
 
 $config = [
     'settings' => [
-		'displayErrorDetails' => false,
+		'displayErrorDetails' => true,
 	],
 	'devEnvironment' => true
 ];
