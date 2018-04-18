@@ -5,13 +5,13 @@
 /src/frontend/coverage
 
 #  build
-/src/frontend/build
-/src/javascript
-/public/*
-/session_store/*
-!/public/api
-!/public/.htaccess
-src/api/config/PublishDates.json
+# /src/frontend/build
+# /src/javascript
+# /public/*
+# /session_store/*
+# !/public/api
+# !/public/.htaccess
+# src/api/config/PublishDates.json
 
 #  configuration
 /src/frontend/.DS_Store
