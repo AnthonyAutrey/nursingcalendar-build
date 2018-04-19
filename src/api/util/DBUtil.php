@@ -36,6 +36,7 @@ class DBUtil {
 
 		} catch(PDOException $ex) {
 			echo $ex->getMessage(); // TODO: remove this for production
+			return "error";
 		}
 	}
 
